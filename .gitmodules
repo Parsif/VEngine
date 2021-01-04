@@ -1,0 +1,12 @@
+[submodule "VEngine/vendor/imgui"]
+	path = VEngine/vendor/imgui
+	url = https://github.com/ocornut/imgui
+[submodule "VEngine/vendor/ImGuizmo"]
+	path = VEngine/vendor/ImGuizmo
+	url = https://github.com/CedricGuillemet/ImGuizmo
+[submodule "VEngine/vendor/glfw"]
+	path = VEngine/vendor/glfw
+	url = https://github.com/glfw/glfw
+[submodule "VEngine/vendor/glm"]
+	path = VEngine/vendor/glm
+	url = https://github.com/g-truc/glm
