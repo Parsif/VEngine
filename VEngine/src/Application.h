@@ -1,15 +1,23 @@
 #pragma once
 
+#include "VEngine.h"
+
+
+
 namespace VEngine
+
 {
 	class Application
 	{
 	public:
-		static bool start();
-		static void run();
+		Application();
+		bool start();
+		void run();
 
 	private:
-		static bool s_is_running;
+		Ref<Window> m_window;
+		Ref<Renderer> m_renderer;
+		
 	};
 }
 

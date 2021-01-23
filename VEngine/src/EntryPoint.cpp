@@ -1,12 +1,15 @@
+#include "precheader.h"
+
 #include "Application.h"
 
 #ifdef V_PLATFORM_WINDOWS
-#include <windows.h>
 
-int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, PWSTR pCmdLine, int nCmdShow)
+int main(int argc, char* argv[])
 {
-	VEngine::Application::start();
-	VEngine::Application::run();
+	VEngine::Application application;
+	application.start();
+	application.run();
+	return 0;
 }
 
 #endif
