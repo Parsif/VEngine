@@ -2,7 +2,7 @@
 #include "precheader.h"
 
 
-namespace VEngine
+namespace vengine
 {
 	template<class T>
 	using Ref = std::shared_ptr<T>;

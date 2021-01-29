@@ -2,7 +2,7 @@
 #include "ShaderProgram.h"
 
 
-namespace VEngine
+namespace vengine
 {
 	ShaderProgram::ShaderProgram(Shader& vertex_shader, Shader& fragment_shader)
 	{

@@ -2,7 +2,7 @@
 
 #include "vmath/vec.h"
 
-namespace VEngine
+namespace vengine
 {
 	struct RenderPassDescriptor
 	{

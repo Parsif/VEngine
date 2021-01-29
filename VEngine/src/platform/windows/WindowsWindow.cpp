@@ -3,7 +3,7 @@
 #include "WindowsWindow.h"
 
 
-namespace VEngine
+namespace vengine
 {
 	WindowsWindow::WindowsWindow(const std::string& title, unsigned int width, unsigned int height) : m_width(width), m_height(height)
 	{
@@ -54,5 +54,10 @@ namespace VEngine
 	void WindowsWindow::swap_buffers() const
 	{
 		glfwSwapBuffers(m_glfw_window);
+	}
+
+	void* WindowsWindow::get_native() const
+	{
+		return m_glfw_window;
 	}
 }

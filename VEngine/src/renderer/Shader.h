@@ -1,8 +1,11 @@
 #pragma once
+
+#include "precheader.h"
+
 #include <GL/glew.h>
 
 
-namespace VEngine
+namespace vengine
 {
 
 	//TODO: possible move to opengl/utils

@@ -1,10 +1,10 @@
 #pragma once
-#include "Vtypes.h"
 
 #include "RenderCommand.h"
+#include "core/Vtypes.h"
 
 
-namespace VEngine
+namespace vengine
 {
 	class RenderQueue
 	{

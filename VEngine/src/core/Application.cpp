@@ -2,21 +2,17 @@
 
 #include "Application.h"
 
-
-
 //TODO: remove include
-#include "renderer/TriangleCommand.h"
+#include "../renderer/TriangleCommand.h"
 
 
-
-
-namespace VEngine
+namespace vengine
 {
 	Application::Application()
 	{
-		m_window = std::unique_ptr<Window>(Window::create_window());
+		m_window = std::shared_ptr<Window>(Window::create_window());
 		m_renderer = std::make_unique<Renderer>();
-
+		m_editor_ui = std::make_unique<ImGuiUI>(m_window);
 	}
 
 	bool Application::start()
@@ -57,6 +53,7 @@ namespace VEngine
 		while(m_window->is_open())
 		{
 			m_window->on_update();
+			m_editor_ui->draw();
 			m_renderer->render();
 			m_window->swap_buffers();
 		}

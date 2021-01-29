@@ -2,7 +2,7 @@
 
 #include "Shader.h"
 
-namespace VEngine
+namespace vengine
 {
 	Shader::Shader(ShaderType type, const std::string& filename) : m_type(type)
 	{

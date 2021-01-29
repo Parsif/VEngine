@@ -4,7 +4,7 @@
 
 
 
-namespace VEngine
+namespace vengine
 
 {
 	class Application
@@ -16,7 +16,8 @@ namespace VEngine
 
 	private:
 		Ref<Window> m_window;
-		Ref<Renderer> m_renderer;
+		std::unique_ptr<Renderer> m_renderer;
+		std::unique_ptr<ImGuiUI> m_editor_ui;
 		
 	};
 }

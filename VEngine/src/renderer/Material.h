@@ -2,7 +2,7 @@
 
 #include "ShaderProgram.h"
 
-namespace VEngine
+namespace vengine
 {
 	class Material
 	{

@@ -2,7 +2,7 @@
 
 #include "Material.h"
 
-namespace VEngine
+namespace vengine
 {
 	Material::Material(const ShaderProgram& shader_program) : m_shader_program(shader_program)
 	{

@@ -1,5 +1,7 @@
 workspace "VEngine"
-    configurations { "Debug", "Release" }
+    configurations { "Debug", "Release" }   
+    startproject "VEngine"
+
 
 architecture "x86_64"
 
@@ -7,6 +9,8 @@ outputdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
 
 include "VEngine/vendor/glfw"
 include "VEngine/vendor/Vmath"
+include "VEngine/vendor/imgui"
+
 
 project "VEngine"
     kind "ConsoleApp"
@@ -16,6 +20,9 @@ project "VEngine"
     objdir ("bin-int/bin-int/" .. outputdir .. "/%{prj.name}")
     
     
+    pchheader "precheader.h"
+	pchsource "%{prj.name}/src/precheader.cpp"
+
     files 
     {
         "%{prj.name}/src/**.h",
@@ -28,7 +35,8 @@ project "VEngine"
         "%{prj.name}/src",
         "%{prj.name}/vendor/glew/include",
         "%{prj.name}/vendor/glfw/include",
-        "%{prj.name}/vendor/Vmath/Vmath"
+        "%{prj.name}/vendor/Vmath/Vmath",
+        "%{prj.name}/vendor/imgui",
     }
 
     links
@@ -36,7 +44,8 @@ project "VEngine"
         "opengl32.lib",
         "GLFW",
         "%{prj.name}/vendor/glew/lib/Release/x64/glew32s.lib",
-        "Vmath"
+        "Vmath",
+        "imgui"
     }
 
     filter "system:windows"

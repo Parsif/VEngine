@@ -1,16 +1,16 @@
 #pragma once
 
-#include "Vtypes.h"
+#include "core/Vtypes.h"
 
-#include "renderer/RenderCommand.h"
 #include "Material.h"
+#include "RenderCommand.h"
 
 #include "opengl/Buffer.h"
 #include "opengl/types.h"
 #include "opengl/VertexArray.h"
 
 
-namespace VEngine
+namespace vengine
 {
 	class TriangleCommand final : public RenderCommand
 	{

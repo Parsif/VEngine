@@ -1,6 +1,6 @@
 #pragma once
 
-namespace VEngine
+namespace vengine
 {
 	enum class PrimitiveType
 	{

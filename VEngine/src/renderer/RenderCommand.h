@@ -1,7 +1,7 @@
 #pragma once
 
 
-namespace VEngine
+namespace vengine
 {
 	class RenderCommand
 	{

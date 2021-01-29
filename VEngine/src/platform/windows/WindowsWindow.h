@@ -1,10 +1,12 @@
 #pragma once
 
-#include "Window.h"
+#include "precheader.h"
+
+#include "core/Window.h"
 
 #include "GLFW/glfw3.h"
 
-namespace VEngine
+namespace vengine
 {
 	class WindowsWindow : public Window
 	{
@@ -22,7 +24,10 @@ namespace VEngine
 
 		[[nodiscard]] unsigned int get_width() const override { return m_width; }
 		[[nodiscard]] unsigned int get_height() const override { return m_height; }
+		[[nodiscard]] void* get_native() const override;
+
 		void swap_buffers() const override;
+
 	private:
 		GLFWwindow* m_glfw_window;
 		unsigned int m_width, m_height;

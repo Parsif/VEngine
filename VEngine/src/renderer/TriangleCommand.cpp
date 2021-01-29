@@ -1,6 +1,8 @@
+#include "precheader.h"
+
 #include "TriangleCommand.h"
 
-namespace VEngine
+namespace vengine
 {
 	void TriangleCommand::set_vertex_buffer(void* data, unsigned int size)
 	{

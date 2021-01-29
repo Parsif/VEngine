@@ -1,7 +1,9 @@
+#include "precheader.h"
+
 #include "UtilsGL.h"
 
 
-namespace VEngine
+namespace vengine
 {
 	GLenum UtilsGL::to_gl_primitive_type(PrimitiveType primitive_type)
 	{

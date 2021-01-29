@@ -2,7 +2,8 @@
 
 #include "RenderQueue.h"
 
-namespace VEngine
+
+namespace vengine
 {
 	void RenderQueue::push_back(const Ref<RenderCommand> render_command)
 	{

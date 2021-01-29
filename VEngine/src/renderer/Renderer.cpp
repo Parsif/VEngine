@@ -5,10 +5,12 @@
 #include "TriangleCommand.h"
 
 
-namespace VEngine
+namespace vengine
 {
+	Renderer* Renderer::s_instance = nullptr;
 	Renderer::Renderer()
 	{
+		s_instance = this;
 		m_render_pass_descriptor.need_clear_color = true;
 	}
 
@@ -20,6 +22,7 @@ namespace VEngine
 	void Renderer::render()
 	{
 		m_renderer_api.begin_render_pass(m_render_pass_descriptor);
+		m_current_frame_buffer = m_renderer_api.get_current_fbo();
 		m_renderer_api.set_viewport(m_viewport.x, m_viewport.y, m_viewport.width, m_viewport.height);
 		for(auto& render_command : m_render_queue)
 		{

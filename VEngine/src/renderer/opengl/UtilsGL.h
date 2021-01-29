@@ -4,7 +4,7 @@
 
 #include "types.h"
 
-namespace VEngine
+namespace vengine
 {
 	class UtilsGL
 	{

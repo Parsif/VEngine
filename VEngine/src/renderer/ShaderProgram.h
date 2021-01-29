@@ -3,7 +3,7 @@
 #include "Shader.h"
 
 
-namespace VEngine
+namespace vengine
 {
 
 	class ShaderProgram

@@ -5,9 +5,8 @@
 
 #include <GL/glew.h>
 
-#include <utility>
 
-namespace VEngine
+namespace vengine
 {
 	RendererApiGL::RendererApiGL()
 	{
@@ -25,6 +24,14 @@ namespace VEngine
 
 	void RendererApiGL::begin_render_pass(const RenderPassDescriptor& descriptor)
 	{
+		FrameBufferSpecifications frame_buffer_specs;
+		frame_buffer_specs.width = m_viewport.width;
+		frame_buffer_specs.height = m_viewport.height;
+		frame_buffer_specs.use_color_attachment = true;
+		frame_buffer_specs.use_depth_stencil_attachment = true;
+		m_frame_buffer.create(frame_buffer_specs);
+
+		m_frame_buffer.bind();
 		unsigned int mask = 0;
 		if (descriptor.depth_test_enabled)
 		{
@@ -41,10 +48,12 @@ namespace VEngine
 			mask |= GL_DEPTH_BUFFER_BIT;
 		}
 		glClear(mask);
+
 	}
 
 	void RendererApiGL::end_render_pass()
 	{
+		m_frame_buffer.unbind();
 	}
 
 	void RendererApiGL::set_viewport(int x, int y, unsigned int width, unsigned int height)
@@ -76,6 +85,7 @@ namespace VEngine
 		m_material = std::move(material);
 	}
 
+
 	void RendererApiGL::draw_arrays(PrimitiveType primitive_type, std::size_t start, std::size_t count) const
 	{
 		prepare_drawing();
@@ -92,7 +102,7 @@ namespace VEngine
 	void RendererApiGL::prepare_drawing() const
 	{
 		m_material->use();
-	//	bind_vertex_buffer();
+		bind_vertex_buffer();
 	}
 
 	void RendererApiGL::bind_vertex_buffer() const

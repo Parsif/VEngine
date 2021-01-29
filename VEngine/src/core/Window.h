@@ -1,9 +1,6 @@
 #pragma once
 
-#include <string>
-#include <utility>
-
-namespace VEngine
+namespace vengine
 {
 	class Window
 	{
@@ -21,6 +18,8 @@ namespace VEngine
 		[[nodiscard]] virtual unsigned int get_width() const = 0;
 		[[nodiscard]] virtual unsigned int get_height() const = 0;
 		virtual void swap_buffers() const = 0;
+
+		[[nodiscard]] virtual void* get_native() const = 0;
 
 
 		[[nodiscard]] static Window* create_window();
