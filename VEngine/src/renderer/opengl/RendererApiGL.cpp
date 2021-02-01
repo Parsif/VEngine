@@ -31,6 +31,8 @@ namespace vengine
 		frame_buffer_specs.use_depth_stencil_attachment = true;
 		m_frame_buffer.create(frame_buffer_specs);
 
+		//TODO: consider glViewport call
+		
 		m_frame_buffer.bind();
 		unsigned int mask = 0;
 		if (descriptor.depth_test_enabled)

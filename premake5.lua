@@ -7,9 +7,10 @@ architecture "x86_64"
 
 outputdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
 
-include "VEngine/vendor/glfw"
-include "VEngine/vendor/Vmath"
-include "VEngine/vendor/imgui"
+
+include "VEngine/vendor/glfw/premake5.lua"
+include "VEngine/vendor/Vmath/premake5.lua"
+include "VEngine/vendor/imgui/premake5.lua"
 
 
 project "VEngine"

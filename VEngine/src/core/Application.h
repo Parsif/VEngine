@@ -16,8 +16,8 @@ namespace vengine
 
 	private:
 		Ref<Window> m_window;
-		std::unique_ptr<Renderer> m_renderer;
-		std::unique_ptr<ImGuiUI> m_editor_ui;
+		Scope<Renderer> m_renderer;
+		Scope<ImGuiUI> m_editor_ui;
 		
 	};
 }

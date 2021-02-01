@@ -25,7 +25,7 @@ namespace vengine
 	
 	private:
 		Ref<Window> m_window;
-		std::unique_ptr<SceneHierarchyPanel> m_scene_hierarchy_panel;
+		Scope<SceneHierarchyPanel> m_scene_hierarchy_panel;
 	};
 }
 
