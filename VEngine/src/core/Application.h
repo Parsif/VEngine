@@ -3,7 +3,6 @@
 #include "VEngine.h"
 
 
-
 namespace vengine
 
 {
@@ -11,13 +10,18 @@ namespace vengine
 	{
 	public:
 		Application();
-		bool start();
+		void start();
 		void run();
+
+		void on_event(const Event& event);
+
+		void on_window_resize(const Event& event);
 
 	private:
 		Ref<Window> m_window;
-		Scope<Renderer> m_renderer;
-		Scope<ImGuiUI> m_editor_ui;
+		Renderer m_renderer;
+		ImGuiUI m_editor_ui;
+		Scene m_scene;
 		
 	};
 }

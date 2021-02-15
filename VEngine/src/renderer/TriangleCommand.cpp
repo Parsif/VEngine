@@ -14,7 +14,7 @@ namespace vengine
 		m_index_buffer = std::make_shared<IndexBuffer>(data, size, count);
 	}
 
-	void TriangleCommand::set_material(Ref<Material> material)
+	void TriangleCommand::set_material(Material material)
 	{
 		m_material = std::move(material);
 	}

@@ -9,4 +9,9 @@ namespace vengine
 	{
 		m_render_commands.push_back(render_command);
 	}
+
+	void RenderQueue::clear()
+	{
+		m_render_commands.clear();
+	}
 }

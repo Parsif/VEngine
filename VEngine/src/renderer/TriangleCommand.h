@@ -17,7 +17,7 @@ namespace vengine
 	public:
 		void set_vertex_buffer(void* data, unsigned int size);
 		void set_index_buffer(unsigned int* data, unsigned int size, size_t count);
-		void set_material(Ref<Material> material);
+		void set_material(Material material);
 
 
 		[[nodiscard]] auto get_vertex_buffer() const { return m_vertex_buffer; }
@@ -36,7 +36,7 @@ namespace vengine
 		Ref<VertexBuffer> m_vertex_buffer;
 		Ref<IndexBuffer> m_index_buffer;
 		Ref<VertexArray> m_vertex_array = std::make_shared<VertexArray>();
-		Ref<Material> m_material;
+		Material m_material;
 
 		PrimitiveType m_primitive_type = PrimitiveType::TRIANGLE;
 		IndexType m_index_type = IndexType::U_INT;	

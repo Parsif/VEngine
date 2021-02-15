@@ -14,10 +14,9 @@ namespace vengine
 	class Renderer
 	{
 	public:
-		Renderer();
-
+		void init();
 		[[nodiscard]] static Renderer* get_instance() { return s_instance; }
-		
+
 		void add_command(const Ref<RenderCommand> render_command);
 		void render();
 		void set_viewport(int x, int y, unsigned int width, unsigned int height);
@@ -25,6 +24,8 @@ namespace vengine
 		[[nodiscard]] auto& get_current_fbo() const { return m_current_frame_buffer; }
 	
 	private:
+		void begin_render_pass();
+		void end_render_pass();
 		void process_render_command(const Ref<RenderCommand> command);
 		void set_depth_test(bool value);
 		void set_stencil_test(bool value);
@@ -46,7 +47,7 @@ namespace vengine
 		RendererApiGL m_renderer_api;
 
 		RenderPassDescriptor m_render_pass_descriptor;
-		vmath::Vec4f m_clear_color{0, 0, 0, 1.0f};
+		glm::vec4 m_clear_color{0, 0, 0, 1.0f};
 
 		FrameBufferGL m_current_frame_buffer;
 		

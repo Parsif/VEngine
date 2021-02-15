@@ -2,60 +2,65 @@
 
 #include "Application.h"
 
-//TODO: remove include
-#include "../renderer/TriangleCommand.h"
-
 
 namespace vengine
 {
 	Application::Application()
 	{
 		m_window = std::shared_ptr<Window>(Window::create_window());
-		m_renderer = std::make_unique<Renderer>();
-		m_editor_ui = std::make_unique<ImGuiUI>(m_window);
 	}
 
-	bool Application::start()
+	void Application::start()
 	{
-		return true;
+		m_window->init();
+		m_renderer.init();
+		m_editor_ui.init(m_window);
+
+		m_window->set_event_callback([this](const Event& event) { on_event(event); });
 	}
 
 	void Application::run()
 	{
-		m_renderer->set_viewport(0, 0, m_window->get_width(), m_window->get_height());
-		
-		float vertices[] = {
-			0.5f,  0.5f, 0.0f,  // Top Right
-			0.5f, -0.5f, 0.0f,  // Bottom Right
-		   -0.5f, -0.5f, 0.0f,  // Bottom Left
-		   -0.5f,  0.5f, 0.0f   // Top Left 
-		};
-		
-		unsigned int indices[] = {  // Note that we start from 0!
-			0, 1, 3,  // First Triangle
-			1, 2, 3   // Second Triangle
-		};
-		
-		
-		Shader vert{ShaderType::VERTEX, "./VEngine/src/renderer/shaders/basic.vert"};
-		Shader frag{ShaderType::FRAGMENT, "./VEngine/src/renderer/shaders/basic.frag"};
+		m_renderer.set_viewport(0, 0, m_window->get_width(), m_window->get_height());
 
-		ShaderProgram sh{vert, frag};
-		auto basic_material = std::make_shared<Material>(sh);
+		const float aspect_ratio = float(m_window->get_width()) / m_window->get_height();
+		auto projection = glm::perspective(glm::radians(45.0f), aspect_ratio, 1.0f, 100.f);
+		const Camera camera{ projection, glm::vec3(0.0f, 0.0f, 3.0f),
+			glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(0.0f) };
 
-		auto triangle_command = std::make_shared<TriangleCommand>();
-		triangle_command->set_vertex_buffer(vertices, sizeof(vertices));
-		triangle_command->set_index_buffer(indices, sizeof(indices), sizeof(indices) / sizeof(*indices));
-		triangle_command->set_material(basic_material);
-
-		m_renderer->add_command(triangle_command);
+		m_scene.set_camera(camera);
+	
 		
 		while(m_window->is_open())
 		{
 			m_window->on_update();
-			m_editor_ui->draw();
-			m_renderer->render();
+			
+			m_scene.on_update();
+			m_renderer.render();
+			m_editor_ui.draw();
+			
 			m_window->swap_buffers();
 		}
+	}
+
+	void Application::on_event(const Event& event)
+	{
+		const EventDispatcher event_dispatcher(event);
+		event_dispatcher.dispatch<EventType::WINDOW_RESIZED>([&]
+		{
+			on_window_resize(event);
+		});
+
+		event_dispatcher.dispatch<EventType::KEY_PRESSED>([&]
+		{
+			m_scene.on_event(event);
+		});
+	}
+
+	void Application::on_window_resize(const Event& event)
+	{
+		//TODO: fix framebuffer resizing
+		const auto window_resize_event = *static_cast<const WindowResizedEvent*>(&event);
+		m_renderer.set_viewport(0, 0, window_resize_event.get_width(), window_resize_event.get_height());
 	}
 }

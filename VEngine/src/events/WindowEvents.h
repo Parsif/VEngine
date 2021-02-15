@@ -13,6 +13,9 @@ namespace vengine
 
 		[[nodiscard]] auto get_width() const { return m_width; }
 		[[nodiscard]] auto get_height() const { return m_height; }
+
+		[[nodiscard]] static auto get_static_type() { return EventType::WINDOW_RESIZED; }
+
 	
 	private:
 		unsigned int m_width, m_height;

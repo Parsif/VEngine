@@ -28,8 +28,12 @@ namespace vengine
         [[nodiscard]] inline auto get_color_attachment_id() const { return m_color_attachment; }
 
     private:
+        void delete_framebuffer() const;
+    
+    private:
         unsigned int m_id;
         unsigned int m_color_attachment, m_depth_stencil_attachment;
+        FrameBufferSpecifications m_specs;
     };
 }
 

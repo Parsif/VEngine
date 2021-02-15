@@ -11,3 +11,8 @@
 #include "Vtypes.h"
 
 #include "../ui/ImGuiUI.h"
+
+#include "events/WindowEvents.h"
+
+#include "scene/Scene.h"
+

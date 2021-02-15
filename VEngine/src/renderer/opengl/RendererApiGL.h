@@ -15,15 +15,15 @@ namespace vengine
 	class RendererApiGL
 	{
 	public:
-		RendererApiGL();
+		void init();
 		void begin_render_pass(const RenderPassDescriptor& descriptor);
-		void end_render_pass();
+		void end_render_pass() const;
 
 		void set_viewport(int x, int y, unsigned int width, unsigned int height);
 		void set_vertex_buffer(Ref<VertexBuffer> vertex_buffer);
 		void set_index_buffer(Ref<IndexBuffer> index_buffer);
 		void set_vertex_array(Ref<VertexArray> vertex_array);
-		void set_material(Ref<Material> material);
+		void set_material(Material material);
 
 
 		void draw_arrays(PrimitiveType primitive_type, std::size_t start, std::size_t count) const;
@@ -45,14 +45,15 @@ namespace vengine
 			unsigned int width = 0;
 			unsigned int height = 0;
 		};
+		
 		Ref<VertexBuffer> m_vertex_buffer;
 		Ref<IndexBuffer> m_index_buffer;
 		Ref<VertexArray> m_vertex_array;
 		//TODO: CHANGE DEFAULT INIT OF BUFFER LAYOUT
 		BufferLayout m_buffer_layout{ {ShaderDataType::Float3} };
-		Ref<Material> m_material;
+		Material m_material{};
 		
-		FrameBufferGL m_frame_buffer;
+		FrameBufferGL m_frame_buffer{};
 		Viewport m_viewport;
 
 	private:

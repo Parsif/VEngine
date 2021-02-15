@@ -7,7 +7,6 @@
 
 namespace vengine
 {
-
 	//TODO: possible move to opengl/utils
 	enum class ShaderType
 	{
@@ -17,7 +16,6 @@ namespace vengine
 	//forward declaration
 	class ShaderProgram;
 	
-	//TODO: uniforms location at compile time
 	class Shader
 	{
 	public:

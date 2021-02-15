@@ -11,8 +11,9 @@
 
 namespace vengine
 {
-	ImGuiUI::ImGuiUI(Ref<Window> window) : m_window(std::move(window))
+	void ImGuiUI::init(Ref<Window> window)
 	{
+		m_window = window;
 		m_scene_hierarchy_panel = std::make_unique<SceneHierarchyPanel>();
 		init_imgui();
 	}
@@ -53,7 +54,6 @@ namespace vengine
 	}
 
 
-	
 	void ImGuiUI::draw()
 	{
 		begin_frame();

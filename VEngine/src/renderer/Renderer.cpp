@@ -8,10 +8,12 @@
 namespace vengine
 {
 	Renderer* Renderer::s_instance = nullptr;
-	Renderer::Renderer()
+
+	void Renderer::init()
 	{
 		s_instance = this;
 		m_render_pass_descriptor.need_clear_color = true;
+		m_renderer_api.init();
 	}
 
 	void Renderer::add_command(const Ref<RenderCommand> render_command)
@@ -21,14 +23,12 @@ namespace vengine
 
 	void Renderer::render()
 	{
-		m_renderer_api.begin_render_pass(m_render_pass_descriptor);
-		m_current_frame_buffer = m_renderer_api.get_current_fbo();
-		m_renderer_api.set_viewport(m_viewport.x, m_viewport.y, m_viewport.width, m_viewport.height);
+		begin_render_pass();
 		for(auto& render_command : m_render_queue)
 		{
 			process_render_command(render_command);
 		}
-		m_renderer_api.end_render_pass();
+		end_render_pass();
 	}
 
 	void Renderer::set_viewport(int x, int y, unsigned int width, unsigned int height)
@@ -37,6 +37,19 @@ namespace vengine
 		m_viewport.y = y;
 		m_viewport.width = width;
 		m_viewport.height = height;
+		m_renderer_api.set_viewport(m_viewport.x, m_viewport.y, m_viewport.width, m_viewport.height);
+	}
+
+	void Renderer::begin_render_pass()
+	{
+		m_renderer_api.begin_render_pass(m_render_pass_descriptor);
+	}
+
+	void Renderer::end_render_pass()
+	{
+		m_current_frame_buffer = m_renderer_api.get_current_fbo();
+		m_renderer_api.end_render_pass();
+		m_render_queue.clear();
 	}
 
 	void Renderer::process_render_command(const Ref<RenderCommand> command)
@@ -63,7 +76,6 @@ namespace vengine
 			break;
 		}
 		
-		default: ;
 		}
 
 	}

@@ -9,7 +9,6 @@ outputdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
 
 
 include "VEngine/vendor/glfw/premake5.lua"
-include "VEngine/vendor/Vmath/premake5.lua"
 include "VEngine/vendor/imgui/premake5.lua"
 
 
@@ -36,8 +35,8 @@ project "VEngine"
         "%{prj.name}/src",
         "%{prj.name}/vendor/glew/include",
         "%{prj.name}/vendor/glfw/include",
-        "%{prj.name}/vendor/Vmath/Vmath",
         "%{prj.name}/vendor/imgui",
+        "%{prj.name}/vendor/glm",
     }
 
     links
@@ -45,7 +44,6 @@ project "VEngine"
         "opengl32.lib",
         "GLFW",
         "%{prj.name}/vendor/glew/lib/Release/x64/glew32s.lib",
-        "Vmath",
         "imgui"
     }
 
@@ -53,6 +51,7 @@ project "VEngine"
         staticruntime "On"
         systemversion "latest"
 
+        warnings  "Extra" 
 
         defines
         {

@@ -8,7 +8,7 @@
 
 namespace vengine
 {
-	RendererApiGL::RendererApiGL()
+	void RendererApiGL::init()
 	{
 		if (glewInit() != GLEW_OK)
 		{
@@ -19,7 +19,6 @@ namespace vengine
 		glEnable(GL_DEBUG_OUTPUT);
 		glDebugMessageCallback(MessageCallback, 0);
 #endif
-	
 	}
 
 	void RendererApiGL::begin_render_pass(const RenderPassDescriptor& descriptor)
@@ -32,8 +31,8 @@ namespace vengine
 		m_frame_buffer.create(frame_buffer_specs);
 
 		//TODO: consider glViewport call
-		
 		m_frame_buffer.bind();
+		
 		unsigned int mask = 0;
 		if (descriptor.depth_test_enabled)
 		{
@@ -45,6 +44,7 @@ namespace vengine
 			mask |= GL_COLOR_BUFFER_BIT;
 			glClearColor(descriptor.clear_color.x, descriptor.clear_color.y, descriptor.clear_color.z, descriptor.clear_color.w);
 		}
+		
 		if(descriptor.need_clear_depth)
 		{
 			mask |= GL_DEPTH_BUFFER_BIT;
@@ -53,7 +53,7 @@ namespace vengine
 
 	}
 
-	void RendererApiGL::end_render_pass()
+	void RendererApiGL::end_render_pass() const
 	{
 		m_frame_buffer.unbind();
 	}
@@ -82,7 +82,7 @@ namespace vengine
 		m_vertex_array = std::move(vertex_array);
 	}
 
-	void RendererApiGL::set_material(Ref<Material> material)
+	void RendererApiGL::set_material(Material material)
 	{
 		m_material = std::move(material);
 	}
@@ -97,13 +97,13 @@ namespace vengine
 	void RendererApiGL::draw_elements(PrimitiveType primitive_type, std::size_t count, IndexType index_type,
 		std::size_t offset) const
 	{
-		prepare_drawing();	
+		prepare_drawing();
 		glDrawElements(UtilsGL::to_gl_primitive_type(primitive_type), count, UtilsGL::to_gl_index_type(index_type), (GLvoid*)offset);
 	}
 
 	void RendererApiGL::prepare_drawing() const
 	{
-		m_material->use();
+		m_material.use();
 		bind_vertex_buffer();
 	}
 
