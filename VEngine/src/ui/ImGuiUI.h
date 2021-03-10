@@ -11,7 +11,7 @@ namespace vengine
 	class ImGuiUI 
 	{
 	public:
-		void init(Ref<Window> window);
+		void init(Ref<Window> window, Ref<Scene> scene);
 		
 		void draw();
 		~ImGuiUI();

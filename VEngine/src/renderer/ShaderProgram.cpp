@@ -1,13 +1,72 @@
 #include "precheader.h"
 #include "ShaderProgram.h"
 
-#include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
 namespace vengine
 {
-	ShaderProgram::ShaderProgram(Shader& vertex_shader, Shader& fragment_shader)
+	//////////////////////////////////////////////////
+	//Shader//////////////////////////////////////////
+	//////////////////////////////////////////////////
+	Shader::Shader(ShaderType type, const std::string& filename) : m_type(type)
 	{
+		std::ifstream shader_stream(filename);
+		if (!shader_stream.is_open())
+		{
+			std::cerr << "Can't open file: " << filename << '\n';
+			return;
+		}
+		const std::string shader_content((std::istreambuf_iterator<char>(shader_stream)), std::istreambuf_iterator<char>());
+		shader_stream.close();
+
+		m_render_id = glCreateShader(to_glew(type));
+		const auto* const shader_source = shader_content.c_str();
+		glShaderSource(m_render_id, 1, &shader_source, nullptr);
+		glCompileShader(m_render_id);
+
+		int success;
+		glGetShaderiv(m_render_id, GL_COMPILE_STATUS, &success);
+		if (!success)
+		{
+			char info_log[512];
+			glGetShaderInfoLog(m_render_id, sizeof(info_log), nullptr, info_log);
+			std::cerr << filename << " " << info_log << '\n';
+		}
+
+	}
+
+	Shader::~Shader()
+	{
+		delete_shader();
+	}
+
+	void Shader::delete_shader()
+	{
+		if (m_render_id)
+		{
+			glDeleteShader(m_render_id);
+			m_render_id = 0;
+		}
+	}
+
+	GLenum Shader::to_glew(ShaderType type)
+	{
+		switch (type)
+		{
+		case ShaderType::VERTEX: return GL_VERTEX_SHADER;
+		case ShaderType::FRAGMENT: return GL_FRAGMENT_SHADER;
+		}
+	}
+	
+	//////////////////////////////////////////////////
+	//ShaderProgram///////////////////////////////////
+	//////////////////////////////////////////////////
+	
+	ShaderProgram::ShaderProgram(const std::string& vertex_shader_path, const std::string& fragment_shader_path)
+	{
+		Shader vertex_shader(ShaderType::VERTEX, vertex_shader_path);
+		Shader fragment_shader(ShaderType::FRAGMENT, fragment_shader_path);
+
         m_render_id = glCreateProgram();
         glAttachShader(m_render_id, vertex_shader.get_render_id());
         glAttachShader(m_render_id, fragment_shader.get_render_id());
@@ -25,17 +84,6 @@ namespace vengine
         vertex_shader.delete_shader();
         fragment_shader.delete_shader();
 		set_all_uniform_locations();
-	}
-
-	ShaderProgram::~ShaderProgram()
-	{
-		std::cout << "Deleting uniforms\n";
-
-		for (auto&& uniform_info : m_uniforms_info)
-		{
-			//TODO: fix error
-		//	delete uniform_info.second;
-		}
 	}
 
 	void ShaderProgram::set_all_uniform_locations()
@@ -62,35 +110,36 @@ namespace vengine
 		switch (type)
 		{
 		case GL_INT:
+		case GL_SAMPLER_2D:
 		{
-			m_uniforms_info[uniform_name] = new UniformInfo<int>(location, type);
+			m_int_uniforms.emplace(uniform_name, UniformInfo<int>{location, type });
 			break;
 		}
 
 		case GL_FLOAT:
 		{
-			m_uniforms_info[uniform_name] = new UniformInfo<float>(location, type);
+			m_float_uniforms.emplace(uniform_name, UniformInfo<float>{location, type });
 			break;
 		}
 
 		case GL_FLOAT_VEC3:
 		{
-			m_uniforms_info[uniform_name] = new UniformInfo<glm::vec3>(location, type);
+			m_vec3_uniforms.emplace(uniform_name, UniformInfo<glm::vec3>{location, type });
 			break;
 		}
 
 		case GL_FLOAT_VEC4:
 		{
-			m_uniforms_info[uniform_name] = new UniformInfo<glm::vec4>(location, type);
+			m_vec4_uniforms.emplace(uniform_name, UniformInfo<glm::vec4>{location, type });
 			break;
 		}
 
 		case GL_FLOAT_MAT4:
 		{
-			m_uniforms_info[uniform_name] = new UniformInfo<glm::mat4>(location, type);
+			m_mat4_uniforms.emplace(uniform_name, UniformInfo<glm::mat4>{location, type });
 			break;
 		}
-
+			
 		default:
 		{
 			std::cerr << "Unhandled uniform type\n";
@@ -106,55 +155,33 @@ namespace vengine
 
 	void ShaderProgram::set_all_uniforms() const
 	{
-		std::cout << "Setting uniforms\n";
-		for(auto&& uniform_info : m_uniforms_info)
+		for (auto&& [name, uniform_info] : m_int_uniforms)
 		{
-			switch (uniform_info.second->get_type())
-			{
-			case GL_INT:
-			{
-				auto* uniform = static_cast<UniformInfo<int>*>(uniform_info.second);
-				glUniform1i(uniform->get_location(), uniform->get_value());
-				break;
-			}
-
-			case GL_FLOAT:
-			{
-				auto* uniform = static_cast<UniformInfo<float>*>(uniform_info.second);
-				glUniform1f(uniform->get_location(), uniform->get_value());
-				break;
-			}
-
-			case GL_FLOAT_VEC3:
-			{
-				auto* uniform = static_cast<UniformInfo<glm::vec3>*>(uniform_info.second);
-				auto value = uniform->get_value();
-				glUniform3f(uniform->get_location(), value.x, value.y, value.z);
-				break;
-			}
-
-			case GL_FLOAT_VEC4:
-			{
-				auto* uniform = static_cast<UniformInfo<glm::vec4>*>(uniform_info.second);
-				auto value = uniform->get_value();
-				glUniform4f(uniform->get_location(), value.x, value.y, value.z, value.w);
-				break;
-			}
-
-			case GL_FLOAT_MAT4:
-			{
-				auto* uniform = static_cast<UniformInfo<glm::mat4>*>(uniform_info.second);
-				glUniformMatrix4fv(uniform->get_location(), 1, GL_TRUE, glm::value_ptr(uniform->get_value()));
-				break;
-			}
-
-			default:
-			{
-				std::cerr << "Unhandled uniform type\n";
-				break;
-			}
-			}
+			glUniform1i(uniform_info.location, uniform_info.value);
 		}
+		
+		for (auto&& [name, uniform_info] : m_float_uniforms)
+		{
+			glUniform1f(uniform_info.location, uniform_info.value);
+		}
+		
+		for (auto&& [name, uniform_info] : m_vec3_uniforms)
+		{
+			glUniform3f(uniform_info.location, uniform_info.value.x, uniform_info.value.y,
+						uniform_info.value.z);
+		}
+		
+		for (auto&& [name, uniform_info] : m_vec4_uniforms)
+		{
+			glUniform4f(uniform_info.location, uniform_info.value.x, uniform_info.value.y,
+						uniform_info.value.z, uniform_info.value.w);
+		}
+		
+		for (auto&& [name, uniform_info] : m_mat4_uniforms)
+		{
+			glUniformMatrix4fv(uniform_info.location, 1, GL_FALSE, glm::value_ptr(uniform_info.value));
+		}
+		
 	}
 }
 

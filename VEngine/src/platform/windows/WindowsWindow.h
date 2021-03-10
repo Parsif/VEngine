@@ -1,7 +1,5 @@
 #pragma once
 
-#include "precheader.h"
-
 #include "core/Window.h"
 
 #include "GLFW/glfw3.h"

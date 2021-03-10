@@ -7,8 +7,10 @@
 int main(int argc, char* argv[])
 {
 	vengine::Application application;
-	application.start();
+	application.init();
 	application.run();
+	application.shutdown();
+	
 	return 0;
 }
 

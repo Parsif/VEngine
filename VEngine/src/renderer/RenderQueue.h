@@ -9,7 +9,7 @@ namespace vengine
 	class RenderQueue
 	{
 	public:
-		void push_back(const Ref<RenderCommand> render_command);
+		void push_back(const RenderCommand& render_command);
 		[[nodiscard]] size_t size() const { return m_render_commands.size(); };
 		void sort();
 		void clear();
@@ -23,7 +23,7 @@ namespace vengine
 	private:
 	
 	private:
-		std::deque<Ref<RenderCommand>> m_render_commands;
+		std::deque<RenderCommand> m_render_commands;
 		
 	};
 }

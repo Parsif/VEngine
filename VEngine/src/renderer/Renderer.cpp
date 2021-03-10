@@ -2,7 +2,7 @@
 
 #include "Renderer.h"
 
-#include "TriangleCommand.h"
+#include "RenderCommand.h"
 
 
 namespace vengine
@@ -12,11 +12,19 @@ namespace vengine
 	void Renderer::init()
 	{
 		s_instance = this;
+		m_render_pass_descriptor.depth_test_enabled = true;
 		m_render_pass_descriptor.need_clear_color = true;
+		m_render_pass_descriptor.need_clear_depth = true;
+		
 		m_renderer_api.init();
 	}
 
-	void Renderer::add_command(const Ref<RenderCommand> render_command)
+	void Renderer::shutdown()
+	{
+		m_renderer_api.shutdown();
+	}
+
+	void Renderer::add_command(const RenderCommand& render_command)
 	{
 		m_render_queue.push_back(render_command);
 	}
@@ -52,31 +60,8 @@ namespace vengine
 		m_render_queue.clear();
 	}
 
-	void Renderer::process_render_command(const Ref<RenderCommand> command)
+	void Renderer::process_render_command(RenderCommand& command) const
 	{
-		switch (command->get_type())
-		{
-		case RenderCommand::Type::MESH_COMMAND:
-		{
-			break;
-		}
-			
-			
-		case RenderCommand::Type::TRIANGLES_COMMAND:
-		{
-			const auto render_command = std::dynamic_pointer_cast<TriangleCommand>(command);
-			m_renderer_api.set_vertex_buffer(render_command->get_vertex_buffer());
-			m_renderer_api.set_index_buffer(render_command->get_index_buffer());
-			m_renderer_api.set_vertex_array(render_command->get_vertex_array());
-			m_renderer_api.set_material(render_command->get_material());
-			
-
-			m_renderer_api.draw_elements(render_command->get_primitive_type(), render_command->get_index_count(),
-										   render_command->get_index_type(), render_command->get_index_offset());
-			break;
-		}
-		
-		}
-
+		m_renderer_api.draw_elements(command);
 	}
 }

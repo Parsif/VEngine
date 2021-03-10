@@ -21,6 +21,11 @@ namespace vengine
 #endif
 	}
 
+	void RendererApiGL::shutdown()
+	{
+		
+	}
+
 	void RendererApiGL::begin_render_pass(const RenderPassDescriptor& descriptor)
 	{
 		FrameBufferSpecifications frame_buffer_specs;
@@ -67,67 +72,49 @@ namespace vengine
 		m_viewport.height = height;
 	}
 
-	void RendererApiGL::set_vertex_buffer(Ref<VertexBuffer> vertex_buffer)
+
+	void RendererApiGL::draw_elements(RenderCommand& triangle_command) const
 	{
-		m_vertex_buffer = std::move(vertex_buffer);
+		prepare_drawing(triangle_command);
+		glDrawElements(UtilsGL::to_gl_primitive_type(triangle_command.get_primitive_type()),
+			triangle_command.get_index_count(), UtilsGL::to_gl_index_type(triangle_command.get_index_type()), 
+			(GLvoid*)triangle_command.get_index_offset());
+
 	}
 
-	void RendererApiGL::set_index_buffer(Ref<IndexBuffer> index_buffer)
+	void RendererApiGL::prepare_drawing(RenderCommand& triangle_command) const
 	{
-		m_index_buffer = std::move(index_buffer);
-	}
-
-	void RendererApiGL::set_vertex_array(Ref<VertexArray> vertex_array)
-	{
-		m_vertex_array = std::move(vertex_array);
-	}
-
-	void RendererApiGL::set_material(Material material)
-	{
-		m_material = std::move(material);
-	}
-
-
-	void RendererApiGL::draw_arrays(PrimitiveType primitive_type, std::size_t start, std::size_t count) const
-	{
-		prepare_drawing();
-		glDrawArrays(UtilsGL::to_gl_primitive_type(primitive_type), start, count);
-	}
-
-	void RendererApiGL::draw_elements(PrimitiveType primitive_type, std::size_t count, IndexType index_type,
-		std::size_t offset) const
-	{
-		prepare_drawing();
-		glDrawElements(UtilsGL::to_gl_primitive_type(primitive_type), count, UtilsGL::to_gl_index_type(index_type), (GLvoid*)offset);
-	}
-
-	void RendererApiGL::prepare_drawing() const
-	{
-		m_material.use();
-		bind_vertex_buffer();
-	}
-
-	void RendererApiGL::bind_vertex_buffer() const
-	{
-		if(m_vertex_array->is_data_bound())
-		{
-			m_vertex_array->bind_draw();
-		}
+		const auto& textures2d = triangle_command.get_textures2d();
 		
+		//TODO: distinguish between different types of textures
+		for (size_t i = 0; i < textures2d.size(); ++i)
+		{
+			textures2d[i].bind(i);
+			triangle_command.get_material().set("u_material.diffuse" + std::to_string(i), (int)i);
+		}
+
+		triangle_command.get_material().use();
+
+		const auto& vertex_array = triangle_command.get_vertex_array();
+		if (vertex_array->is_data_bound())
+		{
+			vertex_array->bind_draw();
+		}
+
 		else
 		{
-			m_vertex_array->bind_data();
-			m_vertex_buffer->bind();
-			m_index_buffer->bind();
+			vertex_array->bind_data();
+			triangle_command.get_vertex_buffer()->bind();
+			triangle_command.get_index_buffer()->bind();
+			const auto& buffer_layout = triangle_command.get_buffer_layout();
 			size_t i = 0;
-			for (auto&& attribute : m_buffer_layout.getElements())
+			for (auto&& attribute : buffer_layout.getElements())
 			{
 				glEnableVertexAttribArray(i);
-				glVertexAttribPointer(i, attribute.GetComponentCount(), GL_FLOAT, GL_FALSE, m_buffer_layout.getStride(), (const void*)attribute.offset);
+				glVertexAttribPointer(i, attribute.GetComponentCount(), GL_FLOAT, GL_FALSE, buffer_layout.getStride(), (const void*)attribute.offset);
 				++i;
 			}
 		}
-	
 	}
 }
 

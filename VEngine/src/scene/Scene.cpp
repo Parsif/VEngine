@@ -1,56 +1,80 @@
 #include "precheader.h"
 #include "Scene.h"
 
-#include "renderer/TriangleCommand.h"
+#include "renderer/ModelLoader.h"
 #include "renderer/Renderer.h"
+
+#include "renderer/MaterialLibrary.h"
+
+#include "glm/gtx/string_cast.hpp"
 
 namespace vengine
 {
-	
+	void Scene::init()
+	{
+		MaterialLibrary::init();
+		create_camera();
+		create_cube();
+	}
+
 	void Scene::on_update()
 	{
-		create_command();
+		auto& basic_material = MaterialLibrary::get_material("Basic");
+
+		m_registry.each([&](auto entity)
+		{
+			if(m_registry.has<ModelComponent>(entity)) 
+			{
+				ModelComponent& model_component = m_registry.get<ModelComponent>(entity);
+				
+				const glm::mat4 transform = m_registry.has<TransformComponent>(entity) ? m_registry.get<TransformComponent>(entity).get_transform() : glm::mat4{1.0f};
+				for (auto&& command : ModelLoader::get_model_commands(model_component.filepath))
+				{
+					basic_material.set("u_transform", transform);
+					basic_material.set("u_view_projection", get_camera().get_view_projection());
+					command.set_material(basic_material);
+					Renderer::get_instance()->add_command(command);
+				}
+			}
+		});
+		
 	}
 
 	void Scene::on_event(const Event& event)
 	{
-		m_camera.on_event(event);
+		get_camera().on_event(event);
+	}
+	
+	void Scene::create_empty_entity()
+	{
+		const auto entity = m_registry.create();
+		m_registry.emplace<TagComponent>(entity, "Empty entity");
 	}
 
-	void Scene::create_command()
+	void Scene::create_camera()
 	{
-		float vertices[] = {
-			0.5f,  0.5f, 0.0f,  // Top Right
-			0.5f, -0.5f, 0.0f,  // Bottom Right
-		   -0.5f, -0.5f, 0.0f,  // Bottom Left
-		   -0.5f,  0.5f, 0.0f   // Top Left 
-		};
+		m_camera_entity = m_registry.create();
+		m_registry.emplace<TagComponent>(m_camera_entity, "Camera");
 
-		unsigned int indices[] = {  // Note that we start from 0!
-			0, 1, 3,  // First Triangle
-			1, 2, 3   // Second Triangle	
-		};
-
-		glm::mat4 transform{1};
-
-		Shader vert{ ShaderType::VERTEX, "./VEngine/src/renderer/shaders/basic.vert" };
-		Shader frag{ ShaderType::FRAGMENT, "./VEngine/src/renderer/shaders/basic.frag" };
-
-		ShaderProgram sh{ vert, frag };
-		Material material{ sh };
-		material.set("u_transform", transform);
-		material.set("u_view_projection", m_camera.get_view_projection());
-
-		auto triangle_command = std::make_shared<TriangleCommand>();
-		triangle_command->set_vertex_buffer(vertices, sizeof(vertices));
-		triangle_command->set_index_buffer(indices, sizeof(indices), sizeof(indices) / sizeof(*indices));
-		triangle_command->set_material(material);
-
-		Renderer::get_instance()->add_command(triangle_command);
+		const auto viewport = Renderer::get_instance()->get_viewport();
+		const float aspect_ratio = float(viewport.width) / viewport.height;
+		const Camera camera{ 45.0f, aspect_ratio, 0.1f, 100.f,
+			glm::vec3(0.0f, 0.0f, 3.0f), glm::vec3(0.0f, 0.0f, 0.0f),
+			glm::vec3(0.0f, 1.0f, 0.0f) };
+		
+		m_registry.emplace<CameraComponent>(m_camera_entity, camera);
 	}
 
-	void Scene::set_camera(const Camera& camera)
+	void Scene::create_cube()
 	{
-		m_camera = camera;
+		const auto entity = m_registry.create();
+		m_registry.emplace<TagComponent>(entity, "Cube entity");
+		m_registry.emplace<TransformComponent>(entity);
+		m_registry.emplace<ModelComponent>(entity, "./VEngine/assets/backpack/backpack.obj");
+	}
+
+	void Scene::destroy_entity(entt::entity entity)
+	{
+		m_registry.destroy(entity);
 	}
 }

@@ -37,6 +37,9 @@ project "VEngine"
         "%{prj.name}/vendor/glfw/include",
         "%{prj.name}/vendor/imgui",
         "%{prj.name}/vendor/glm",
+        "%{prj.name}/vendor/assimp/include",
+        "%{prj.name}/vendor/entt",
+        "%{prj.name}/vendor/stb_image",
     }
 
     links
@@ -44,7 +47,15 @@ project "VEngine"
         "opengl32.lib",
         "GLFW",
         "%{prj.name}/vendor/glew/lib/Release/x64/glew32s.lib",
-        "imgui"
+        "imgui",
+        "%{prj.name}/vendor/assimp/assimp.lib",
+    }
+
+    postbuildcommands
+    {
+        "{COPY} %{prj.name}/vendor/assimp/assimp-vc142-mt.dll %{cfg.targetdir}",
+        "{COPY} %{prj.name}/vendor/assimp/draco.dll %{cfg.targetdir}",
+
     }
 
     filter "system:windows"

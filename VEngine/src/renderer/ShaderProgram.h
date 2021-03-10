@@ -1,46 +1,57 @@
 #pragma once
 
-#include "Shader.h"
 #include "core/Vtypes.h"
 
+#include <glm/glm.hpp>
+#include <GL/glew.h>
 
 namespace vengine
 {
+	//forward declarations
+	class ShaderProgram;
 	class Material;
-	
-	class UniformInfoBase
-	{
-	public:
-		UniformInfoBase() = default;
-		virtual ~UniformInfoBase() = default;
-		[[nodiscard]] virtual unsigned int get_type() const = 0;
 
+	enum class ShaderType
+	{
+		VERTEX, FRAGMENT
 	};
-
-	template<class T>
-	class UniformInfo final : public UniformInfoBase
+	
+	class Shader
 	{
 	public:
-		UniformInfo(const int location, const unsigned int type) :
-			m_location(location), m_type(type) {}
-		~UniformInfo() override = default;
-
-		[[nodiscard]] unsigned int get_type() const override { return m_type; }
-		[[nodiscard]] int get_location() const { return m_location; }
-		[[nodiscard]] T& get_value() { return m_value; }
+		Shader(ShaderType shader_type, const std::string& filename);
+		~Shader();
 
 	private:
-		int m_location = 0;
-		unsigned int m_type = 0;
-		T m_value;
+		[[nodiscard]] auto get_render_id() const { return m_render_id; }
+		void delete_shader();
+		
+		static GLenum to_glew(ShaderType type);
+	private:
+		unsigned int m_render_id;
+		ShaderType m_type;
+
+		friend class ShaderProgram;
+	};
+	
+	
+	template<class T>
+	class UniformInfo 
+	{
+	public:
+		UniformInfo() = default;
+		UniformInfo(const int location_, const unsigned int type_) : location(location_), type(type_){}
+		
+		int location = 0;
+		unsigned int type = 0;
+		T value{};
 	};
 
 	class ShaderProgram
 	{
 	public:
 		ShaderProgram() = default;
-		ShaderProgram(Shader& vertex_shader, Shader& fragment_shader);
-		~ShaderProgram();
+		ShaderProgram(const std::string& vertex_shader_path, const std::string& fragment_shader_path);
 		
 	private:
 		void set_all_uniform_locations();
@@ -53,21 +64,42 @@ namespace vengine
 			
 		//TODO: add error checking and handling
 		template<class T>
-		void set_uniform_value(const std::string& uniform_name, T value)
+		void set_uniform_value(const std::string& uniform_name, T& value)
 		{
-			static_cast<UniformInfo<T>*>(m_uniforms_info[uniform_name])->get_value() = value;
+			if (std::is_same<T, int>::value && m_int_uniforms.count(uniform_name) == 1)
+			{
+				m_int_uniforms[uniform_name].value = *reinterpret_cast<int*>(&value);
+			}
+			else if (std::is_same<T, float>::value && m_float_uniforms.count(uniform_name) == 1)
+			{
+				m_float_uniforms[uniform_name].value = *reinterpret_cast<float*>(&value);
+			}
+			else if (std::is_same<T, glm::vec3>::value && m_vec3_uniforms.count(uniform_name) == 1)
+			{
+				m_vec3_uniforms[uniform_name].value = *reinterpret_cast<glm::vec3*>(&value);
+			}
+			else if (std::is_same<T, glm::vec4>::value && m_vec4_uniforms.count(uniform_name) == 1)
+			{
+				m_vec4_uniforms[uniform_name].value = *reinterpret_cast<glm::vec4*>(&value);
+			}
+			else if (std::is_same<T, glm::mat4>::value && m_mat4_uniforms.count(uniform_name) == 1)
+			{
+				m_mat4_uniforms[uniform_name].value = *reinterpret_cast<glm::mat4*>(&value);
+			}
+			else
+			{
+				std::cerr << "Uniform type unsupported or uniform name not found\n";
+			}
 		}
-	
-		[[nodiscard]] auto get_uniform_location(std::string uniform_name) const
-		{
-			return glGetUniformLocation(m_render_id, uniform_name.data());
-		}
-		
 
 	private:
 		unsigned int m_render_id;
-		std::unordered_map<std::string, UniformInfoBase*> m_uniforms_info;
-		
+		std::unordered_map<std::string, UniformInfo<int>> m_int_uniforms;
+		std::unordered_map<std::string, UniformInfo<float>> m_float_uniforms;
+		std::unordered_map<std::string, UniformInfo<glm::vec3>> m_vec3_uniforms;
+		std::unordered_map<std::string, UniformInfo<glm::vec4>> m_vec4_uniforms;
+		std::unordered_map<std::string, UniformInfo<glm::mat4>> m_mat4_uniforms;
+
 		friend Material;
 	};
 

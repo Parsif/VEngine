@@ -1,6 +1,5 @@
 #pragma once
 
-#include "precheader.h"
 
 namespace vengine
 {
@@ -114,6 +113,7 @@ namespace vengine
         uint32_t m_stride;
 
     public:
+        BufferLayout() = default;
         BufferLayout(std::initializer_list<BufferElement> buffer_elements) : m_elements(buffer_elements)
         {
             size_t offset = 0;

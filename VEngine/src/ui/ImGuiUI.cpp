@@ -11,10 +11,10 @@
 
 namespace vengine
 {
-	void ImGuiUI::init(Ref<Window> window)
+	void ImGuiUI::init(Ref<Window> window, Ref<Scene> scene)
 	{
 		m_window = window;
-		m_scene_hierarchy_panel = std::make_unique<SceneHierarchyPanel>();
+		m_scene_hierarchy_panel = std::make_unique<SceneHierarchyPanel>(scene);
 		init_imgui();
 	}
 

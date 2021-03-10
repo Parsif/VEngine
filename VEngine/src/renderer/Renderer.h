@@ -15,18 +15,21 @@ namespace vengine
 	{
 	public:
 		void init();
+		void shutdown();
 		[[nodiscard]] static Renderer* get_instance() { return s_instance; }
 
-		void add_command(const Ref<RenderCommand> render_command);
+		void add_command(const RenderCommand& render_command);
 		void render();
 		void set_viewport(int x, int y, unsigned int width, unsigned int height);
 
 		[[nodiscard]] auto& get_current_fbo() const { return m_current_frame_buffer; }
+		[[nodiscard]] auto& get_viewport() const { return m_viewport; }
+
 	
 	private:
 		void begin_render_pass();
 		void end_render_pass();
-		void process_render_command(const Ref<RenderCommand> command);
+		void process_render_command(RenderCommand& command) const;
 		void set_depth_test(bool value);
 		void set_stencil_test(bool value);
 		

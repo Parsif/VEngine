@@ -10,8 +10,9 @@ namespace vengine
 	{
 	public:
 		Application();
-		void start();
+		void init();
 		void run();
+		void shutdown();
 
 		void on_event(const Event& event);
 
@@ -21,7 +22,7 @@ namespace vengine
 		Ref<Window> m_window;
 		Renderer m_renderer;
 		ImGuiUI m_editor_ui;
-		Scene m_scene;
+		Ref<Scene> m_scene;
 		
 	};
 }
