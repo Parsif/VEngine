@@ -5,6 +5,7 @@
 #include <entt/entt.hpp>
 
 #include "Components.h"
+#include "renderer/opengl/SkyboxGL.h"
 
 namespace vengine
 {
@@ -16,9 +17,7 @@ namespace vengine
 		void init();
 		void on_update();
 		void on_event(const Event& event);
-
-		//TODO: temporary
-		void create_command();
+		
 		
 		void set_camera(const Camera& camera);
 
@@ -32,18 +31,19 @@ namespace vengine
 		void create_camera();
 		void create_cube();
 
+		void draw_skybox();
+
 		void destroy_entity(entt::entity entity);
 
 	private:
-		[[nodiscard]] auto& get_camera()
-		{
-			return m_registry.get<CameraComponent>(m_camera_entity).camera;
-		}
+		[[nodiscard]] auto& get_camera(){ return m_registry.get<CameraComponent>(m_camera_entity).camera; }
 
 		
 	private:
 		entt::entity m_camera_entity;
 		entt::registry m_registry;
+		SkyboxGL m_skybox;
+		
 		friend SceneHierarchyPanel;
 	};
 }

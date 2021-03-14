@@ -1,7 +1,7 @@
 #pragma once
 
+#include <GL/glew.h>
 #include <glm/vec4.hpp>
-
 
 namespace vengine
 {
@@ -13,5 +13,6 @@ namespace vengine
 		bool need_clear_color = false;
 		bool need_clear_depth = false;
 		bool need_clear_stencil = false;
+		GLenum depth_func = GL_LEQUAL;
 	};
 }

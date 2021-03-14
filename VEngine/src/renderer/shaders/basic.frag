@@ -14,5 +14,5 @@ uniform Material u_material;
 
 void main()
 {
-	fr_color = texture(u_material.diffuse0, vs_tex_coords.xy);
+	fr_color = texture(u_material.diffuse0, vs_tex_coords);
 }   

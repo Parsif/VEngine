@@ -8,10 +8,20 @@ namespace vengine
 	{
 		m_vertex_buffer = std::make_shared<VertexBuffer>(data, size);
 	}
-
+	
+	void RenderCommand::set_vertex_buffer(const VertexBuffer& vertex_buffer)
+	{
+		m_vertex_buffer = std::make_shared<VertexBuffer>(vertex_buffer);
+	}
+	
 	void RenderCommand::set_index_buffer(unsigned* data, unsigned int size, size_t count)
 	{
 		m_index_buffer = std::make_shared<IndexBuffer>(data, size, count);
+	}
+
+	void RenderCommand::set_index_buffer(const IndexBuffer& index_buffer)
+	{
+		m_index_buffer = std::make_shared<IndexBuffer>(index_buffer);
 	}
 
 	void RenderCommand::set_buffer_layout(const BufferLayout& buffer_layout)

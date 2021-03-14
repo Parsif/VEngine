@@ -64,7 +64,7 @@ namespace vengine
 		static bool show = true;
 		ImGui::Begin("SceneView");
 		const auto texture_id = Renderer::get_instance()->get_current_fbo().get_color_attachment_id();
-		ImGui::Image((void*)texture_id, ImGui::GetWindowSize(), ImVec2(0, 1), ImVec2(1, 0));
+		ImGui::Image((void*)texture_id, ImGui::GetContentRegionAvail(), ImVec2(0, 1), ImVec2(1, 0));
 		ImGui::End();
 		
 		m_scene_hierarchy_panel->draw();

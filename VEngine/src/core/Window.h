@@ -26,7 +26,6 @@ namespace vengine
 		[[nodiscard]] virtual void* get_native() const = 0;
 
 		[[nodiscard]] static Window* create_window();
-	protected:
 	};
 
 	

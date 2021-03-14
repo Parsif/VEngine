@@ -21,15 +21,14 @@ namespace vengine
 		void recalculate_view();
 		void recalculate_projection();
 		
-		[[nodiscard]] auto get_view_projection() const
-		{
-			return m_projection * m_view;
-		}
-		[[nodiscard]] auto* get_fov() { return &m_fov; }
+		[[nodiscard]] auto get_view_projection() const{ return m_projection * m_view; }
+		[[nodiscard]] auto get_view() const { return m_view; }
+		[[nodiscard]] auto get_projection() const { return m_projection; }
+
+		[[nodiscard]] auto get_fov() { return m_fov; }
 		[[nodiscard]] auto* get_near_z() { return &m_near_z; }
 		[[nodiscard]] auto* get_far_z() { return &m_far_z; }
 		[[nodiscard]] auto get_position() { return glm::value_ptr(m_eye); }
-
 
 	private:
 		glm::mat4 m_view{};
@@ -38,6 +37,7 @@ namespace vengine
 		float m_aspect_ratio{};
 		float m_near_z{}, m_far_z{};
 		glm::vec3 m_eye, m_target, m_up;
+
 
 	};
 }

@@ -79,6 +79,13 @@ namespace vengine
 			}
 		});
 
+		glfwSetScrollCallback(m_glfw_window, [](GLFWwindow* window, double xoffset, double yoffset)
+		{
+			auto& data = *static_cast<WindowData*>(glfwGetWindowUserPointer(window));
+
+			const MouseScrollEvent event(xoffset, yoffset);
+			data.event_callback(event);
+		});
 		
 		glfwSetCursorPosCallback(m_glfw_window, [](GLFWwindow* window, double x, double y)
 		{

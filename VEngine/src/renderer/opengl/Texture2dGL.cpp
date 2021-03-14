@@ -8,7 +8,6 @@ namespace vengine
 {
 	Texture2dGL::Texture2dGL(std::string_view filepath)
 	{
-		//stbi_set_flip_vertically_on_load(true);
 		unsigned char* data = stbi_load(filepath.data(), &m_width, &m_height, &m_channels, 0);
 		glGenTextures(1, &m_id);
 		glBindTexture(GL_TEXTURE_2D, m_id);

@@ -1,6 +1,8 @@
 #include "precheader.h"
 #include "Camera.h"
 
+#include "events/MouseEvents.h"
+
 namespace vengine
 {
 	Camera::Camera(const float fov, const float aspect_ratio, const float near_z, const float far_z,
@@ -14,7 +16,32 @@ namespace vengine
 
 	void Camera::on_event(const Event& event)
 	{
-		std::cout << "camera event\n";
+		switch (event.get_type())
+		{
+		case EventType::MOUSE_SCROLLED:
+		{
+			constexpr float FOV_MIN = 1.0f, FOV_MAX = 180.0f;
+			constexpr int SCROLL_MULTIPLIER = 4;
+				
+			const auto scroll_event = *static_cast<const MouseScrollEvent*>(&event);
+			m_fov -= scroll_event.get_yoffset() * SCROLL_MULTIPLIER;
+			if (m_fov < FOV_MIN)
+			{
+				m_fov = FOV_MIN;
+			}
+			else if(m_fov > FOV_MAX)
+			{
+				m_fov = FOV_MAX;
+			}
+				
+			recalculate_projection();
+			break;
+		}
+		default:
+		{
+			std::cout << "Unhandled camera event\n";
+		}
+		}
 	}	
 
 	void Camera::translate(const glm::vec3& translate)

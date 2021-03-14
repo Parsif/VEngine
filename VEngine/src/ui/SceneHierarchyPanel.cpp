@@ -84,10 +84,9 @@ namespace vengine
         {
             if (ImGui::TreeNodeEx((void*)typeid(CameraComponent).hash_code(), ImGuiTreeNodeFlags_DefaultOpen, "Camera prop"))
             {
-                if (ImGui::DragFloat("Fov", m_scene->get_camera().get_fov(), DRAG_SPEED))
-                {
-                    m_scene->get_camera().recalculate_projection();
-                }
+               
+                const std::string fov = "Fov: " + std::to_string((int)m_scene->get_camera().get_fov());
+                ImGui::Text(fov.c_str());
 
                 if (ImGui::DragFloat("Near_z", m_scene->get_camera().get_near_z(), DRAG_SPEED))
                 {
@@ -99,6 +98,7 @@ namespace vengine
                     m_scene->get_camera().recalculate_projection();
                 }
 
+            	//TODO: fix
                 if (ImGui::DragFloat3("Position", m_scene->get_camera().get_position(), DRAG_SPEED))
                 {
                     m_scene->get_camera().recalculate_view();

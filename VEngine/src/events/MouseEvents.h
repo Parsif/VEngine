@@ -18,4 +18,20 @@ namespace vengine
 	private:
 		float m_mouse_x, m_mouse_y;
 	};
+	
+	class MouseScrollEvent : public Event
+	{
+	public:
+		MouseScrollEvent(const double xoffset, const double yoffset) : m_xoffset(xoffset), m_yoffset(yoffset)
+		{
+			m_event_type = EventType::MOUSE_SCROLLED;
+		}
+
+		[[nodiscard]] auto get_xoffset() const { return m_xoffset; }
+		[[nodiscard]] auto get_yoffset() const { return m_yoffset; }
+
+	private:
+		float m_xoffset, m_yoffset;
+	};
+	
 }

@@ -17,7 +17,11 @@ namespace vengine
 	{
 	public:
 		void set_vertex_buffer(void* data, unsigned int size);
+		void set_vertex_buffer(const VertexBuffer& vertex_buffer);
+
 		void set_index_buffer(unsigned int* data, unsigned int size, size_t count);
+		void set_index_buffer(const IndexBuffer& index_buffer);
+
 		void set_buffer_layout(const BufferLayout& buffer_layout);
 
 		void set_material(Material material);
@@ -47,7 +51,7 @@ namespace vengine
 		std::vector<Texture2dGL> m_textures2d;
 
 		PrimitiveType m_primitive_type = PrimitiveType::TRIANGLE;
-		IndexType m_index_type = IndexType::U_INT;	
+		IndexType m_index_type = IndexType::U_INT;
 	};
 }
 

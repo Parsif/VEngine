@@ -111,6 +111,7 @@ namespace vengine
 		{
 		case GL_INT:
 		case GL_SAMPLER_2D:
+		case GL_SAMPLER_CUBE:
 		{
 			m_int_uniforms.emplace(uniform_name, UniformInfo<int>{location, type });
 			break;

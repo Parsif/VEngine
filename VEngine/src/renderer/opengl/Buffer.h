@@ -8,8 +8,8 @@ namespace vengine
     //////////////////////////////////////////////////
     class VertexBuffer
     {
-   
     public:
+        VertexBuffer() = default;
         explicit VertexBuffer(void* data, const unsigned int size);
         ~VertexBuffer();
 
@@ -26,8 +26,8 @@ namespace vengine
     //////////////////////////////////////////////////
     class IndexBuffer
     {
-
     public:
+        IndexBuffer() = default;
         explicit IndexBuffer(unsigned int* data, unsigned int size, size_t count, size_t offset = 0);
         ~IndexBuffer();
 
