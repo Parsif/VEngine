@@ -61,6 +61,19 @@ namespace vengine
 		{
 			m_scene->on_event(event);
 		});
+		
+		event_dispatcher.dispatch<EventType::MOUSE_MOVED>([&]
+		{
+			if(glfwGetMouseButton(static_cast<GLFWwindow*>(m_window->get_native()), GLFW_MOUSE_BUTTON_MIDDLE) == GLFW_PRESS)
+			{
+				m_scene->on_event(event);
+			}
+		});
+
+		event_dispatcher.dispatch<EventType::MOUSE_PRESSED>([&]
+		{
+			m_scene->on_event(event);
+		});
 	}
 
 	void Application::on_window_resize(const Event& event)

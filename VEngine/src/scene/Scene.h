@@ -29,7 +29,7 @@ namespace vengine
 
 		void create_empty_entity();
 		void create_camera();
-		void create_cube();
+		void create_model(const std::string& model_path);	
 
 		void draw_skybox();
 

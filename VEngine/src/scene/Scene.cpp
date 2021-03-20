@@ -17,7 +17,7 @@ namespace vengine
 			"./VEngine/assets/SkyCubemap/skybox_left.jpg", "./VEngine/assets/SkyCubemap/skybox_right.jpg",
 			"./VEngine/assets/SkyCubemap/skybox_back.jpg", "./VEngine/assets/SkyCubemap/skybox_front.jpg");
 		create_camera();
-		create_cube();
+		create_model("./VEngine/assets/backpack/backpack.obj");
 	}
 
 	void Scene::on_update()
@@ -62,28 +62,25 @@ namespace vengine
 
 		const auto viewport = Renderer::get_instance()->get_viewport();
 		const float aspect_ratio = float(viewport.width) / viewport.height;
-		const Camera camera{ 45.0f, aspect_ratio, 0.1f, 100.f,
+		const Camera camera{ 45.0f, aspect_ratio, 0.1f, 200.f,
 			glm::vec3(0.0f, 0.0f, 3.0f), glm::vec3(0.0f, 0.0f, 0.0f),
 			glm::vec3(0.0f, 1.0f, 0.0f) };
 		
 		m_registry.emplace<CameraComponent>(m_camera_entity, camera);
 	}
 
-	void Scene::create_cube()
+	void Scene::create_model(const std::string& model_path)
 	{
 		const auto entity = m_registry.create();
-		m_registry.emplace<TagComponent>(entity, "Cube entity");
+		m_registry.emplace<TagComponent>(entity, "Model entity");
 		m_registry.emplace<TransformComponent>(entity);
-		m_registry.emplace<ModelComponent>(entity, "./VEngine/assets/backpack/backpack.obj");
+		m_registry.emplace<ModelComponent>(entity, model_path);
 	}
 
 	void Scene::draw_skybox()
 	{
 		auto& render_command = m_skybox.get_render_command();
-		auto material = MaterialLibrary::get_material("Skybox");
-		const glm::mat4 view = glm::mat3(get_camera().get_view());
-		material.set("u_view_projection", get_camera().get_projection() * view);
-		render_command.set_material(material);
+		render_command.set_material(MaterialLibrary::get_material("Skybox"));
 		Renderer::get_instance()->add_command(render_command);
 	}
 

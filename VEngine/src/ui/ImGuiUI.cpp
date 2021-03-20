@@ -3,9 +3,10 @@
 
 #include "renderer/Renderer.h"
 
-#include "imgui_impl_opengl3.h"
-#include "imgui_impl_glfw.h"
-#include "imgui.h"
+#include <imgui_impl_opengl3.h>
+#include <imgui_impl_glfw.h>
+#include <imgui.h>
+
 
 #include "GLFW/glfw3.h"
 
@@ -79,6 +80,7 @@ namespace vengine
 		ImGui_ImplOpenGL3_NewFrame();
 		ImGui_ImplGlfw_NewFrame();
 		ImGui::NewFrame();
+
 	}
 
 	void ImGuiUI::end_frame()
@@ -97,7 +99,6 @@ namespace vengine
 			ImGui::RenderPlatformWindowsDefault();
 			glfwMakeContextCurrent(backup_current_context);
 		}
-		
 
 	}
 

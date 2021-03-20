@@ -22,7 +22,6 @@ namespace vengine
 
 		void set_event_callback(const EventCallback& event_callback) override;
 
-
 		[[nodiscard]] unsigned int get_width() const override { return m_data.width; }
 		[[nodiscard]] unsigned int get_height() const override { return m_data.height; }
 		[[nodiscard]] void* get_native() const override;
@@ -38,9 +37,11 @@ namespace vengine
 		{
 			std::string title;
 			unsigned int width, height;
+			double mouse_x{}, mouse_y{};
 			EventCallback event_callback;
 		};
 		WindowData m_data;
+
 	};
 
 	

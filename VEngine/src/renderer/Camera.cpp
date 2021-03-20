@@ -37,6 +37,25 @@ namespace vengine
 			recalculate_projection();
 			break;
 		}
+
+		case EventType::MOUSE_MOVED:
+		{
+			const auto move_event = *static_cast<const MouseMoveEvent*>(&event);
+			m_yaw += move_event.get_xoffset() * mouse_sensitivity;
+			m_pitch += move_event.get_yoffset() * mouse_sensitivity;
+
+			if (m_pitch > 89.0f)
+				m_pitch = 89.0f;
+			if (m_pitch < -89.0f)
+				m_pitch = -89.0f;
+				
+			glm::vec3 direction;
+			direction.x = cos(glm::radians(m_yaw)) * cos(glm::radians(m_pitch));
+			direction.y = sin(glm::radians(m_pitch));
+			direction.z = sin(glm::radians(m_yaw)) * cos(glm::radians(m_pitch));
+			rotate(glm::normalize(direction));
+			break;
+		}
 		default:
 		{
 			std::cout << "Unhandled camera event\n";
@@ -51,7 +70,8 @@ namespace vengine
 
 	void Camera::rotate(const glm::vec3& rotate)
 	{
-			
+		m_target = m_eye + rotate;
+		recalculate_view();
 	}
 
 	void Camera::recalculate_view()

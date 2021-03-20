@@ -91,7 +91,19 @@ namespace vengine
 		{
 			auto& data = *static_cast<WindowData*>(glfwGetWindowUserPointer(window));
 
-			const MouseMoveEvent event(x, y);
+			const MouseMoveEvent event(x - data.mouse_x,  data.mouse_y - y);
+
+			data.mouse_x = x;
+			data.mouse_y = y;
+
+			data.event_callback(event);
+		});
+
+		glfwSetMouseButtonCallback(m_glfw_window, [](GLFWwindow* window, int button, int action, int mods)
+		{
+			auto& data = *static_cast<WindowData*>(glfwGetWindowUserPointer(window));
+
+			const MousePressedEvent event(button, action, mods);
 			data.event_callback(event);
 		});
 	}

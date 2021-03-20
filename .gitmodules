@@ -1,8 +1,8 @@
-[submodule "VEngine\\vendor\\imgui"]
-	path = VEngine\\vendor\\imgui
+[submodule "VEngine/vendor/imgui"]
+	path = VEngine/vendor/imgui
 	url = https://github.com/Parsif/imgui
-[submodule "VEngine\\vendor\\glfw"]
-	path = VEngine\\vendor\\glfw
+[submodule "VEngine/vendor/glfw"]
+	path = VEngine/vendor/glfw
 	url = https://github.com/Parsif/glfw
 [submodule "VEngine/vendor/glm"]
 	path = VEngine/vendor/glm

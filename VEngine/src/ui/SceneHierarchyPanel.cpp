@@ -79,6 +79,8 @@ namespace vengine
                 ImGui::TreePop();
             }
         }
+
+  
 		
         if (m_scene->m_registry.has<CameraComponent>(entity))
         {

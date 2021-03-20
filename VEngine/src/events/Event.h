@@ -6,9 +6,9 @@ namespace vengine
 	enum class EventType
 	{
 		KEY_PRESSED, KEY_RELEASED,
-		MOUSE_MOVED, MOUSE_SCROLLED,
+		MOUSE_MOVED, MOUSE_SCROLLED, MOUSE_PRESSED,
 		WINDOW_RESIZED, WINDOW_CLOSED
-	};
+	};	
 	
 	class Event
 	{

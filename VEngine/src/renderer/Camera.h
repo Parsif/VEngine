@@ -6,6 +6,8 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
+#define M_PI 3.14159f
+
 namespace vengine
 {
 	class Camera
@@ -25,10 +27,11 @@ namespace vengine
 		[[nodiscard]] auto get_view() const { return m_view; }
 		[[nodiscard]] auto get_projection() const { return m_projection; }
 
-		[[nodiscard]] auto get_fov() { return m_fov; }
+		[[nodiscard]] auto get_fov() const { return m_fov; }
 		[[nodiscard]] auto* get_near_z() { return &m_near_z; }
 		[[nodiscard]] auto* get_far_z() { return &m_far_z; }
 		[[nodiscard]] auto get_position() { return glm::value_ptr(m_eye); }
+
 
 	private:
 		glm::mat4 m_view{};
@@ -38,7 +41,10 @@ namespace vengine
 		float m_near_z{}, m_far_z{};
 		glm::vec3 m_eye, m_target, m_up;
 
+		float m_yaw = 3.0f * (float)M_PI / 4.0f, m_pitch = M_PI / 4.0f;
 
+
+		static constexpr float mouse_sensitivity = 0.3f;
 	};
 }
 
