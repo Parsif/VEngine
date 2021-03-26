@@ -24,7 +24,7 @@ namespace vengine
         TransformComponent() = default;
         glm::vec3 translation{ 0.0f }, rotation{ 0.0f }, scale{ 1.0f };
 
-        [[nodiscard]] inline auto get_transform() const
+        [[nodiscard]] inline auto get_transform() const 
         {
             glm::mat4 transform(1.0f);
             transform = glm::translate(transform, translation);
@@ -36,6 +36,8 @@ namespace vengine
 
             return transform;
         }
+
+      
     };
 
 	struct ModelComponent

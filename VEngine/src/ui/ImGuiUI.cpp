@@ -2,19 +2,24 @@
 #include "ImGuiUI.h"
 
 #include "renderer/Renderer.h"
+#include "events/KeyEvent.h"
+#include "math/Math.h"
 
 #include <imgui_impl_opengl3.h>
 #include <imgui_impl_glfw.h>
 #include <imgui.h>
 
+#include <ImGuizmo.h>
+#include <GLFW/glfw3.h>
 
-#include "GLFW/glfw3.h"
+
 
 namespace vengine
 {
 	void ImGuiUI::init(Ref<Window> window, Ref<Scene> scene)
 	{
 		m_window = window;
+		m_scene = scene;
 		m_scene_hierarchy_panel = std::make_unique<SceneHierarchyPanel>(scene);
 		init_imgui();
 	}
@@ -62,12 +67,13 @@ namespace vengine
 
 		// scene view
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 8));
-		static bool show = true;
+		
 		ImGui::Begin("SceneView");
 		const auto texture_id = Renderer::get_instance()->get_current_fbo().get_color_attachment_id();
 		ImGui::Image((void*)texture_id, ImGui::GetContentRegionAvail(), ImVec2(0, 1), ImVec2(1, 0));
+		draw_guizmo();
 		ImGui::End();
-		
+
 		m_scene_hierarchy_panel->draw();
 		ImGui::PopStyleVar();
 		
@@ -75,15 +81,46 @@ namespace vengine
 		end_frame();
 	}
 
+	void ImGuiUI::on_event(const Event& event)
+	{
+		if(event.get_type() == EventType::KEY_PRESSED)
+		{
+			const auto key_pressed_event = *static_cast<const KeyPressedEvent*>(&event);
+			switch (key_pressed_event.get_keycode())
+			{
+			case GLFW_KEY_Q:
+				m_guizmo_type = -1;
+				break;
+				
+			case GLFW_KEY_W:
+				m_guizmo_type = ImGuizmo::OPERATION::TRANSLATE;
+				break;
+				
+			case GLFW_KEY_E:
+				m_guizmo_type = ImGuizmo::OPERATION::ROTATE;
+				break;
+				
+			case GLFW_KEY_R:
+				m_guizmo_type = ImGuizmo::OPERATION::SCALE;
+				break;
+			}
+		}
+		
+		else
+		{
+			std::cerr << "Unhandled imgui event\n";
+		}
+	}
+
 	void ImGuiUI::begin_frame()
 	{
 		ImGui_ImplOpenGL3_NewFrame();
 		ImGui_ImplGlfw_NewFrame();
 		ImGui::NewFrame();
-
+		ImGuizmo::BeginFrame();
 	}
 
-	void ImGuiUI::end_frame()
+	void ImGuiUI::end_frame() const
 	{
 		ImGuiIO& io = ImGui::GetIO();
 		io.DisplaySize = ImVec2(m_window->get_width(), m_window->get_height());
@@ -180,5 +217,46 @@ namespace vengine
 		}
 
 	}
-	
+
+	void ImGuiUI::draw_guizmo() const
+	{
+		const auto selected_entity = m_scene_hierarchy_panel->get_selected_entity();
+		if(m_guizmo_type != -1 && m_scene->m_registry.valid(selected_entity) && m_scene->m_registry.has<TransformComponent>(selected_entity))
+		{
+			ImGuizmo::SetOrthographic(false);
+			ImGuizmo::SetDrawlist();
+			ImGuizmo::SetRect(ImGui::GetWindowPos().x, ImGui::GetWindowPos().y, ImGui::GetWindowWidth(), ImGui::GetWindowHeight());
+
+			auto& transform_component = m_scene->m_registry.get<TransformComponent>(selected_entity);
+			auto transform = transform_component.get_transform();
+			
+			const bool snap = m_window->is_key_pressed(GLFW_KEY_LEFT_ALT);
+			
+			float snap_value = 0.5f; // Snap to 0.5m for translation/scale
+			// Snap to 45 degrees for rotation
+			if (m_guizmo_type == ImGuizmo::OPERATION::ROTATE)
+				snap_value = 45.0f;
+
+			float snap_values[3] = { snap_value, snap_value, snap_value };
+			
+			ImGuizmo::Manipulate(glm::value_ptr(m_scene->get_camera().get_view()),
+				glm::value_ptr(m_scene->get_camera().get_projection()),
+				static_cast<ImGuizmo::OPERATION>(m_guizmo_type),
+				ImGuizmo::LOCAL,
+				glm::value_ptr(transform),
+				nullptr,
+				snap ? snap_values : nullptr);
+			
+			if (ImGuizmo::IsUsing())
+			{
+				glm::vec3 translation, rotation, scale;
+				math::decompose_transform(transform, translation, rotation, scale);
+				transform_component.translation = translation;
+				//TODO: fix rotation
+				//transform_component.rotation += rotation - transform_component.rotation;
+				transform_component.scale = scale;
+			}
+			
+		}
+	}
 }

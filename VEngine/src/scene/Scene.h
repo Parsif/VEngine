@@ -10,6 +10,7 @@
 namespace vengine
 {
 	class SceneHierarchyPanel;
+	class ImGuiUI;
 
 	class Scene
 	{
@@ -19,7 +20,6 @@ namespace vengine
 		void on_event(const Event& event);
 		
 		
-		void set_camera(const Camera& camera);
 
 		template<class T, class... Args>
 		T& add_component(entt::entity entity, Args&&... args)
@@ -35,7 +35,6 @@ namespace vengine
 
 		void destroy_entity(entt::entity entity);
 
-	private:
 		[[nodiscard]] auto& get_camera(){ return m_registry.get<CameraComponent>(m_camera_entity).camera; }
 
 		
@@ -45,6 +44,8 @@ namespace vengine
 		SkyboxGL m_skybox;
 		
 		friend SceneHierarchyPanel;
+		friend ImGuiUI;
+
 	};
 }
 

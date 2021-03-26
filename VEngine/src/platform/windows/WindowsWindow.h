@@ -27,6 +27,12 @@ namespace vengine
 		[[nodiscard]] void* get_native() const override;
 
 		void swap_buffers() const override;
+
+		[[nodiscard]] bool is_key_pressed(int key_code) const override
+		{
+			return glfwGetKey(m_glfw_window, key_code) == GLFW_PRESS;
+		}
+	
 	private:
 		void set_glfw_event_callbacks() const;
 		

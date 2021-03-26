@@ -54,7 +54,7 @@ namespace vengine
 
 		event_dispatcher.dispatch<EventType::KEY_PRESSED>([&]
 		{
-			m_scene->on_event(event);
+			m_editor_ui.on_event(event);
 		});
 
 		event_dispatcher.dispatch<EventType::MOUSE_SCROLLED>([&]

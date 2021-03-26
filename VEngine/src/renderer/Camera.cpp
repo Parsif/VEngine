@@ -41,19 +41,8 @@ namespace vengine
 		case EventType::MOUSE_MOVED:
 		{
 			const auto move_event = *static_cast<const MouseMoveEvent*>(&event);
-			m_yaw += move_event.get_xoffset() * mouse_sensitivity;
-			m_pitch += move_event.get_yoffset() * mouse_sensitivity;
+			orbit(move_event.get_xoffset() * mouse_sensitivity, move_event.get_yoffset() * mouse_sensitivity);
 
-			if (m_pitch > 89.0f)
-				m_pitch = 89.0f;
-			if (m_pitch < -89.0f)
-				m_pitch = -89.0f;
-				
-			glm::vec3 direction;
-			direction.x = cos(glm::radians(m_yaw)) * cos(glm::radians(m_pitch));
-			direction.y = sin(glm::radians(m_pitch));
-			direction.z = sin(glm::radians(m_yaw)) * cos(glm::radians(m_pitch));
-			rotate(glm::normalize(direction));
 			break;
 		}
 		default:
@@ -63,14 +52,20 @@ namespace vengine
 		}
 	}	
 
-	void Camera::translate(const glm::vec3& translate)
+	void Camera::orbit(const float delta_x, const float delta_y)
 	{
-		
-	}
+		glm::vec4 position{ m_eye.x, m_eye.y, m_eye.z, 1 };
+		const glm::vec4 pivot{ m_target.x, m_target.y, m_target.z, 1 };
 
-	void Camera::rotate(const glm::vec3& rotate)
-	{
-		m_target = m_eye + rotate;
+		glm::mat4 rotation_matrix_x{1.0f};
+		rotation_matrix_x = glm::rotate(rotation_matrix_x, glm::radians(delta_x), m_up);
+		position = (rotation_matrix_x * (position - pivot)) + pivot;
+
+		const glm::vec3 right_vector{ m_view[0][0], m_view[0][1], m_view[0][2] };
+		glm::mat4 rotation_matrix_y{ 1.0f };
+		rotation_matrix_y = glm::rotate(rotation_matrix_y, glm::radians(delta_y), right_vector);
+		m_eye = rotation_matrix_y * (position - pivot) + pivot;
+
 		recalculate_view();
 	}
 
