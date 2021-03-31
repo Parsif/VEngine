@@ -16,12 +16,14 @@ namespace vengine
 		m_skybox.init("./VEngine/assets/SkyCubemap/skybox_top.jpg", "./VEngine/assets/SkyCubemap/skybox_bottom.jpg",
 			"./VEngine/assets/SkyCubemap/skybox_left.jpg", "./VEngine/assets/SkyCubemap/skybox_right.jpg",
 			"./VEngine/assets/SkyCubemap/skybox_back.jpg", "./VEngine/assets/SkyCubemap/skybox_front.jpg");
+		m_grid.init();
 		create_camera();
 		create_model("./VEngine/assets/backpack/backpack.obj");
 	}
 
 	void Scene::on_update()
 	{
+		draw_grid();
 		draw_skybox();
 
 		auto& basic_material = MaterialLibrary::get_material("Basic");
@@ -63,7 +65,7 @@ namespace vengine
 		const auto viewport = Renderer::get_instance()->get_viewport();
 		const float aspect_ratio = float(viewport.width) / viewport.height;
 		const Camera camera{ 45.0f, aspect_ratio, 0.1f, 200.f,
-			glm::vec3(0.0f, 0.0f, 3.0f), glm::vec3(0.0f, 0.0f, 0.0f),
+			glm::vec3(0.0f, 2.0f, 6.0f), glm::vec3(0.0f, 0.0f, 0.0f),
 			glm::vec3(0.0f, 1.0f, 0.0f) };
 		
 		m_registry.emplace<CameraComponent>(m_camera_entity, camera);
@@ -82,6 +84,16 @@ namespace vengine
 		auto& render_command = m_skybox.get_render_command();
 		render_command.set_material(MaterialLibrary::get_material("Skybox"));
 		Renderer::get_instance()->add_command(render_command);
+	}
+
+	void Scene::draw_grid()
+	{
+		auto& command = m_grid.get_render_command();
+		auto& grid_material = MaterialLibrary::get_material("Grid");
+		grid_material.set("u_view", get_camera().get_view());
+		grid_material.set("u_projection", get_camera().get_projection());
+		command.set_material(grid_material);
+		Renderer::get_instance()->add_command(command);
 	}
 
 	void Scene::destroy_entity(entt::entity entity)

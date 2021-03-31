@@ -22,6 +22,15 @@ namespace vengine
 			"./VEngine/src/renderer/shaders/skybox.frag"
 			}
 		};
+
+		s_materials["Grid"] = Material
+		{
+			ShaderProgram
+			{
+			"./VEngine/src/renderer/shaders/grid.vert",
+			"./VEngine/src/renderer/shaders/grid.frag"
+			}
+		};
 		
 	}
 }

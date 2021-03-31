@@ -38,9 +38,8 @@ namespace vengine
 		//TODO: consider glViewport call
 		m_frame_buffer.bind();
 
-		//TODO: move to descriptor
 		glDepthFunc(descriptor.depth_func);
-		
+
 		unsigned int mask = 0;
 		if (descriptor.depth_test_enabled)
 		{
