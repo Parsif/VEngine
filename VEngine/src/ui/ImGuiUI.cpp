@@ -12,6 +12,7 @@
 #include <ImGuizmo.h>
 #include <GLFW/glfw3.h>
 
+#include "utils/PlatformUtils.h"
 
 
 namespace vengine
@@ -76,8 +77,8 @@ namespace vengine
 
 		m_scene_hierarchy_panel->draw();
 		ImGui::PopStyleVar();
-		
 		ImGui::End();
+
 		end_frame();
 	}
 
@@ -201,6 +202,20 @@ namespace vengine
 
 		if (ImGui::BeginMenuBar())
 		{
+			if (ImGui::BeginMenu("File"))
+			{
+				if (ImGui::MenuItem("Import", nullptr, false))
+				{
+					auto file_name = FileDialogs::open_file_dialog("Obj \0*.obj\0", m_window);
+					if(file_name)
+					{
+						std::replace(file_name.value().begin(), file_name.value().end(), '\\', '/');
+						m_scene->create_model(file_name.value());
+					}
+				}
+				ImGui::EndMenu();
+			}
+			
 			if (ImGui::BeginMenu("Options"))
 			{
 				// Disabling fullscreen would allow the window to be moved to the front of other windows,
@@ -208,11 +223,14 @@ namespace vengine
 				ImGui::MenuItem("Fullscreen", nullptr, &opt_fullscreen);
 				ImGui::MenuItem("Padding", nullptr, &opt_padding);
 				ImGui::Separator();
+				ImGui::MenuItem("Grid", nullptr, &Grid::s_enabled);
 
 				if (ImGui::MenuItem("Close", nullptr, false, &p_open != nullptr))
 					p_open = false;
 				ImGui::EndMenu();
+
 			}
+			
 			ImGui::EndMenuBar();
 		}
 

@@ -83,7 +83,6 @@ namespace vengine
             }
         }
 
-  
 		
         if (m_scene->m_registry.has<CameraComponent>(entity))
         {

@@ -19,11 +19,16 @@ namespace vengine
 		m_grid.init();
 		create_camera();
 		create_model("./VEngine/assets/backpack/backpack.obj");
+
 	}
 
 	void Scene::on_update()
 	{
-		draw_grid();
+		if (Grid::s_enabled)
+		{
+			draw_grid();
+		}
+		
 		draw_skybox();
 
 		auto& basic_material = MaterialLibrary::get_material("Basic");
