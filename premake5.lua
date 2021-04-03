@@ -10,7 +10,7 @@ outputdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
 
 include "VEngine/vendor/glfw/premake5.lua"
 include "VEngine/vendor/imgui/premake5.lua"
-
+include "VEngine/vendor/yaml/premake5.lua"
 
 
 project "VEngine"
@@ -40,16 +40,18 @@ project "VEngine"
         "%{prj.name}/vendor/glm",
         "%{prj.name}/vendor/assimp/include",
         "%{prj.name}/vendor/entt",
-        "%{prj.name}/vendor/stb_image"
+        "%{prj.name}/vendor/stb_image",
+        "%{prj.name}/vendor/yaml/include",
     }
 
     links
     {
-        "opengl32.lib",
         "GLFW",
+        "ImGui",
+        "Yaml",
+        "opengl32.lib",
         "%{prj.name}/vendor/glew/lib/Release/x64/glew32s.lib",
-        "imgui",
-        "%{prj.name}/vendor/assimp/assimp.lib"
+        "%{prj.name}/vendor/assimp/assimp.lib",
     }
 
     postbuildcommands

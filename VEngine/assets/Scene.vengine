@@ -1,0 +1,36 @@
+Scene: Untitled
+Entities:
+  - Entity: 12837192831273
+    TagComponent:
+      Tag: Backpack3
+    TransformComponent:
+      Translation: [0, 2.0141921, 0]
+      Rotation: [0, 0, 0]
+      Scale: [1.63577271, 1, 4]
+    ModelComponent:
+      ModelFilepath: D:/Development/Cpp/VEngine/VEngine/assets/backpack/backpack.obj
+  - Entity: 12837192831273
+    TagComponent:
+      Tag: Camera
+    CameraComponent:
+      PerspectiveFOV: 41
+      PerspectiveNear: 0.100000001
+      PerspectiveFar: 500
+  - Entity: 12837192831273
+    TagComponent:
+      Tag: Backpack1
+    TransformComponent:
+      Translation: [5, 3, 0]
+      Rotation: [0, 0, 0]
+      Scale: [1, 1, 1]
+    ModelComponent:
+      ModelFilepath: D:/Development/Cpp/VEngine/VEngine/assets/backpack/backpack.obj
+  - Entity: 12837192831273
+    TagComponent:
+      Tag: Backpack2
+    TransformComponent:
+      Translation: [-5, 3, 0]
+      Rotation: [0, 0, 0]
+      Scale: [1, 1, 1]
+    ModelComponent:
+      ModelFilepath: D:/Development/Cpp/VEngine/VEngine/assets/backpack/backpack.obj

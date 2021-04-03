@@ -12,6 +12,7 @@ namespace vengine
 {
 	class SceneHierarchyPanel;
 	class ImGuiUI;
+	class SceneSerializer;
 
 	class Scene
 	{
@@ -27,7 +28,7 @@ namespace vengine
 			return m_registry.emplace<T>(entity, std::forward<Args>(args)...);
 		}
 
-		void create_empty_entity();
+		[[nodiscard]] entt::entity create_empty_entity(const std::string& tag = "Empty entity");
 		void create_camera();
 		void create_model(const std::string& model_path);	
 
@@ -36,8 +37,10 @@ namespace vengine
 
 		void destroy_entity(entt::entity entity);
 
+		//TODO: consider other camera implementation inside scene
 		[[nodiscard]] auto& get_camera(){ return m_registry.get<CameraComponent>(m_camera_entity).camera; }
-
+		void set_camera_entity(entt::entity entity);
+		void clear();
 		
 	private:
 		entt::entity m_camera_entity;
@@ -47,7 +50,7 @@ namespace vengine
 		
 		friend SceneHierarchyPanel;
 		friend ImGuiUI;
-
+		friend SceneSerializer;
 	};
 }
 

@@ -14,12 +14,13 @@ namespace vengine
 	{
 	public:
 		Camera() = default;
-		Camera(const float fov, const float aspect_ratio, const float near_z, const float far_z, const glm::vec3& eye, const glm::vec3& target, const glm::vec3& up);
+		Camera(const float fov, const float near_z, const float far_z);
 		void on_event(const Event& event);
 
-	
 		void orbit(float delta_x, float delta_y);
 
+		void set_projection(const float fov, const float aspect_ratio, const float near_z, const float far_z);
+		
 		void recalculate_view();
 		void recalculate_projection();
 		
@@ -37,9 +38,9 @@ namespace vengine
 		glm::mat4 m_view{};
 		glm::mat4 m_projection{};
 		float m_fov{}; // in degrees
-		float m_aspect_ratio{};
+		float m_aspect_ratio{ 1.778f };
 		float m_near_z{}, m_far_z{};
-		glm::vec3 m_eye, m_target, m_up;
+		glm::vec3 m_eye{ 1, 3, 2 }, m_target{0, 0, 0}, m_up{0, 1, 0};
 
 		static constexpr float mouse_sensitivity = 0.3f;
 	};

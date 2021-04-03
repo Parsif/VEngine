@@ -23,19 +23,15 @@ namespace vengine
         {
             draw_entity_node(entity);
         });
-		
-        if (ImGui::BeginPopupContextWindow(0, 1, false))
-        {
-            if (ImGui::MenuItem("Create empty entity"))
-                m_scene->create_empty_entity();
 
-            ImGui::EndPopup();
-        }
 
 		ImGui::End();
 
         ImGui::Begin("Properties");
-        draw_entity_components(m_selected_entity);
+		if(m_scene->m_registry.valid(m_selected_entity))
+		{
+            draw_entity_components(m_selected_entity);
+		}
         ImGui::End();
 	}
 
@@ -61,8 +57,6 @@ namespace vengine
         if (m_scene->m_registry.has<TagComponent>(entity))
         {
             auto& tag = m_scene->m_registry.get<TagComponent>(entity).tag;
-            constexpr unsigned int TAG_MAX_SIZE = 100;
-            tag.resize(TAG_MAX_SIZE);
             if (ImGui::InputText("Tag", tag.data(), tag.size() * sizeof(char)))
             {
             }
@@ -111,6 +105,8 @@ namespace vengine
                 ImGui::TreePop();
             }
         }
+
+
 	}
 
 

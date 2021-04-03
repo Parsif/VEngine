@@ -6,7 +6,7 @@
 
 #include "renderer/MaterialLibrary.h"
 
-#include "glm/gtx/string_cast.hpp"
+#include <glm/gtx/string_cast.hpp>
 
 namespace vengine
 {
@@ -18,8 +18,6 @@ namespace vengine
 			"./VEngine/assets/SkyCubemap/skybox_back.jpg", "./VEngine/assets/SkyCubemap/skybox_front.jpg");
 		m_grid.init();
 		create_camera();
-		create_model("./VEngine/assets/backpack/backpack.obj");
-
 	}
 
 	void Scene::on_update()
@@ -56,10 +54,11 @@ namespace vengine
 		get_camera().on_event(event);
 	}
 	
-	void Scene::create_empty_entity()
+	[[nodiscard]] entt::entity Scene::create_empty_entity(const std::string& tag)
 	{
 		const auto entity = m_registry.create();
-		m_registry.emplace<TagComponent>(entity, "Empty entity");
+		m_registry.emplace<TagComponent>(entity, tag);
+		return entity;
 	}
 
 	void Scene::create_camera()
@@ -67,11 +66,7 @@ namespace vengine
 		m_camera_entity = m_registry.create();
 		m_registry.emplace<TagComponent>(m_camera_entity, "Camera");
 
-		const auto viewport = Renderer::get_instance()->get_viewport();
-		const float aspect_ratio = float(viewport.width) / viewport.height;
-		const Camera camera{ 45.0f, aspect_ratio, 0.1f, 200.f,
-			glm::vec3(0.0f, 2.0f, 6.0f), glm::vec3(0.0f, 0.0f, 0.0f),
-			glm::vec3(0.0f, 1.0f, 0.0f) };
+		const Camera camera{ 45.0f, 0.1f, 500.f };
 		
 		m_registry.emplace<CameraComponent>(m_camera_entity, camera);
 	}
@@ -104,5 +99,15 @@ namespace vengine
 	void Scene::destroy_entity(entt::entity entity)
 	{
 		m_registry.destroy(entity);
+	}
+
+	void Scene::set_camera_entity(entt::entity entity)
+	{
+		m_camera_entity = entity;
+	}
+
+	void Scene::clear()
+	{
+		m_registry.clear();
 	}
 }

@@ -12,15 +12,20 @@ namespace vengine
 {
 	struct TagComponent
 	{
-		explicit TagComponent(std::string tag_name) : tag(std::move(tag_name)){}
+		explicit TagComponent(std::string tag_name) : tag(std::move(tag_name))
+		{
+            constexpr unsigned int TAG_MAX_SIZE = 100;
+            tag.resize(TAG_MAX_SIZE);
+		}
+		
 		std::string tag;
 	};
 
     struct TransformComponent
     {
-        TransformComponent(const glm::vec3 transform_, const glm::vec3 rotation_, const glm::vec3 scale_)
-            : translation(transform_), rotation(rotation_), scale(scale_) {}
-        TransformComponent(glm::vec3 transform_) : translation(transform_) {}
+        TransformComponent(const glm::vec3 translation_, const glm::vec3 rotation_, const glm::vec3 scale_)
+            : translation(translation_), rotation(rotation_), scale(scale_) {}
+        TransformComponent(glm::vec3 translation_) : translation(translation_) {}
         TransformComponent() = default;
         glm::vec3 translation{ 0.0f }, rotation{ 0.0f }, scale{ 1.0f };
 
@@ -36,8 +41,6 @@ namespace vengine
 
             return transform;
         }
-
-      
     };
 
 	struct ModelComponent

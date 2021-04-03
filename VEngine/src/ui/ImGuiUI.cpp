@@ -4,6 +4,8 @@
 #include "renderer/Renderer.h"
 #include "events/KeyEvent.h"
 #include "math/Math.h"
+#include "utils/PlatformUtils.h"
+#include "scene/SceneSerializer.h"
 
 #include <imgui_impl_opengl3.h>
 #include <imgui_impl_glfw.h>
@@ -11,8 +13,6 @@
 
 #include <ImGuizmo.h>
 #include <GLFW/glfw3.h>
-
-#include "utils/PlatformUtils.h"
 
 
 namespace vengine
@@ -104,9 +104,19 @@ namespace vengine
 			case GLFW_KEY_R:
 				m_guizmo_type = ImGuizmo::OPERATION::SCALE;
 				break;
+
+			case GLFW_KEY_DELETE:
+				{
+					const auto selected_entity = m_scene_hierarchy_panel->get_selected_entity();
+					if(m_scene->m_registry.valid(selected_entity))
+					{
+						m_scene->destroy_entity(selected_entity);
+					}
+					break;
+				}
 			}
 		}
-		
+
 		else
 		{
 			std::cerr << "Unhandled imgui event\n";
@@ -204,15 +214,39 @@ namespace vengine
 		{
 			if (ImGui::BeginMenu("File"))
 			{
-				if (ImGui::MenuItem("Import", nullptr, false))
+				if (ImGui::MenuItem("Save scene", nullptr, false))
 				{
-					auto file_name = FileDialogs::open_file_dialog("Obj \0*.obj\0", m_window);
-					if(file_name)
+					auto filename = FileDialogs::save_file_dialog("VEngine (.vengine)\0*.vengine\0", m_window);
+					if (filename)
 					{
-						std::replace(file_name.value().begin(), file_name.value().end(), '\\', '/');
-						m_scene->create_model(file_name.value());
+						std::replace(filename.value().begin(), filename.value().end(), '\\', '/');
+						SceneSerializer scene_serializer{ m_scene };
+						scene_serializer.serialize(filename.value());
 					}
 				}
+
+				if (ImGui::MenuItem("Open scene", nullptr, false))
+				{
+					auto filename = FileDialogs::open_file_dialog("VEngine (.vengine)\0*.vengine\0", m_window);
+					if (filename)
+					{
+						std::replace(filename.value().begin(), filename.value().end(), '\\', '/');
+						SceneSerializer scene_serializer{ m_scene };
+						scene_serializer.deserialize(filename.value());
+					}
+				}
+				ImGui::Separator();
+
+				if (ImGui::MenuItem("Import model", nullptr, false))
+				{
+					auto filename = FileDialogs::open_file_dialog("Obj (.obj)\0*.obj\0", m_window);
+					if(filename)
+					{
+						std::replace(filename.value().begin(), filename.value().end(), '\\', '/');
+						m_scene->create_model(filename.value());
+					}
+				}
+				
 				ImGui::EndMenu();
 			}
 			
@@ -220,10 +254,10 @@ namespace vengine
 			{
 				// Disabling fullscreen would allow the window to be moved to the front of other windows,
 				// which we can't undo at the moment without finer window depth/z control.
+				ImGui::MenuItem("Grid", nullptr, &Grid::s_enabled);
 				ImGui::MenuItem("Fullscreen", nullptr, &opt_fullscreen);
 				ImGui::MenuItem("Padding", nullptr, &opt_padding);
 				ImGui::Separator();
-				ImGui::MenuItem("Grid", nullptr, &Grid::s_enabled);
 
 				if (ImGui::MenuItem("Close", nullptr, false, &p_open != nullptr))
 					p_open = false;
