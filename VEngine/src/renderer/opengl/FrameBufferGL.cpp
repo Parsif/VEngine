@@ -20,7 +20,8 @@ namespace vengine
             delete_framebuffer();
     	}
         glGenFramebuffers(1, &m_id);
-        bind();
+        glBindFramebuffer(GL_FRAMEBUFFER, m_id);
+    	
     	if(spec.use_color_attachment)
     	{
             glGenTextures(1, &m_color_attachment);
@@ -43,6 +44,7 @@ namespace vengine
             glBindTexture(GL_TEXTURE_2D, 0);
             glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, m_depth_stencil_attachment, 0);
     	}
+
     	
         if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
         {

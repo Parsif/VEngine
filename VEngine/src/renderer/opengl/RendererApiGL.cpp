@@ -92,7 +92,7 @@ namespace vengine
 		for (size_t i = 0; i < textures2d.size(); ++i)
 		{
 			textures2d[i].bind(i);
-			triangle_command.get_material().set("u_material.diffuse" + std::to_string(i), (int)i);
+			triangle_command.get_material().set("u_material." + textures2d[i].get_string_type(), (int)i);
 		}
 
 		triangle_command.get_material().use();

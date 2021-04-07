@@ -22,26 +22,4 @@ namespace vengine
 		Event() = default;
 		EventType m_event_type;
 	};
-
-	class EventDispatcher
-	{
-	public:
-		EventDispatcher(const Event& event) : m_event(event) {}
-
-
-		// return true if event dispatched, false if not
-		template<EventType T>
-		[[nodiscard]] bool dispatch(const std::function<void()>& event_fn) const
-		{
-			if(T == m_event.get_type())
-			{
-				event_fn();
-				return true;
-			}
-			return false;
-		}
-		
-	private:
-		Event m_event;
-	};
 }

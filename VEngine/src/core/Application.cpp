@@ -46,34 +46,40 @@ namespace vengine
 
 	void Application::on_event(const Event& event)
 	{
-		const EventDispatcher event_dispatcher(event);
-		event_dispatcher.dispatch<EventType::WINDOW_RESIZED>([&]
+		switch (event.get_type())
 		{
-			on_window_resize(event);
-		});
+		case EventType::WINDOW_RESIZED:
+			{
+				on_window_resize(event);
+				break;
+			}
 
-		event_dispatcher.dispatch<EventType::KEY_PRESSED>([&]
-		{
-			m_editor_ui.on_event(event);
-		});
+		case EventType::KEY_PRESSED:
+			{
+				m_editor_ui.on_event(event);
+				break;
+			}
 
-		event_dispatcher.dispatch<EventType::MOUSE_SCROLLED>([&]
-		{
-			m_scene->on_event(event);
-		});
-		
-		event_dispatcher.dispatch<EventType::MOUSE_MOVED>([&]
-		{
-			if(glfwGetMouseButton(static_cast<GLFWwindow*>(m_window->get_native()), GLFW_MOUSE_BUTTON_MIDDLE) == GLFW_PRESS)
+		case EventType::MOUSE_SCROLLED:
 			{
 				m_scene->on_event(event);
+				break;
 			}
-		});
+		case EventType::MOUSE_MOVED:
+			{
+				if (glfwGetMouseButton(static_cast<GLFWwindow*>(m_window->get_native()), GLFW_MOUSE_BUTTON_MIDDLE) == GLFW_PRESS)
+				{
+					m_scene->on_event(event);
+				}
+				break;
+			}
 
-		event_dispatcher.dispatch<EventType::MOUSE_PRESSED>([&]
-		{
-			m_scene->on_event(event);
-		});
+		case EventType::MOUSE_PRESSED:
+			{
+				m_scene->on_event(event);
+				break;
+			}
+		}
 	}
 
 	void Application::on_window_resize(const Event& event)

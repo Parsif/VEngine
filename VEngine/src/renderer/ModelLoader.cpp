@@ -53,7 +53,7 @@ namespace vengine
 	{
 		RenderCommand triangle_command;
 		std::vector<float> vertices;
-		const BufferLayout buffer_layout{ ShaderDataType::Float3, ShaderDataType::Float2 };
+		const BufferLayout buffer_layout{ ShaderDataType::Float3, ShaderDataType::Float2, ShaderDataType::Float3 };
 		triangle_command.set_buffer_layout(buffer_layout);
 		
 		for (size_t i = 0; i < ai_mesh->mNumVertices; ++i)
@@ -67,6 +67,13 @@ namespace vengine
 			{
 				vertices.push_back(ai_mesh->mTextureCoords[0][i].x);
 				vertices.push_back(ai_mesh->mTextureCoords[0][i].y);
+			}
+
+			if(ai_mesh->HasNormals())
+			{
+				vertices.push_back(ai_mesh->mNormals[i].x);
+				vertices.push_back(ai_mesh->mNormals[i].y);
+				vertices.push_back(ai_mesh->mNormals[i].z);
 			}
 			
 		}
@@ -88,22 +95,30 @@ namespace vengine
 		{
 			triangle_command.set_index_buffer(indices.data(), sizeof(indices.back()) * indices.size(), indices.size());
 		}
+
+		auto diffuse_textures = process_material(scene->mMaterials[ai_mesh->mMaterialIndex], file_dir, aiTextureType_DIFFUSE);
+		auto specular_textures = process_material(scene->mMaterials[ai_mesh->mMaterialIndex], file_dir, aiTextureType_SPECULAR);
+
+		std::vector<Texture2dGL> texture2ds;
+		texture2ds.insert(texture2ds.end(), std::make_move_iterator(diffuse_textures.begin()), std::make_move_iterator(diffuse_textures.end()));
+		texture2ds.insert(texture2ds.end(), std::make_move_iterator(specular_textures.begin()), std::make_move_iterator(specular_textures.end()));
 		
-		triangle_command.set_textures2d(process_material(scene->mMaterials[ai_mesh->mMaterialIndex], file_dir));
+		triangle_command.set_textures2d(texture2ds);
 		
 		return triangle_command;
 	}
 
-	std::vector<Texture2dGL> ModelLoader::process_material(aiMaterial* ai_material, const std::string& file_dir)
+	std::vector<Texture2dGL> ModelLoader::process_material(aiMaterial* ai_material, const std::string& file_dir, aiTextureType ai_texture_type)
 	{
 		std::vector<Texture2dGL> textures2d;
 
-		for (unsigned int i = 0; i < ai_material->GetTextureCount(aiTextureType_DIFFUSE); ++i)
+		for (unsigned int i = 0; i < ai_material->GetTextureCount(ai_texture_type); ++i)
 		{
 			aiString texture_path;
-			if (ai_material->GetTexture(aiTextureType_DIFFUSE, 0, &texture_path) == AI_SUCCESS)
+			if (ai_material->GetTexture(ai_texture_type, 0, &texture_path) == AI_SUCCESS)
 			{
 				const auto fullpath = file_dir + '/' + texture_path.data;
+
 				if (s_loaded_textures.find(fullpath) != s_loaded_textures.end())
 				{
 					textures2d.push_back(s_loaded_textures[fullpath]);
@@ -111,7 +126,7 @@ namespace vengine
 				
 				else
 				{
-					const Texture2dGL texture2d{ fullpath };
+					const Texture2dGL texture2d{ fullpath, ai_texture_type };
 					textures2d.push_back(texture2d);
 					s_loaded_textures[fullpath] = texture2d;
 				}

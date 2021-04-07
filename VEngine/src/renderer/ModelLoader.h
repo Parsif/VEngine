@@ -19,7 +19,7 @@ namespace vengine
 		static void load_model(const std::string& filepath);
 		static void process_scene(const aiScene* scene, const std::string& filepath);
 		[[nodiscard]] static RenderCommand process_mesh(aiMesh* ai_mesh, const aiScene* scene, const std::string& file_dir);
-		[[nodiscard]] static std::vector<Texture2dGL> process_material(aiMaterial* ai_material, const std::string& file_dir);
+		[[nodiscard]] static std::vector<Texture2dGL> process_material(aiMaterial* ai_material, const std::string& file_dir, aiTextureType ai_texture_type);
 
 	
 	private:

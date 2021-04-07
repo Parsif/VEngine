@@ -41,6 +41,8 @@ namespace vengine
 		[[nodiscard]] auto& get_camera(){ return m_registry.get<CameraComponent>(m_camera_entity).camera; }
 		void set_camera_entity(entt::entity entity);
 		void clear();
+
+		void create_dir_light();
 		
 	private:
 		entt::entity m_camera_entity;

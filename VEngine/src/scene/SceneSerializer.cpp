@@ -116,6 +116,20 @@ namespace vengine
 				{
 					m_scene->add_component<ModelComponent>(entity, model_component["ModelFilepath"].as<std::string>());
 				}
+
+				auto dir_light_component = yaml_entity["DirLightComponent"];
+				if (dir_light_component)
+				{
+					DirLightComponent component;
+
+					component.direction = dir_light_component["Direction"].as<glm::vec3>();
+					component.color = dir_light_component["Color"].as<glm::vec3>();
+					component.ambient_intensity = dir_light_component["AmbientIntensity"].as<float>();
+					component.diffuse_intensity = dir_light_component["DiffuseIntensity"].as<float>();
+					component.specular_intensity = dir_light_component["SpecularIntensity"].as<float>();
+
+					m_scene->add_component<DirLightComponent>(entity, component);
+				}
 			}
 		}
 	}
@@ -158,8 +172,8 @@ namespace vengine
 			auto& camera = m_scene->m_registry.get<CameraComponent>(entity).camera;
 
 			out << YAML::Key << "PerspectiveFOV" << YAML::Value << camera.get_fov();
-			out << YAML::Key << "PerspectiveNear" << YAML::Value << *camera.get_near_z();
-			out << YAML::Key << "PerspectiveFar" << YAML::Value << *camera.get_far_z();
+			out << YAML::Key << "PerspectiveNear" << YAML::Value << *camera.get_near_z_pointer();
+			out << YAML::Key << "PerspectiveFar" << YAML::Value << *camera.get_far_z_pointer();
 
 			out << YAML::EndMap; // CameraComponent
 		}
@@ -173,6 +187,23 @@ namespace vengine
 			auto& model_filepath = m_scene->m_registry.get<ModelComponent>(entity).filepath;
 
 			out << YAML::Key << "ModelFilepath" << YAML::Value << model_filepath;
+
+			out << YAML::EndMap; // ModelComponent
+		}
+
+
+		if (m_scene->m_registry.has<DirLightComponent>(entity))
+		{
+			out << YAML::Key << "DirLightComponent";
+			out << YAML::BeginMap; // ModelComponent
+
+			auto& dir_light_component = m_scene->m_registry.get<DirLightComponent>(entity);
+
+			out << YAML::Key << "Direction" << YAML::Value << dir_light_component.direction;
+			out << YAML::Key << "Color" << YAML::Value << dir_light_component.color;
+			out << YAML::Key << "AmbientIntensity" << YAML::Value << dir_light_component.ambient_intensity;
+			out << YAML::Key << "DiffuseIntensity" << YAML::Value << dir_light_component.diffuse_intensity;
+			out << YAML::Key << "SpecularIntensity" << YAML::Value << dir_light_component.specular_intensity;
 
 			out << YAML::EndMap; // ModelComponent
 		}

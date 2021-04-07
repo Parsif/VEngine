@@ -86,9 +86,10 @@ namespace vengine
 			{
 				m_mat4_uniforms[uniform_name].value = *reinterpret_cast<glm::mat4*>(&value);
 			}
+			
 			else
 			{
-				std::cerr << "Uniform type unsupported or uniform name not found\n";
+				std::cerr << "Uniform type unsupported or uniform name not found: " << uniform_name << '\n';
 			}
 		}
 

@@ -23,7 +23,14 @@ namespace vengine
         {
             draw_entity_node(entity);
         });
+		
+        if (ImGui::BeginPopupContextWindow(0, 1, false))
+        {
+            if (ImGui::MenuItem("Create dir light"))
+                m_scene->create_dir_light();
 
+            ImGui::EndPopup();
+        }
 
 		ImGui::End();
 
@@ -86,22 +93,37 @@ namespace vengine
                 const std::string fov = "Fov: " + std::to_string((int)m_scene->get_camera().get_fov());
                 ImGui::Text(fov.c_str());
 
-                if (ImGui::DragFloat("Near_z", m_scene->get_camera().get_near_z(), DRAG_SPEED))
+                if (ImGui::DragFloat("Near_z", m_scene->get_camera().get_near_z_pointer(), DRAG_SPEED))
                 {
                     m_scene->get_camera().recalculate_projection();
                 }
 
-                if (ImGui::DragFloat("Far_z", m_scene->get_camera().get_far_z(), DRAG_SPEED))
+                if (ImGui::DragFloat("Far_z", m_scene->get_camera().get_far_z_pointer(), DRAG_SPEED))
                 {
                     m_scene->get_camera().recalculate_projection();
                 }
 
             	//TODO: fix
-                if (ImGui::DragFloat3("Position", m_scene->get_camera().get_position(), DRAG_SPEED))
+                if (ImGui::DragFloat3("Position", m_scene->get_camera().get_position_pointer(), DRAG_SPEED))
                 {
                     m_scene->get_camera().recalculate_view();
                 }
 
+                ImGui::TreePop();
+            }
+        }
+
+        if (m_scene->m_registry.has<DirLightComponent>(entity))
+        {
+            auto& dir_light_component = m_scene->m_registry.get<DirLightComponent>(entity);
+
+            if (ImGui::TreeNodeEx((void*)typeid(TransformComponent).hash_code(), ImGuiTreeNodeFlags_DefaultOpen, "DirLight"))
+            {
+                ImGui::DragFloat3("Direction", glm::value_ptr(dir_light_component.direction), DRAG_SPEED);
+                ImGui::DragFloat3("Color", glm::value_ptr(dir_light_component.color), DRAG_SPEED);
+                ImGui::DragFloat("Ambient intensity", &dir_light_component.ambient_intensity, DRAG_SPEED);
+                ImGui::DragFloat("Diffuse intensity", &dir_light_component.diffuse_intensity, DRAG_SPEED);
+                ImGui::DragFloat("Specular intensity", &dir_light_component.specular_intensity, DRAG_SPEED);
                 ImGui::TreePop();
             }
         }

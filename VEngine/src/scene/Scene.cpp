@@ -30,6 +30,22 @@ namespace vengine
 		draw_skybox();
 
 		auto& basic_material = MaterialLibrary::get_material("Basic");
+
+		auto dir_light_view = m_registry.view<DirLightComponent>();
+
+		for (auto dir_light_entity : dir_light_view)
+		{
+			auto& dir_light_component = dir_light_view.get<DirLightComponent>(dir_light_entity);
+			basic_material.set("u_dirlight.direction", dir_light_component.direction);
+			basic_material.set("u_dirlight.color", dir_light_component.color);
+			basic_material.set("u_dirlight.ambient_intensity", dir_light_component.ambient_intensity);
+			basic_material.set("u_dirlight.diffuse_intensity", dir_light_component.diffuse_intensity);
+			basic_material.set("u_dirlight.specular_intensity", dir_light_component.specular_intensity);
+		}
+
+		basic_material.set("u_view_projection", get_camera().get_view_projection());
+		basic_material.set("u_view_pos", get_camera().get_position());
+		
 		m_registry.each([&](auto entity)
 		{
 			if(m_registry.has<ModelComponent>(entity)) 
@@ -40,13 +56,11 @@ namespace vengine
 				for (auto&& command : ModelLoader::get_model_commands(model_component.filepath))
 				{
 					basic_material.set("u_transform", transform);
-					basic_material.set("u_view_projection", get_camera().get_view_projection());
 					command.set_material(basic_material);
 					Renderer::get_instance()->add_command(command);
 				}
 			}
 		});
-		
 	}
 
 	void Scene::on_event(const Event& event)
@@ -109,5 +123,12 @@ namespace vengine
 	void Scene::clear()
 	{
 		m_registry.clear();
+	}
+
+	void Scene::create_dir_light()
+	{
+		const auto entity = m_registry.create();
+		m_registry.emplace<TagComponent>(entity, "Directional light");
+		m_registry.emplace<DirLightComponent>(entity);
 	}
 }

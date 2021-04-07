@@ -29,9 +29,11 @@ namespace vengine
 		[[nodiscard]] auto get_projection() const { return m_projection; }
 
 		[[nodiscard]] auto get_fov() const { return m_fov; }
-		[[nodiscard]] auto* get_near_z() { return &m_near_z; }
-		[[nodiscard]] auto* get_far_z() { return &m_far_z; }
-		[[nodiscard]] auto get_position() { return glm::value_ptr(m_eye); }
+		[[nodiscard]] auto* get_near_z_pointer() { return &m_near_z; }
+		[[nodiscard]] auto* get_far_z_pointer() { return &m_far_z; }
+		[[nodiscard]] auto* get_position_pointer() { return glm::value_ptr(m_eye); }
+		[[nodiscard]] auto get_position() const { return m_eye; }
+
 
 
 	private:
