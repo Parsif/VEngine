@@ -36,6 +36,7 @@ namespace vengine
 		{
 			process_render_command(render_command);
 		}
+		
 		end_render_pass();
 	}
 
@@ -43,6 +44,13 @@ namespace vengine
 	{
 		m_viewport.x = x;
 		m_viewport.y = y;
+		m_viewport.width = width;
+		m_viewport.height = height;
+		m_renderer_api.set_viewport(m_viewport.x, m_viewport.y, m_viewport.width, m_viewport.height);
+	}
+
+	void Renderer::set_viewport_size(unsigned width, unsigned height)
+	{
 		m_viewport.width = width;
 		m_viewport.height = height;
 		m_renderer_api.set_viewport(m_viewport.x, m_viewport.y, m_viewport.width, m_viewport.height);

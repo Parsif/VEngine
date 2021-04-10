@@ -5,16 +5,14 @@
 #include "scene/Components.h"
 
 
-#include <ImGuizmo.h>
-
 namespace vengine
 {
-	SceneHierarchyPanel::SceneHierarchyPanel(Ref<Scene> scene) : m_scene(scene)
+	void SceneHierarchyPanel::init(Ref<Scene> scene)
 	{
-		
+        m_scene = scene;
 	}
 
-	
+
 	void SceneHierarchyPanel::draw()
 	{
 		ImGui::Begin("SceneHierarchyPanel");

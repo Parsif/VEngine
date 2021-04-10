@@ -1,5 +1,6 @@
 #pragma once
 
+#include "ConsolePanel.h"
 #include "SceneHierarchyPanel.h"
 #include "core/Vtypes.h"
 #include "core/Window.h"
@@ -31,7 +32,9 @@ namespace vengine
 		Ref<Window> m_window;
 		Ref<Scene> m_scene;
 		
-		Scope<SceneHierarchyPanel> m_scene_hierarchy_panel;
+		SceneHierarchyPanel m_scene_hierarchy_panel;
+		ConsolePanel m_console_panel;
+
 		int m_guizmo_type = -1;
 	};
 }

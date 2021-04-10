@@ -3,6 +3,8 @@
 
 #include <yaml-cpp/yaml.h>
 
+#include "core/Logger.h"
+
 namespace YAML
 {
 	template<>
@@ -75,7 +77,7 @@ namespace vengine
 		YAML::Node data = YAML::LoadFile(filepath);
 		if (!data["Scene"])
 		{
-			std::cerr << "File is corrupted\n";
+			Logger::log("File is corrupted", Logger::MessageSeverity::ERROR);
 		}
 
 		auto yaml_entities = data["Entities"];

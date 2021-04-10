@@ -12,6 +12,8 @@ namespace vengine
 {
 	void Scene::init()
 	{
+		m_renderer = Renderer::get_instance();
+
 		MaterialLibrary::init();
 		m_skybox.init("./VEngine/assets/SkyCubemap/skybox_top.jpg", "./VEngine/assets/SkyCubemap/skybox_bottom.jpg",
 			"./VEngine/assets/SkyCubemap/skybox_left.jpg", "./VEngine/assets/SkyCubemap/skybox_right.jpg",
@@ -28,9 +30,34 @@ namespace vengine
 		}
 		
 		draw_skybox();
+		
+		//render shadowmap
+		/*auto& shadowmap_material = MaterialLibrary::get_material("Shadowmap");
+		const unsigned int SHADOW_WIDTH = 1024, SHADOW_HEIGHT = 1024;
+		const auto viewport = m_renderer->get_viewport();
+		m_renderer->set_viewport_size(SHADOW_WIDTH, SHADOW_HEIGHT);
+		
+		m_registry.each([&](auto entity)
+			{
+				if (m_registry.has<ModelComponent>(entity))
+				{
+					ModelComponent& model_component = m_registry.get<ModelComponent>(entity);
+
+					const glm::mat4 transform = m_registry.has<TransformComponent>(entity) ? m_registry.get<TransformComponent>(entity).get_transform() : glm::mat4{ 1.0f };
+					for (auto&& command : ModelLoader::get_model_commands(model_component.filepath))
+					{
+						shadowmap_material.set("u_transform", transform);
+						command.set_material(shadowmap_material);
+						m_renderer->add_command(command);
+					}
+				}
+			});*/
+
+
+		//render normal scene
+		//m_renderer->set_viewport_size(viewport.width, viewport.height);
 
 		auto& basic_material = MaterialLibrary::get_material("Basic");
-
 		auto dir_light_view = m_registry.view<DirLightComponent>();
 
 		for (auto dir_light_entity : dir_light_view)
@@ -57,7 +84,7 @@ namespace vengine
 				{
 					basic_material.set("u_transform", transform);
 					command.set_material(basic_material);
-					Renderer::get_instance()->add_command(command);
+					m_renderer->add_command(command);
 				}
 			}
 		});
@@ -97,7 +124,7 @@ namespace vengine
 	{
 		auto& render_command = m_skybox.get_render_command();
 		render_command.set_material(MaterialLibrary::get_material("Skybox"));
-		Renderer::get_instance()->add_command(render_command);
+		m_renderer->add_command(render_command);
 	}
 
 	void Scene::draw_grid()
@@ -107,7 +134,7 @@ namespace vengine
 		grid_material.set("u_view", get_camera().get_view());
 		grid_material.set("u_projection", get_camera().get_projection());
 		command.set_material(grid_material);
-		Renderer::get_instance()->add_command(command);
+		m_renderer->add_command(command);
 	}
 
 	void Scene::destroy_entity(entt::entity entity)

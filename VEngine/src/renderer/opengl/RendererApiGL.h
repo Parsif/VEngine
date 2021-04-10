@@ -30,7 +30,7 @@ namespace vengine
 		[[nodiscard]] auto& get_current_fbo() const { return m_frame_buffer; }
 
 	private:
-		void prepare_drawing(RenderCommand& triangle_command) const;
+		void prepare_drawing(RenderCommand& command) const;
 
 		
 	private:

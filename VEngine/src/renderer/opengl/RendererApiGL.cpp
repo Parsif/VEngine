@@ -12,7 +12,7 @@ namespace vengine
 	{
 		if (glewInit() != GLEW_OK)
 		{
-			std::cerr << "Failed to init glew\n";
+			Logger::log("Failed to init glew", Logger::MessageSeverity::ERROR);
 		}
 
 #ifdef V_CONFIGURATION_DEBUG
@@ -31,8 +31,8 @@ namespace vengine
 		FrameBufferSpecifications frame_buffer_specs;
 		frame_buffer_specs.width = m_viewport.width;
 		frame_buffer_specs.height = m_viewport.height;
-		frame_buffer_specs.use_color_attachment = true;
-		frame_buffer_specs.use_depth_stencil_attachment = true;
+		frame_buffer_specs.frame_buffer_type = descriptor.frame_buffer_type;
+		
 		m_frame_buffer.create(frame_buffer_specs);
 
 		//TODO: consider glViewport call
@@ -84,20 +84,20 @@ namespace vengine
 
 	}
 
-	void RendererApiGL::prepare_drawing(RenderCommand& triangle_command) const
+	void RendererApiGL::prepare_drawing(RenderCommand& command) const
 	{
-		const auto& textures2d = triangle_command.get_textures2d();
+		auto& material = command.get_material();
+		const auto& textures2d = command.get_textures2d();
 		
-		//TODO: distinguish between different types of textures
 		for (size_t i = 0; i < textures2d.size(); ++i)
 		{
 			textures2d[i].bind(i);
-			triangle_command.get_material().set("u_material." + textures2d[i].get_string_type(), (int)i);
+			material.set("u_material." + textures2d[i].get_string_type(), (int)i);
 		}
 
-		triangle_command.get_material().use();
+		material.use();
 
-		const auto& vertex_array = triangle_command.get_vertex_array();
+		const auto& vertex_array = command.get_vertex_array();
 		if (vertex_array->is_data_bound())
 		{
 			vertex_array->bind_draw();
@@ -106,9 +106,9 @@ namespace vengine
 		else
 		{
 			vertex_array->bind_data();
-			triangle_command.get_vertex_buffer()->bind();
-			triangle_command.get_index_buffer()->bind();
-			const auto& buffer_layout = triangle_command.get_buffer_layout();
+			command.get_vertex_buffer()->bind();
+			command.get_index_buffer()->bind();
+			const auto& buffer_layout = command.get_buffer_layout();
 			size_t i = 0;
 			for (auto&& attribute : buffer_layout.getElements())
 			{

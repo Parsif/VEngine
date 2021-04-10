@@ -5,7 +5,7 @@
 
 namespace vengine
 {
-	class Texture2dGL
+	class TextureGL
 	{
 	public:
 		enum class Texture2DType
@@ -14,8 +14,8 @@ namespace vengine
 		};
 	
 	public:
-		Texture2dGL() = default;
-		Texture2dGL(std::string_view filepath, aiTextureType type);
+		TextureGL() = default;
+		TextureGL(const std::string& filepath, aiTextureType type);
 
 		void bind(GLenum slot = 0) const;
 

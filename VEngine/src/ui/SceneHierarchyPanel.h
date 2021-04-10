@@ -8,7 +8,7 @@ namespace vengine
 	class SceneHierarchyPanel
 	{
 	public:
-		explicit SceneHierarchyPanel(Ref<Scene> scene);
+		void init(Ref<Scene> scene);
 		void draw();
 		void draw_entity_node(entt::entity entity);
 		void draw_entity_components(entt::entity entity) const;

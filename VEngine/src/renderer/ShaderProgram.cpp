@@ -13,7 +13,7 @@ namespace vengine
 		std::ifstream shader_stream(filename);
 		if (!shader_stream.is_open())
 		{
-			std::cerr << "Can't open file: " << filename << '\n';
+			Logger::log("Can't open file: " + filename, Logger::MessageSeverity::ERROR);
 			return;
 		}
 		const std::string shader_content((std::istreambuf_iterator<char>(shader_stream)), std::istreambuf_iterator<char>());
@@ -30,7 +30,7 @@ namespace vengine
 		{
 			char info_log[512];
 			glGetShaderInfoLog(m_render_id, sizeof(info_log), nullptr, info_log);
-			std::cerr << filename << " " << info_log << '\n';
+			Logger::log(filename + " " + info_log, Logger::MessageSeverity::ERROR);
 		}
 
 	}
@@ -78,7 +78,7 @@ namespace vengine
         {
             char info_log[512];
             glGetProgramInfoLog(m_render_id, sizeof(info_log), nullptr, info_log);
-            std::cerr << info_log << '\n';
+			Logger::log(info_log, Logger::MessageSeverity::ERROR);
         }
         
         vertex_shader.delete_shader();
@@ -143,7 +143,7 @@ namespace vengine
 			
 		default:
 		{
-			std::cerr << "Unhandled uniform type\n";
+			Logger::log("Unhandled uniform type", Logger::MessageSeverity::ERROR);
 			break;
 		}
 		}

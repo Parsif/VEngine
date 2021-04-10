@@ -40,5 +40,5 @@ void main()
     vec3 frag_pos = vs_near_point + t * (vs_far_point - vs_near_point);
     gl_FragDepth = compute_depth(frag_pos);
 
-    fr_color = (grid(frag_pos, 2)) * ((t > 0) ? 1 : 0);
+    fr_color = (grid(frag_pos, 1)) * ((t > 0) ? 1 : 0);
 }

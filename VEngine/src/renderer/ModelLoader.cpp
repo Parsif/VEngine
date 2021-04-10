@@ -1,7 +1,7 @@
 #include "precheader.h"
 #include "ModelLoader.h"
 
-#include "opengl/Texture2dGL.h"
+#include "opengl/TextureGL.h"
 
 namespace vengine
 {
@@ -29,7 +29,8 @@ namespace vengine
 
 		if (!scene)
 		{
-			std::cerr << importer.GetErrorString() << '\n';
+			Logger::log(importer.GetErrorString(), Logger::MessageSeverity::ERROR);
+
 			return;
 		}
 
@@ -99,7 +100,7 @@ namespace vengine
 		auto diffuse_textures = process_material(scene->mMaterials[ai_mesh->mMaterialIndex], file_dir, aiTextureType_DIFFUSE);
 		auto specular_textures = process_material(scene->mMaterials[ai_mesh->mMaterialIndex], file_dir, aiTextureType_SPECULAR);
 
-		std::vector<Texture2dGL> texture2ds;
+		std::vector<TextureGL> texture2ds;
 		texture2ds.insert(texture2ds.end(), std::make_move_iterator(diffuse_textures.begin()), std::make_move_iterator(diffuse_textures.end()));
 		texture2ds.insert(texture2ds.end(), std::make_move_iterator(specular_textures.begin()), std::make_move_iterator(specular_textures.end()));
 		
@@ -108,9 +109,9 @@ namespace vengine
 		return triangle_command;
 	}
 
-	std::vector<Texture2dGL> ModelLoader::process_material(aiMaterial* ai_material, const std::string& file_dir, aiTextureType ai_texture_type)
+	std::vector<TextureGL> ModelLoader::process_material(aiMaterial* ai_material, const std::string& file_dir, aiTextureType ai_texture_type)
 	{
-		std::vector<Texture2dGL> textures2d;
+		std::vector<TextureGL> textures2d;
 
 		for (unsigned int i = 0; i < ai_material->GetTextureCount(ai_texture_type); ++i)
 		{
@@ -126,7 +127,7 @@ namespace vengine
 				
 				else
 				{
-					const Texture2dGL texture2d{ fullpath, ai_texture_type };
+					const TextureGL texture2d{ fullpath, ai_texture_type };
 					textures2d.push_back(texture2d);
 					s_loaded_textures[fullpath] = texture2d;
 				}

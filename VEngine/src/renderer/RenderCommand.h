@@ -7,7 +7,7 @@
 #include "opengl/Buffer.h"
 #include "opengl/types.h"
 #include "opengl/VertexArray.h"
-#include "opengl/Texture2dGL.h"
+#include "opengl/TextureGL.h"
 
 
 namespace vengine
@@ -25,7 +25,7 @@ namespace vengine
 		void set_buffer_layout(const BufferLayout& buffer_layout);
 
 		void set_material(Material material);
-		void set_textures2d(std::vector<Texture2dGL> textures2d);
+		void set_textures2d(std::vector<TextureGL> textures2d);
 
 
 		[[nodiscard]] auto& get_vertex_buffer() const { return m_vertex_buffer; }
@@ -48,7 +48,7 @@ namespace vengine
 		BufferLayout m_buffer_layout{};
 		Material m_material{};
 		
-		std::vector<Texture2dGL> m_textures2d;
+		std::vector<TextureGL> m_textures2d;
 
 		PrimitiveType m_primitive_type = PrimitiveType::TRIANGLE;
 		IndexType m_index_type = IndexType::U_INT;

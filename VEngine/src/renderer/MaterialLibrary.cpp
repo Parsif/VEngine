@@ -31,6 +31,15 @@ namespace vengine
 			"./VEngine/src/renderer/shaders/grid.frag"
 			}
 		};
+
+		s_materials["Shadowmap"] = Material
+		{
+			ShaderProgram
+			{
+			"./VEngine/src/renderer/shaders/shadowmap.vert",
+			"./VEngine/src/renderer/shaders/shadowmap.frag"
+			}
+		};
 		
 	}
 }

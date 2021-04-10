@@ -6,7 +6,6 @@
 #include "opengl/RendererApiGL.h"
 
 #include "RenderPassDescriptor.h"
-#include "core/Vtypes.h"
 #include "opengl/FrameBufferGL.h"
 
 namespace vengine
@@ -19,19 +18,22 @@ namespace vengine
 		[[nodiscard]] static Renderer* get_instance() { return s_instance; }
 
 		void add_command(const RenderCommand& render_command);
+		
 		void render();
 		void set_viewport(int x, int y, unsigned int width, unsigned int height);
+		void set_viewport_size(unsigned int width, unsigned int height);
 
-		[[nodiscard]] auto& get_current_fbo() const { return m_current_frame_buffer; }
-		[[nodiscard]] auto& get_viewport() const { return m_viewport; }
+
+		[[nodiscard]] auto get_color_attachment() const { return m_current_frame_buffer.get_color_attachment(); }
+		[[nodiscard]] auto get_depth_attachment() const { return m_current_frame_buffer.get_depth_attachment(); }
+
+		[[nodiscard]] auto get_viewport() const { return m_viewport; }
 
 	
 	private:
 		void begin_render_pass();
 		void end_render_pass();
 		void process_render_command(RenderCommand& command) const;
-		void set_depth_test(bool value);
-		void set_stencil_test(bool value);
 		
 	
 	private:
@@ -44,19 +46,15 @@ namespace vengine
 		};
 
 		Viewport m_viewport;
-
 		
 		RenderQueue m_render_queue;
 		RendererApiGL m_renderer_api;
 
 		RenderPassDescriptor m_render_pass_descriptor;
-		glm::vec4 m_clear_color{0, 0, 0, 1.0f};
 
 		FrameBufferGL m_current_frame_buffer;
 		
 		static Renderer* s_instance;
-		
-		
 	};
 }
 

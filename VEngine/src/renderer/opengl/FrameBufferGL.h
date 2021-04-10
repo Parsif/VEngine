@@ -1,14 +1,16 @@
 #pragma once
 
-#include "core/Vtypes.h"
-
 namespace vengine
 {
+    enum class FrameBufferType
+    {
+        COLOR_DEPTH_STENCIL, DEPTH_ONLY
+    };
+	
     struct FrameBufferSpecifications
     {
         uint32_t width, height;
-        bool use_color_attachment;
-        bool use_depth_stencil_attachment;
+        FrameBufferType frame_buffer_type;
         uint32_t samples = 1;
     };
 
@@ -23,14 +25,16 @@ namespace vengine
         void bind() const;
         void unbind() const;
 
-        [[nodiscard]] inline auto get_color_attachment_id() const { return m_color_attachment; }
+        [[nodiscard]] auto get_color_attachment() const { return m_color_attachment; }
+        [[nodiscard]] auto get_depth_attachment() const { return m_depth_attachment; }
+
 
     private:
         void delete_framebuffer() const;
     
     private:
         unsigned int m_id;
-        unsigned int m_color_attachment, m_depth_stencil_attachment;
+        unsigned int m_color_attachment, m_depth_stencil_attachment, m_depth_attachment;
         FrameBufferSpecifications m_specs;
     };
 }

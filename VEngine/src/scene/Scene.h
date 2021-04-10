@@ -6,6 +6,7 @@
 
 #include "Components.h"
 #include "renderer/Grid.h"
+#include "renderer/Renderer.h"
 #include "renderer/opengl/SkyboxGL.h"
 
 namespace vengine
@@ -45,11 +46,12 @@ namespace vengine
 		void create_dir_light();
 		
 	private:
+		Renderer* m_renderer;
 		entt::entity m_camera_entity;
 		entt::registry m_registry;
 		SkyboxGL m_skybox;
 		Grid m_grid;
-		
+
 		friend SceneHierarchyPanel;
 		friend ImGuiUI;
 		friend SceneSerializer;

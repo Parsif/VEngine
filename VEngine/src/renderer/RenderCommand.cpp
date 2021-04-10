@@ -24,7 +24,7 @@ namespace vengine
 		m_material = std::move(material);
 	}
 
-	void RenderCommand::set_textures2d(std::vector<Texture2dGL> textures2d)
+	void RenderCommand::set_textures2d(std::vector<TextureGL> textures2d)
 	{
 		m_textures2d = std::move(textures2d);
 	}

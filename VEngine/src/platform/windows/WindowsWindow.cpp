@@ -3,6 +3,8 @@
 #include "WindowsWindow.h"
 
 
+
+#include "core/Logger.h"
 #include "events/KeyEvent.h"
 #include "events/MouseEvents.h"
 #include "events/WindowEvents.h"
@@ -24,7 +26,7 @@ namespace vengine
 		
 		if (!glfwInit())
 		{
-			std::cerr << " Initialization failed\n";
+			Logger::log("Initialization failed", Logger::MessageSeverity::ERROR);
 		}
 		glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
 		glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
@@ -32,7 +34,7 @@ namespace vengine
 		m_glfw_window = glfwCreateWindow(m_data.width, m_data.height, title.c_str(), NULL, NULL);
 		if (!m_glfw_window)
 		{
-			std::cerr << "Window or OpenGL context creation failed\n";
+			Logger::log("Window or OpenGL context creation failed", Logger::MessageSeverity::ERROR);
 		}
 		glfwMakeContextCurrent(m_glfw_window);
 

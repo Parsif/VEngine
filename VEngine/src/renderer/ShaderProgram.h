@@ -5,6 +5,8 @@
 #include <glm/glm.hpp>
 #include <GL/glew.h>
 
+#include "core/Logger.h"
+
 namespace vengine
 {
 	//forward declarations
@@ -89,7 +91,7 @@ namespace vengine
 			
 			else
 			{
-				std::cerr << "Uniform type unsupported or uniform name not found: " << uniform_name << '\n';
+				Logger::log("Uniform type unsupported or uniform name not found: " + uniform_name, Logger::MessageSeverity::ERROR);
 			}
 		}
 

@@ -14,6 +14,8 @@
 #include <ImGuizmo.h>
 #include <GLFW/glfw3.h>
 
+#include "core/Logger.h"
+
 
 namespace vengine
 {
@@ -21,7 +23,7 @@ namespace vengine
 	{
 		m_window = window;
 		m_scene = scene;
-		m_scene_hierarchy_panel = std::make_unique<SceneHierarchyPanel>(scene);
+		m_scene_hierarchy_panel.init(scene);
 		init_imgui();
 	}
 
@@ -70,12 +72,13 @@ namespace vengine
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 8));
 		
 		ImGui::Begin("SceneView");
-		const auto texture_id = Renderer::get_instance()->get_current_fbo().get_color_attachment_id();
-		ImGui::Image((void*)texture_id, ImGui::GetContentRegionAvail(), ImVec2(0, 1), ImVec2(1, 0));
+		ImGui::Image((void*)Renderer::get_instance()->get_color_attachment(), ImGui::GetContentRegionAvail(), ImVec2(0, 1), ImVec2(1, 0));
 		draw_guizmo();
 		ImGui::End();
 
-		m_scene_hierarchy_panel->draw();
+		m_scene_hierarchy_panel.draw();
+		m_console_panel.draw();
+		
 		ImGui::PopStyleVar();
 		ImGui::End();
 
@@ -107,7 +110,7 @@ namespace vengine
 
 			case GLFW_KEY_DELETE:
 				{
-					const auto selected_entity = m_scene_hierarchy_panel->get_selected_entity();
+					const auto selected_entity = m_scene_hierarchy_panel.get_selected_entity();
 					if(m_scene->m_registry.valid(selected_entity))
 					{
 						m_scene->destroy_entity(selected_entity);
@@ -119,7 +122,7 @@ namespace vengine
 
 		else
 		{
-			std::cerr << "Unhandled imgui event\n";
+			Logger::log("Unhandled imgui event", Logger::MessageSeverity::WARNING);
 		}
 	}
 
@@ -272,7 +275,7 @@ namespace vengine
 
 	void ImGuiUI::draw_guizmo() const
 	{
-		const auto selected_entity = m_scene_hierarchy_panel->get_selected_entity();
+		const auto selected_entity = m_scene_hierarchy_panel.get_selected_entity();
 		if(m_guizmo_type != -1 && m_scene->m_registry.valid(selected_entity) && m_scene->m_registry.has<TransformComponent>(selected_entity))
 		{
 			ImGuizmo::SetOrthographic(false);

@@ -75,7 +75,7 @@ namespace vengine
 		}
 		else
 		{
-			std::cerr << "Failed to load texture " << texture_path << '\n';
+			Logger::log("Failed to load texture " + texture_path, Logger::MessageSeverity::ERROR);
 		}
 		stbi_image_free(data);
 	}

@@ -40,7 +40,7 @@ void main()
 vec3 calc_directional_light()
 {
     //ambient
-    vec3 ambient = u_dirlight.ambient_intensity * texture(u_material.diffuse, vs_tex_coord).rgb;
+    vec3 ambient = u_dirlight.color *  u_dirlight.ambient_intensity * texture(u_material.diffuse, vs_tex_coord).rgb;
 
     //diffuse
      vec3 normal = normalize(vs_normal);

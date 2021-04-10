@@ -1,12 +1,14 @@
 #include "precheader.h"
-#include "Texture2dGL.h"
+#include "TextureGL.h"
+
+#include "core/Logger.h"
 
 #define STB_IMAGE_IMPLEMENTATION    
-#include "stb_image.h"
+#include <stb_image.h>
 
 namespace vengine
 {
-	Texture2dGL::Texture2dGL(std::string_view filepath, aiTextureType type) : m_type(type)
+	TextureGL::TextureGL(const std::string& filepath, aiTextureType type) : m_type(type)
 	{
 		unsigned char* data = stbi_load(filepath.data(), &m_width, &m_height, &m_channels, 0);
 		glGenTextures(1, &m_id);
@@ -18,7 +20,7 @@ namespace vengine
 		}
 		else
 		{
-			std::cerr << "Failed to load texture " << filepath << '\n';
+			Logger::log("Failed to load texture " + filepath, Logger::MessageSeverity::ERROR);
 		}
 		stbi_image_free(data);
 
@@ -40,7 +42,7 @@ namespace vengine
 		
 	}
 
-	void Texture2dGL::bind(const GLenum slot) const
+	void TextureGL::bind(const GLenum slot) const
 	{
 		glActiveTexture(GL_TEXTURE0 + slot);
 		glBindTexture(GL_TEXTURE_2D, m_id);

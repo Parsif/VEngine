@@ -1,6 +1,8 @@
 #include "precheader.h"
 #include "Camera.h"
 
+
+#include "core/Logger.h"
 #include "events/MouseEvents.h"
 
 namespace vengine
@@ -45,6 +47,7 @@ namespace vengine
 		}
 		default:
 		{
+			Logger::log("Unhandled camera event", Logger::MessageSeverity::WARNING);
 			std::cout << "Unhandled camera event\n";
 		}
 		}

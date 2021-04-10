@@ -21,6 +21,8 @@ project "VEngine"
     objdir ("bin-int/bin-int/" .. outputdir .. "/%{prj.name}")
     
     
+
+
     pchheader "precheader.h"
 	pchsource "%{prj.name}/src/precheader.cpp"
 
@@ -42,6 +44,7 @@ project "VEngine"
         "%{prj.name}/vendor/entt",
         "%{prj.name}/vendor/stb_image",
         "%{prj.name}/vendor/yaml/include",
+        "%{prj.name}/vendor/spdlog/include",
     }
 
     links
@@ -64,7 +67,10 @@ project "VEngine"
         staticruntime "On"
         systemversion "latest"
 
-        warnings  "Extra" 
+        kind "WindowedApp"
+        entrypoint "WinMainCRTStartup"
+
+        warnings "Extra" 
 
         defines
         {
