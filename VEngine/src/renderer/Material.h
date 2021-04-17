@@ -16,7 +16,6 @@ namespace vengine
 			m_shader_program.set_uniform_value(uniform_name, value);
 		}
 
-
 		void use() const;
 	private:
 		

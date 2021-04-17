@@ -74,6 +74,7 @@ namespace vengine
 		ImGui::Begin("SceneView");
 		ImGui::Image((void*)Renderer::get_instance()->get_color_attachment(), ImGui::GetContentRegionAvail(), ImVec2(0, 1), ImVec2(1, 0));
 		draw_guizmo();
+		m_scene_view_focused = ImGui::IsWindowFocused();
 		ImGui::End();
 
 		m_scene_hierarchy_panel.draw();
@@ -89,6 +90,8 @@ namespace vengine
 	{
 		if(event.get_type() == EventType::KEY_PRESSED)
 		{
+			if (!m_scene_view_focused)  return;
+			
 			const auto key_pressed_event = *static_cast<const KeyPressedEvent*>(&event);
 			switch (key_pressed_event.get_keycode())
 			{

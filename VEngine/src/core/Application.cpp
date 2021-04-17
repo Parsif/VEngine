@@ -62,12 +62,18 @@ namespace vengine
 
 		case EventType::MOUSE_SCROLLED:
 			{
-				m_scene->on_event(event);
+				//TODO: move focus check in scene
+				if(m_editor_ui.is_scene_view_focused())
+				{
+					m_scene->on_event(event);
+				}
 				break;
 			}
+			
 		case EventType::MOUSE_MOVED:
 			{
-				if (glfwGetMouseButton(static_cast<GLFWwindow*>(m_window->get_native()), GLFW_MOUSE_BUTTON_MIDDLE) == GLFW_PRESS)
+				if (glfwGetMouseButton(static_cast<GLFWwindow*>(m_window->get_native()), GLFW_MOUSE_BUTTON_MIDDLE) == GLFW_PRESS
+					&& m_editor_ui.is_scene_view_focused())
 				{
 					m_scene->on_event(event);
 				}
@@ -76,7 +82,10 @@ namespace vengine
 
 		case EventType::MOUSE_PRESSED:
 			{
-				m_scene->on_event(event);
+				if (m_editor_ui.is_scene_view_focused())
+				{
+					m_scene->on_event(event);
+				}
 				break;
 			}
 		}

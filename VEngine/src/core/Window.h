@@ -10,7 +10,7 @@ namespace vengine
 
 		virtual ~Window() = default;
 
-		virtual void init(const std::string& title = "VEngine", unsigned int width = 1280, unsigned int height = 720) = 0;
+		virtual void init(const std::string& title = "VEngine", unsigned int width = 1920, unsigned int height = 1080) = 0;
 		virtual void on_update() = 0;
 
 		[[nodiscard]] virtual bool is_open() = 0;

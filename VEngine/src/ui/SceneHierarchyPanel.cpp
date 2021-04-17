@@ -119,9 +119,6 @@ namespace vengine
             {
                 ImGui::DragFloat3("Direction", glm::value_ptr(dir_light_component.direction), DRAG_SPEED);
                 ImGui::DragFloat3("Color", glm::value_ptr(dir_light_component.color), DRAG_SPEED);
-                ImGui::DragFloat("Ambient intensity", &dir_light_component.ambient_intensity, DRAG_SPEED);
-                ImGui::DragFloat("Diffuse intensity", &dir_light_component.diffuse_intensity, DRAG_SPEED);
-                ImGui::DragFloat("Specular intensity", &dir_light_component.specular_intensity, DRAG_SPEED);
                 ImGui::TreePop();
             }
         }

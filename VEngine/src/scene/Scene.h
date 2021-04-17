@@ -2,12 +2,12 @@
 
 #include "renderer/Camera.h"
 
-#include <entt/entt.hpp>
-
 #include "Components.h"
 #include "renderer/Grid.h"
 #include "renderer/Renderer.h"
 #include "renderer/opengl/SkyboxGL.h"
+
+#include <entt/entt.hpp>
 
 namespace vengine
 {
@@ -21,7 +21,6 @@ namespace vengine
 		void init();
 		void on_update();
 		void on_event(const Event& event);
-		
 
 		template<class T, class... Args>
 		T& add_component(entt::entity entity, Args&&... args)
@@ -36,7 +35,7 @@ namespace vengine
 		void draw_skybox();
 		void draw_grid();
 
-		void destroy_entity(entt::entity entity);
+		void destroy_entity(entt::entity entity); 
 
 		//TODO: consider other camera implementation inside scene
 		[[nodiscard]] auto& get_camera(){ return m_registry.get<CameraComponent>(m_camera_entity).camera; }

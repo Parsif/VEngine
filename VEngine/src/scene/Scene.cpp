@@ -31,33 +31,21 @@ namespace vengine
 		
 		draw_skybox();
 		
-		//render shadowmap
-		/*auto& shadowmap_material = MaterialLibrary::get_material("Shadowmap");
-		const unsigned int SHADOW_WIDTH = 1024, SHADOW_HEIGHT = 1024;
-		const auto viewport = m_renderer->get_viewport();
-		m_renderer->set_viewport_size(SHADOW_WIDTH, SHADOW_HEIGHT);
-		
-		m_registry.each([&](auto entity)
-			{
-				if (m_registry.has<ModelComponent>(entity))
-				{
-					ModelComponent& model_component = m_registry.get<ModelComponent>(entity);
+		float near_plane = 1.0f, far_plane = 50.5f;
+		glm::mat4 lightProjection = glm::ortho(-50.0f, 50.0f, -50.0f, 50.0f, near_plane, far_plane);
+		glm::mat4 lightView = glm::lookAt(glm::vec3(-2.0f, 4.0f, -1.0f),
+			glm::vec3(0.0f, 0.0f, 0.0f),
+			glm::vec3(0.0f, 1.0f, 0.0f));
+		glm::mat4 lightSpaceMatrix = lightProjection * lightView;
 
-					const glm::mat4 transform = m_registry.has<TransformComponent>(entity) ? m_registry.get<TransformComponent>(entity).get_transform() : glm::mat4{ 1.0f };
-					for (auto&& command : ModelLoader::get_model_commands(model_component.filepath))
-					{
-						shadowmap_material.set("u_transform", transform);
-						command.set_material(shadowmap_material);
-						m_renderer->add_command(command);
-					}
-				}
-			});*/
-
-
-		//render normal scene
-		//m_renderer->set_viewport_size(viewport.width, viewport.height);
+		auto& shadowmap_material = MaterialLibrary::get_material("Shadowmap");
+		shadowmap_material.set("u_light_space_matrix", lightSpaceMatrix);
 
 		auto& basic_material = MaterialLibrary::get_material("Basic");
+		basic_material.set("u_light_space_matrix", lightSpaceMatrix);
+		basic_material.set("u_view_projection", get_camera().get_view_projection());
+		basic_material.set("u_view_pos", get_camera().get_position());
+		
 		auto dir_light_view = m_registry.view<DirLightComponent>();
 
 		for (auto dir_light_entity : dir_light_view)
@@ -65,27 +53,20 @@ namespace vengine
 			auto& dir_light_component = dir_light_view.get<DirLightComponent>(dir_light_entity);
 			basic_material.set("u_dirlight.direction", dir_light_component.direction);
 			basic_material.set("u_dirlight.color", dir_light_component.color);
-			basic_material.set("u_dirlight.ambient_intensity", dir_light_component.ambient_intensity);
-			basic_material.set("u_dirlight.diffuse_intensity", dir_light_component.diffuse_intensity);
-			basic_material.set("u_dirlight.specular_intensity", dir_light_component.specular_intensity);
 		}
 
-		basic_material.set("u_view_projection", get_camera().get_view_projection());
-		basic_material.set("u_view_pos", get_camera().get_position());
-		
 		m_registry.each([&](auto entity)
 		{
 			if(m_registry.has<ModelComponent>(entity)) 
 			{
 				ModelComponent& model_component = m_registry.get<ModelComponent>(entity);
 				
-				const glm::mat4 transform = m_registry.has<TransformComponent>(entity) ? m_registry.get<TransformComponent>(entity).get_transform() : glm::mat4{1.0f};
-				for (auto&& command : ModelLoader::get_model_commands(model_component.filepath))
-				{
-					basic_material.set("u_transform", transform);
-					command.set_material(basic_material);
-					m_renderer->add_command(command);
-				}
+				m_renderer->add_drawable(Drawable{
+					ModelLoader::get_model_commands(model_component.filepath),
+					m_registry.get<TransformComponent>(entity).get_transform(),
+					basic_material,
+					shadowmap_material
+				});
 			}
 		});
 	}
@@ -124,7 +105,7 @@ namespace vengine
 	{
 		auto& render_command = m_skybox.get_render_command();
 		render_command.set_material(MaterialLibrary::get_material("Skybox"));
-		m_renderer->add_command(render_command);
+		//m_renderer->add_drawable(Drawable{render_command});
 	}
 
 	void Scene::draw_grid()
@@ -134,7 +115,7 @@ namespace vengine
 		grid_material.set("u_view", get_camera().get_view());
 		grid_material.set("u_projection", get_camera().get_projection());
 		command.set_material(grid_material);
-		m_renderer->add_command(command);
+		//m_renderer->add_command(command);
 	}
 
 	void Scene::destroy_entity(entt::entity entity)

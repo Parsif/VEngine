@@ -59,9 +59,5 @@ namespace vengine
 	{   
         glm::vec3 direction{ -0.2f, -1.0f, -0.3f };
         glm::vec3 color{1.0f};
-		
-        float ambient_intensity = 1.0f;
-        float diffuse_intensity = 1.0f;
-        float specular_intensity = 1.0f;
 	};
 }

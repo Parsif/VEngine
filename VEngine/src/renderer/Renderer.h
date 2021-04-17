@@ -10,6 +10,9 @@
 
 namespace vengine
 {
+	
+	
+	
 	class Renderer
 	{
 	public:
@@ -17,15 +20,14 @@ namespace vengine
 		void shutdown();
 		[[nodiscard]] static Renderer* get_instance() { return s_instance; }
 
-		void add_command(const RenderCommand& render_command);
+		void add_drawable(const Drawable& drawable);
 		
 		void render();
 		void set_viewport(int x, int y, unsigned int width, unsigned int height);
 		void set_viewport_size(unsigned int width, unsigned int height);
 
 
-		[[nodiscard]] auto get_color_attachment() const { return m_current_frame_buffer.get_color_attachment(); }
-		[[nodiscard]] auto get_depth_attachment() const { return m_current_frame_buffer.get_depth_attachment(); }
+		[[nodiscard]] auto get_color_attachment() const { return m_color_buffer_attachment; }
 
 		[[nodiscard]] auto get_viewport() const { return m_viewport; }
 
@@ -33,8 +35,9 @@ namespace vengine
 	private:
 		void begin_render_pass();
 		void end_render_pass();
-		void process_render_command(RenderCommand& command) const;
-		
+		void render_drawable(Drawable& drawable);
+		void render_shadow(Drawable& drawable);
+
 	
 	private:
 		struct Viewport	
@@ -52,7 +55,7 @@ namespace vengine
 
 		RenderPassDescriptor m_render_pass_descriptor;
 
-		FrameBufferGL m_current_frame_buffer;
+		unsigned int m_color_buffer_attachment, m_depth_buffer_attachment;
 		
 		static Renderer* s_instance;
 	};

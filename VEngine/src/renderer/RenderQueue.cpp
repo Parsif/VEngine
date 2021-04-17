@@ -5,13 +5,13 @@
 
 namespace vengine
 {
-	void RenderQueue::push_back(const RenderCommand& render_command)
+	void RenderQueue::push_back(const Drawable& drawable)
 	{
-		m_render_commands.push_back(render_command);
+		m_drawables.push_back(drawable);
 	}
 
 	void RenderQueue::clear()
 	{
-		m_render_commands.clear();
+		m_drawables.clear();
 	}
 }

@@ -19,6 +19,11 @@ namespace vengine
 		m_buffer_layout = buffer_layout;
 	}
 
+	void RenderCommand::set_transform(const glm::mat4& transform)
+	{
+		m_transform = transform;
+	}
+
 	void RenderCommand::set_material(Material material)
 	{
 		m_material = std::move(material);

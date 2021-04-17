@@ -90,7 +90,7 @@ namespace vengine
 	{
 		int num_of_uniforms;
 		glGetProgramiv(m_render_id, GL_ACTIVE_UNIFORMS, &num_of_uniforms);
-		
+
 		constexpr unsigned int MAX_UNIFORM_NAME_LENGTH = 256;
 		char* uniform_name = new char[MAX_UNIFORM_NAME_LENGTH];
 		int length, count;

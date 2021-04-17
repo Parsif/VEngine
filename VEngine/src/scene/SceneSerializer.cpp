@@ -126,9 +126,6 @@ namespace vengine
 
 					component.direction = dir_light_component["Direction"].as<glm::vec3>();
 					component.color = dir_light_component["Color"].as<glm::vec3>();
-					component.ambient_intensity = dir_light_component["AmbientIntensity"].as<float>();
-					component.diffuse_intensity = dir_light_component["DiffuseIntensity"].as<float>();
-					component.specular_intensity = dir_light_component["SpecularIntensity"].as<float>();
 
 					m_scene->add_component<DirLightComponent>(entity, component);
 				}
@@ -203,9 +200,6 @@ namespace vengine
 
 			out << YAML::Key << "Direction" << YAML::Value << dir_light_component.direction;
 			out << YAML::Key << "Color" << YAML::Value << dir_light_component.color;
-			out << YAML::Key << "AmbientIntensity" << YAML::Value << dir_light_component.ambient_intensity;
-			out << YAML::Key << "DiffuseIntensity" << YAML::Value << dir_light_component.diffuse_intensity;
-			out << YAML::Key << "SpecularIntensity" << YAML::Value << dir_light_component.specular_intensity;
 
 			out << YAML::EndMap; // ModelComponent
 		}

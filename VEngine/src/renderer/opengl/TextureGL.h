@@ -16,6 +16,8 @@ namespace vengine
 	public:
 		TextureGL() = default;
 		TextureGL(const std::string& filepath, aiTextureType type);
+		TextureGL(unsigned int id);
+
 
 		void bind(GLenum slot = 0) const;
 

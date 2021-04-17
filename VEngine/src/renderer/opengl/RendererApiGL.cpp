@@ -86,23 +86,14 @@ namespace vengine
 
 	void RendererApiGL::prepare_drawing(RenderCommand& command) const
 	{
-		auto& material = command.get_material();
-		const auto& textures2d = command.get_textures2d();
-		
-		for (size_t i = 0; i < textures2d.size(); ++i)
-		{
-			textures2d[i].bind(i);
-			material.set("u_material." + textures2d[i].get_string_type(), (int)i);
-		}
-
-		material.use();
+		command.get_material().use();
 
 		const auto& vertex_array = command.get_vertex_array();
 		if (vertex_array->is_data_bound())
 		{
 			vertex_array->bind_draw();
 		}
-
+			
 		else
 		{
 			vertex_array->bind_data();

@@ -16,6 +16,8 @@ namespace vengine
 		
 		void draw();
 		void on_event(const Event& event);
+
+		[[nodiscard]] bool is_scene_view_focused() const { return m_scene_view_focused; }
 		
 		~ImGuiUI();
 
@@ -36,6 +38,7 @@ namespace vengine
 		ConsolePanel m_console_panel;
 
 		int m_guizmo_type = -1;
+		bool m_scene_view_focused;
 	};
 }
 
