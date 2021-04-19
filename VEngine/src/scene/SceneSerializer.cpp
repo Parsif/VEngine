@@ -105,11 +105,14 @@ namespace vengine
 				auto camera_component = yaml_entity["CameraComponent"];
 				if (camera_component)
 				{
+					const auto position = camera_component["Position"].as<glm::vec3>();
 					const auto fov = camera_component["PerspectiveFOV"].as<float>();
 					const auto near_z = camera_component["PerspectiveNear"].as<float>();
 					const auto far_z = camera_component["PerspectiveFar"].as<float>();
 
-					m_scene->add_component<CameraComponent>(entity, Camera{fov, near_z, far_z});
+					Camera camera{ fov, near_z, far_z };
+					camera.set_position(position);
+					m_scene->add_component<CameraComponent>(entity, camera);
 					m_scene->set_camera_entity(entity);
 				}
 
@@ -124,7 +127,7 @@ namespace vengine
 				{
 					DirLightComponent component;
 
-					component.direction = dir_light_component["Direction"].as<glm::vec3>();
+					component.position = dir_light_component["Position"].as<glm::vec3>();
 					component.color = dir_light_component["Color"].as<glm::vec3>();
 
 					m_scene->add_component<DirLightComponent>(entity, component);
@@ -170,6 +173,7 @@ namespace vengine
 
 			auto& camera = m_scene->m_registry.get<CameraComponent>(entity).camera;
 
+			out << YAML::Key << "Position" << YAML::Value << camera.get_position();
 			out << YAML::Key << "PerspectiveFOV" << YAML::Value << camera.get_fov();
 			out << YAML::Key << "PerspectiveNear" << YAML::Value << *camera.get_near_z_pointer();
 			out << YAML::Key << "PerspectiveFar" << YAML::Value << *camera.get_far_z_pointer();
@@ -198,7 +202,7 @@ namespace vengine
 
 			auto& dir_light_component = m_scene->m_registry.get<DirLightComponent>(entity);
 
-			out << YAML::Key << "Direction" << YAML::Value << dir_light_component.direction;
+			out << YAML::Key << "Position" << YAML::Value << dir_light_component.position;
 			out << YAML::Key << "Color" << YAML::Value << dir_light_component.color;
 
 			out << YAML::EndMap; // ModelComponent

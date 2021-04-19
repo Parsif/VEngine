@@ -21,6 +21,10 @@ namespace vengine
 	public:
 		static void log(const std::string& message, const MessageSeverity severity)
 		{
+			if(s_messages.size() > 100)
+			{
+				s_messages.erase(s_messages.begin(), s_messages.begin() + 50);
+			}
 			//TODO: change date format and check str_time size
 			auto now_time = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
 			char str_time[26] = {};

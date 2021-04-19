@@ -57,7 +57,7 @@ namespace vengine
 
 	struct DirLightComponent
 	{   
-        glm::vec3 direction{ -0.2f, -1.0f, -0.3f };
+        glm::vec3 position{ 1.0f };
         glm::vec3 color{1.0f};
 	};
 }

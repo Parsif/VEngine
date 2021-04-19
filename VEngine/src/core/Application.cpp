@@ -26,7 +26,6 @@ namespace vengine
 
 	void Application::run()
 	{
-		
 		while(m_window->is_open())
 		{
 			m_window->on_update();

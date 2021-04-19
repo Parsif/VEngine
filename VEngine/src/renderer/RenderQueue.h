@@ -8,10 +8,9 @@ namespace vengine
 	struct Drawable
 	{
 		std::vector<RenderCommand> commands;
-		glm::mat4 transform;
 		Material render_material;
+		bool is_casting_shadow;
 		Material shadow_material;
-
 	};
 	
 	class RenderQueue

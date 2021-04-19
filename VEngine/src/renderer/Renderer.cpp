@@ -4,9 +4,6 @@
 #include "MaterialLibrary.h"
 #include "RenderCommand.h"
 
-#include <glm/ext/matrix_clip_space.hpp>
-#include <glm/ext/matrix_transform.hpp>
-
 
 namespace vengine
 {
@@ -18,6 +15,7 @@ namespace vengine
 		m_render_pass_descriptor.depth_test_enabled = true;
 		m_render_pass_descriptor.need_clear_color = true;
 		m_render_pass_descriptor.need_clear_depth = true;
+		m_render_pass_descriptor.need_culling = true;
 		
 		m_renderer_api.init();
 	}
@@ -27,7 +25,6 @@ namespace vengine
 		m_renderer_api.shutdown();
 	}
 
-
 	void Renderer::add_drawable(const Drawable& drawable)
 	{
 		m_render_queue.push_back(drawable);
@@ -35,33 +32,36 @@ namespace vengine
 
 	void Renderer::render()
 	{
+		//TODO: make framebuffer creation only once
 		//render shadowmap
-		m_render_pass_descriptor.frame_buffer_type = FrameBufferType::DEPTH_ONLY;
-		const unsigned int SHADOW_WIDTH = 1024, SHADOW_HEIGHT = 1024;
 		const auto viewport = m_viewport;
+		const unsigned int SHADOW_WIDTH = 1024, SHADOW_HEIGHT = 1024;
 		set_viewport_size(SHADOW_WIDTH, SHADOW_HEIGHT);
-		begin_render_pass();
+		m_depth_frame_buffer.create(FrameBufferSpecifications{ SHADOW_WIDTH, SHADOW_HEIGHT, FrameBufferType::DEPTH_ONLY });
+
+		begin_render_pass(m_depth_frame_buffer);
+
 		for(auto& drawable : m_render_queue)
 		{
-			render_shadow(drawable);
+			if(drawable.is_casting_shadow)
+			{
+				render_shadow(drawable);
+			}
 		}
-		m_depth_buffer_attachment = m_renderer_api.get_current_fbo().get_depth_attachment();
-		m_renderer_api.end_render_pass();
+		end_render_pass(m_depth_frame_buffer);
 
 		
 		//render scene
-		m_render_pass_descriptor.frame_buffer_type = FrameBufferType::COLOR_DEPTH_STENCIL;
 		set_viewport_size(viewport.width, viewport.height);
+		m_final_frame_buffer.create(FrameBufferSpecifications{ viewport.width, viewport.height, FrameBufferType::COLOR_DEPTH_STENCIL });
 
-		begin_render_pass();
+		begin_render_pass(m_final_frame_buffer);
 		for (auto& drawable : m_render_queue)
 		{
 			render_drawable(drawable);
 		}
-		m_color_buffer_attachment = m_renderer_api.get_current_fbo().get_color_attachment();
-		m_renderer_api.end_render_pass();
-
-
+		end_render_pass(m_final_frame_buffer);
+		
 		m_render_queue.clear();
 	}
 
@@ -82,19 +82,20 @@ namespace vengine
 		m_renderer_api.set_viewport(m_viewport.x, m_viewport.y, m_viewport.width, m_viewport.height);
 	}
 
-	void Renderer::begin_render_pass()
+	void Renderer::begin_render_pass(const FrameBufferGL& frame_buffer)
 	{
+		frame_buffer.bind();
 		m_renderer_api.begin_render_pass(m_render_pass_descriptor);
 	}
 
-	void Renderer::end_render_pass()
+	void Renderer::end_render_pass(const FrameBufferGL& frame_buffer) const
 	{
-	
+		m_renderer_api.end_render_pass();
+		frame_buffer.unbind();
 	}
 
-	void Renderer::render_drawable(Drawable& drawable)
+	void Renderer::render_drawable(Drawable& drawable) const
 	{
-		drawable.render_material.set("u_transform", drawable.transform);
 		for (auto&& render_command : drawable.commands)
 		{
 			//TODO: try to move textures to materials
@@ -105,25 +106,25 @@ namespace vengine
 				textures2d[i].bind();
 				drawable.render_material.set("u_material." + textures2d[i].get_string_type(), (int)i);
 			}
-
-			TextureGL depth_texture{ m_depth_buffer_attachment };
-			depth_texture.bind(i);
-			drawable.render_material.set("u_shadow_map", (int)i);
-			
-			render_command.set_material(drawable.render_material); // TODO: set material per drawable not per command
+			if(drawable.is_casting_shadow)
+			{
+				TextureGL depth_texture{ m_depth_frame_buffer.get_depth_attachment() };
+				depth_texture.bind(i);
+				drawable.render_material.set("u_shadow_map", (int)i);
+			}
+			drawable.render_material.use();
 			m_renderer_api.draw_elements(render_command);
 		}
 	}
 
-	void Renderer::render_shadow(Drawable& drawable)
+	void Renderer::render_shadow(Drawable& drawable) const
 	{
-		drawable.shadow_material.set("u_transform", drawable.transform);
+		drawable.shadow_material.use();
+
 		for (auto&& render_command : drawable.commands)
 		{
-			render_command.set_material(drawable.shadow_material); // TODO: set material per drawable not per command
 			m_renderer_api.draw_elements(render_command);
 		}
 
-		auto depth_attachment = m_renderer_api.get_current_fbo().get_depth_attachment(); // getting shadowmap
 	}
 }

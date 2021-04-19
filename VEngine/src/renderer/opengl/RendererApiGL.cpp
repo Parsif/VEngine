@@ -28,22 +28,12 @@ namespace vengine
 
 	void RendererApiGL::begin_render_pass(const RenderPassDescriptor& descriptor)
 	{
-		FrameBufferSpecifications frame_buffer_specs;
-		frame_buffer_specs.width = m_viewport.width;
-		frame_buffer_specs.height = m_viewport.height;
-		frame_buffer_specs.frame_buffer_type = descriptor.frame_buffer_type;
-		
-		m_frame_buffer.create(frame_buffer_specs);
-
-		//TODO: consider glViewport call
-		m_frame_buffer.bind();
-
-		glDepthFunc(descriptor.depth_func);
-
 		unsigned int mask = 0;
+		//TODO: call only when changed
 		if (descriptor.depth_test_enabled)
 		{
 			glEnable(GL_DEPTH_TEST);
+			glDepthFunc(descriptor.depth_func);
 		}
 		
 		if (descriptor.need_clear_color)
@@ -56,13 +46,20 @@ namespace vengine
 		{
 			mask |= GL_DEPTH_BUFFER_BIT;
 		}
+		
+		//TODO: call only when changed
+		if (descriptor.need_culling)
+		{
+			glEnable(GL_CULL_FACE);
+			glCullFace(descriptor.culling_func);
+		}
+		
 		glClear(mask);
 
 	}
 
 	void RendererApiGL::end_render_pass() const
 	{
-		m_frame_buffer.unbind();
 	}
 
 	void RendererApiGL::set_viewport(int x, int y, unsigned int width, unsigned int height)
@@ -86,8 +83,6 @@ namespace vengine
 
 	void RendererApiGL::prepare_drawing(RenderCommand& command) const
 	{
-		command.get_material().use();
-
 		const auto& vertex_array = command.get_vertex_array();
 		if (vertex_array->is_data_bound())
 		{

@@ -18,7 +18,6 @@ namespace vengine
 
 		void use() const;
 	private:
-		
 		ShaderProgram m_shader_program;
 	};
 }

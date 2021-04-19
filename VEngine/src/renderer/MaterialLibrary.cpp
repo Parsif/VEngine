@@ -40,6 +40,5 @@ namespace vengine
 			"./VEngine/src/renderer/shaders/shadowmap.frag"
 			}
 		};
-		
 	}
 }

@@ -98,11 +98,9 @@ namespace vengine
 		}
 
 		auto diffuse_textures = process_material(scene->mMaterials[ai_mesh->mMaterialIndex], file_dir, aiTextureType_DIFFUSE);
-		auto specular_textures = process_material(scene->mMaterials[ai_mesh->mMaterialIndex], file_dir, aiTextureType_SPECULAR);
 
 		std::vector<TextureGL> texture2ds;
 		texture2ds.insert(texture2ds.end(), std::make_move_iterator(diffuse_textures.begin()), std::make_move_iterator(diffuse_textures.end()));
-		texture2ds.insert(texture2ds.end(), std::make_move_iterator(specular_textures.begin()), std::make_move_iterator(specular_textures.end()));
 		
 		triangle_command.set_textures2d(texture2ds);
 		

@@ -90,24 +90,27 @@ namespace vengine
 	{
 		if(event.get_type() == EventType::KEY_PRESSED)
 		{
-			if (!m_scene_view_focused)  return;
-			
+
 			const auto key_pressed_event = *static_cast<const KeyPressedEvent*>(&event);
 			switch (key_pressed_event.get_keycode())
-			{
+				{
 			case GLFW_KEY_Q:
+				if (!m_scene_view_focused) return; //TODO: fix this
 				m_guizmo_type = -1;
 				break;
 				
 			case GLFW_KEY_W:
+				if (!m_scene_view_focused) return; //TODO: fix this
 				m_guizmo_type = ImGuizmo::OPERATION::TRANSLATE;
 				break;
 				
 			case GLFW_KEY_E:
+				if (!m_scene_view_focused) return; //TODO: fix this
 				m_guizmo_type = ImGuizmo::OPERATION::ROTATE;
 				break;
 				
 			case GLFW_KEY_R:
+				if (!m_scene_view_focused) return; //TODO: fix this
 				m_guizmo_type = ImGuizmo::OPERATION::SCALE;
 				break;
 

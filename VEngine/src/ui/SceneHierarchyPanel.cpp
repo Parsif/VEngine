@@ -117,7 +117,7 @@ namespace vengine
 
             if (ImGui::TreeNodeEx((void*)typeid(TransformComponent).hash_code(), ImGuiTreeNodeFlags_DefaultOpen, "DirLight"))
             {
-                ImGui::DragFloat3("Direction", glm::value_ptr(dir_light_component.direction), DRAG_SPEED);
+                ImGui::DragFloat3("Position", glm::value_ptr(dir_light_component.position), DRAG_SPEED);
                 ImGui::DragFloat3("Color", glm::value_ptr(dir_light_component.color), DRAG_SPEED);
                 ImGui::TreePop();
             }

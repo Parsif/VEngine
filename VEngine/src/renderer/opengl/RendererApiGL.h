@@ -4,7 +4,6 @@
 
 #include "Buffer.h"
 #include "FrameBufferGL.h"
-#include "types.h"
 #include "VertexArray.h"
 
 #include "../RenderPassDescriptor.h"
@@ -26,9 +25,6 @@ namespace vengine
 
 		void draw_elements(RenderCommand& triangle_command) const;
 
-		// TODO: try other solutions of passing fbo in gui
-		[[nodiscard]] auto& get_current_fbo() const { return m_frame_buffer; }
-
 	private:
 		void prepare_drawing(RenderCommand& command) const;
 
@@ -49,7 +45,6 @@ namespace vengine
 		BufferLayout m_buffer_layout{};
 		Material m_material{};
 		
-		FrameBufferGL m_frame_buffer{};
 		Viewport m_viewport;
 
 	private:

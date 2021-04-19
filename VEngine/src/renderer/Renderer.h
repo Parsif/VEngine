@@ -26,17 +26,16 @@ namespace vengine
 		void set_viewport(int x, int y, unsigned int width, unsigned int height);
 		void set_viewport_size(unsigned int width, unsigned int height);
 
-
-		[[nodiscard]] auto get_color_attachment() const { return m_color_buffer_attachment; }
+		[[nodiscard]] auto get_color_attachment() const { return m_final_frame_buffer.get_color_attachment(); }
 
 		[[nodiscard]] auto get_viewport() const { return m_viewport; }
 
 	
 	private:
-		void begin_render_pass();
-		void end_render_pass();
-		void render_drawable(Drawable& drawable);
-		void render_shadow(Drawable& drawable);
+		void begin_render_pass(const FrameBufferGL& frame_buffer);
+		void end_render_pass(const FrameBufferGL& frame_buffer) const;
+		void render_drawable(Drawable& drawable) const;
+		void render_shadow(Drawable& drawable) const;
 
 	
 	private:
@@ -55,8 +54,9 @@ namespace vengine
 
 		RenderPassDescriptor m_render_pass_descriptor;
 
-		unsigned int m_color_buffer_attachment, m_depth_buffer_attachment;
-		
+		FrameBufferGL m_final_frame_buffer;
+		FrameBufferGL m_depth_frame_buffer;
+
 		static Renderer* s_instance;
 	};
 }

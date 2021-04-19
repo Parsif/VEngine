@@ -13,11 +13,11 @@ in VertexOutput
 struct Material
 {
     sampler2D diffuse;
-    sampler2D specular;
 };
 
-struct DirLight {
-    vec3 direction;
+struct DirLight
+{
+    vec3 position;
     vec3 color;
 };
 
@@ -28,7 +28,7 @@ uniform sampler2D u_shadow_map;
 
 
 vec3 calc_directional_light();
-float calc_shadow();
+float calc_shadow(vec3 normal, vec3 light_dir);
 
 void main()
 {
@@ -47,28 +47,40 @@ vec3 calc_directional_light()
 
     //diffuse
     vec3 normal = normalize(vs_output.normal);
-    vec3 light_direction = normalize(-u_dirlight.direction);
+    vec3 light_direction = normalize(u_dirlight.position - vs_output.frag_pos);
 
     float diffuse_factor = max(dot(normal, light_direction), 0.0);
     vec3 diffuse = u_dirlight.color * diffuse_factor * diffuse_texture_color;
 
     //specular
-    vec3 view_dir = normalize(u_view_pos - vs_output.frag_pos);
-    vec3 reflect_dir = reflect(-light_direction, normal);
-    float specular_factor = pow(max(dot(view_dir, reflect_dir), 0.0), 32);
-    vec3 specular = u_dirlight.color * specular_factor * texture(u_material.specular, vs_output.tex_coord).rgb;
+    vec3 view_direction = normalize(u_view_pos - vs_output.frag_pos);
+    vec3 half_way_direction = normalize(view_direction + light_direction);
+    float specular_factor = pow(max(dot(view_direction, half_way_direction), 0.0), 32);
+    vec3 specular = u_dirlight.color * specular_factor * diffuse_texture_color;
 
-    float shadow = calc_shadow();
-    return ambient + (diffuse + specular) * (1 - shadow);
+    return ambient + (diffuse + specular) * (1 - calc_shadow(normal, light_direction));
 }
 
-float calc_shadow()
+float calc_shadow(vec3 normal, vec3 light_dir)
 {
     vec3 proj_coords = vs_output.frag_pos_light_space.xyz / vs_output.frag_pos_light_space.w;
     proj_coords = proj_coords * 0.5 + 0.5;
-    float closest_depth = texture(u_shadow_map, proj_coords.xy).r;
+    const float closest_depth = texture(u_shadow_map, proj_coords.xy).r;
+    const float current_depth = proj_coords.z;
 
-    float current_depth = proj_coords.z;
-    float shadow = current_depth > closest_depth ? 1.0 : 0;
-    return shadow;
+    const float bias = max(0.05 * (1.0 - dot(normal, light_dir)), 0.005); 
+    const vec2 TEXEL_SIZE = 1.0 / textureSize(u_shadow_map, 0);
+
+
+    float shadow = 0.0;
+    for(int x = -1; x <= 1; ++x)
+    {
+        for(int y = -1; y <= 1; ++y)
+        {
+            float pcf_depth = texture(u_shadow_map, proj_coords.xy + vec2(x, y) * TEXEL_SIZE).r;
+            shadow += current_depth - bias > closest_depth ? 1.0 : 0;
+        }
+    }
+
+    return shadow / 9.0;
 }

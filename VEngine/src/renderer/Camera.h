@@ -19,6 +19,7 @@ namespace vengine
 
 		void orbit(float delta_x, float delta_y);
 
+		void set_position(const glm::vec3& position);
 		void set_projection(const float fov, const float aspect_ratio, const float near_z, const float far_z);
 		
 		void recalculate_view();
@@ -33,7 +34,6 @@ namespace vengine
 		[[nodiscard]] auto* get_far_z_pointer() { return &m_far_z; }
 		[[nodiscard]] auto* get_position_pointer() { return glm::value_ptr(m_eye); }
 		[[nodiscard]] auto get_position() const { return m_eye; }
-
 
 
 	private:

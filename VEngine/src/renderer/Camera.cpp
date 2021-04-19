@@ -70,6 +70,12 @@ namespace vengine
 		recalculate_view();
 	}
 
+	void Camera::set_position(const glm::vec3& position)
+	{
+		m_eye = position;
+		recalculate_view();
+	}
+
 	void Camera::set_projection(const float fov, const float aspect_ratio, const float near_z, const float far_z)
 	{
 		m_projection = glm::perspective(glm::radians(m_fov), m_aspect_ratio, m_near_z, m_far_z);
