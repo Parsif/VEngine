@@ -25,7 +25,6 @@ namespace vengine
 		void set_buffer_layout(const BufferLayout& buffer_layout);
 		void set_transform(const glm::mat4& transform);
 
-
 		void set_textures2d(std::vector<TextureGL> textures2d);
 
 
@@ -41,6 +40,7 @@ namespace vengine
 		[[nodiscard]] auto& get_transform() const { return m_transform; }
 
 		[[nodiscard]] auto& get_textures2d() const { return m_textures2d; }
+
 		
 		
 	private:

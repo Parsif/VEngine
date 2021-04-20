@@ -19,6 +19,7 @@ namespace vengine
 			glTexImage2D(GL_TEXTURE_2D, 0, GL_SRGB, m_width, m_height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
 			glGenerateMipmap(GL_TEXTURE_2D);
 		}
+		
 		else
 		{
 			Logger::log("Failed to load texture " + filepath, Logger::MessageSeverity::ERROR);
@@ -29,15 +30,15 @@ namespace vengine
 		switch (m_type)
 		{
 		case aiTextureType_DIFFUSE:
-			m_string_type = "diffuse";
+			m_string_type = "diffuse_texture";
 			break;
 
 		case aiTextureType_SPECULAR:
-			m_string_type = "specular";
+			m_string_type = "specular_texture";
 			break;
 
-		case aiTextureType_NORMALS:
-			m_string_type = "normals";
+		case aiTextureType_HEIGHT:
+			m_string_type = "normals_texture";
 			break;
 		}
 		

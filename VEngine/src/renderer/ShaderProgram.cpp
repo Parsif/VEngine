@@ -117,6 +117,12 @@ namespace vengine
 			break;
 		}
 
+		case GL_BOOL:
+		{
+			m_bool_uniforms.emplace(uniform_name, UniformInfo<bool>{location, type });
+			break;
+		}
+
 		case GL_FLOAT:
 		{
 			m_float_uniforms.emplace(uniform_name, UniformInfo<float>{location, type });
@@ -157,6 +163,11 @@ namespace vengine
 	void ShaderProgram::set_all_uniforms() const
 	{
 		for (auto&& [name, uniform_info] : m_int_uniforms)
+		{
+			glUniform1i(uniform_info.location, uniform_info.value);
+		}
+
+		for (auto&& [name, uniform_info] : m_bool_uniforms)
 		{
 			glUniform1i(uniform_info.location, uniform_info.value);
 		}

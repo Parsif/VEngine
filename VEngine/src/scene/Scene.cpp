@@ -67,13 +67,15 @@ namespace vengine
 				const auto& transform = m_registry.get<TransformComponent>(entity).get_transform();
 				basic_material.set("u_transform", transform);
 				shadowmap_material.set("u_transform", transform);
+				auto& drawable = ModelLoader::get_drawable(model_component.filepath);
+				basic_material.set("u_material.has_normal_map", drawable.has_normal_map);
 
-				m_renderer->add_drawable(Drawable{
-					ModelLoader::get_model_commands(model_component.filepath),
-					basic_material,
-					true,
-					shadowmap_material
-				});
+				drawable.render_material = basic_material;
+				drawable.shadow_material = shadowmap_material;
+
+				drawable.is_casting_shadow = true;
+
+				m_renderer->add_drawable(drawable);
 			}
 		});
 	}

@@ -103,14 +103,14 @@ namespace vengine
 			size_t i = 0;
 			for (;i < textures2d.size(); ++i)
 			{
-				textures2d[i].bind();
 				drawable.render_material.set("u_material." + textures2d[i].get_string_type(), (int)i);
+				textures2d[i].bind(i);
 			}
 			if(drawable.is_casting_shadow)
 			{
 				TextureGL depth_texture{ m_depth_frame_buffer.get_depth_attachment() };
-				depth_texture.bind(i);
 				drawable.render_material.set("u_shadow_map", (int)i);
+				depth_texture.bind(i);
 			}
 			drawable.render_material.use();
 			m_renderer_api.draw_elements(render_command);

@@ -8,11 +8,14 @@ in VertexOutput
 	vec3 normal;
 	vec3 frag_pos;
     vec4 frag_pos_light_space;
+    mat3 TBN;
 } vs_output;
 
 struct Material
 {
-    sampler2D diffuse;
+    sampler2D diffuse_texture;
+    sampler2D normals_texture;
+    bool has_normal_map;
 };
 
 struct DirLight
@@ -42,11 +45,22 @@ void main()
 vec3 calc_directional_light()
 {
     //ambient
-    vec3 diffuse_texture_color = texture(u_material.diffuse, vs_output.tex_coord).rgb;
+    vec3 diffuse_texture_color = texture(u_material.diffuse_texture, vs_output.tex_coord).rgb;
     vec3 ambient = 0.15 * diffuse_texture_color;
 
     //diffuse
-    vec3 normal = normalize(vs_output.normal);
+    vec3 normal;
+    if(u_material.has_normal_map)
+    {
+        normal = texture(u_material.normals_texture, vs_output.tex_coord).rgb;
+        normal = normal * 2.0 - 1.0;
+        normal = normalize(vs_output.TBN * normal);
+    }
+    else
+    {
+        normal = normalize(vs_output.normal);
+    }
+    
     vec3 light_direction = normalize(u_dirlight.position - vs_output.frag_pos);
 
     float diffuse_factor = max(dot(normal, light_direction), 0.0);

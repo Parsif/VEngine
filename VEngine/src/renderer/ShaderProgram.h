@@ -72,6 +72,10 @@ namespace vengine
 			{
 				m_int_uniforms[uniform_name].value = *reinterpret_cast<int*>(&value);
 			}
+			else if (std::is_same<T, bool>::value && m_bool_uniforms.count(uniform_name) == 1)
+			{
+				m_bool_uniforms[uniform_name].value = *reinterpret_cast<bool*>(&value);
+			}
 			else if (std::is_same<T, float>::value && m_float_uniforms.count(uniform_name) == 1)
 			{
 				m_float_uniforms[uniform_name].value = *reinterpret_cast<float*>(&value);
@@ -98,6 +102,7 @@ namespace vengine
 	private:
 		unsigned int m_render_id;
 		std::unordered_map<std::string, UniformInfo<int>> m_int_uniforms;
+		std::unordered_map<std::string, UniformInfo<bool>> m_bool_uniforms;
 		std::unordered_map<std::string, UniformInfo<float>> m_float_uniforms;
 		std::unordered_map<std::string, UniformInfo<glm::vec3>> m_vec3_uniforms;
 		std::unordered_map<std::string, UniformInfo<glm::vec4>> m_vec4_uniforms;
