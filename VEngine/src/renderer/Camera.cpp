@@ -1,8 +1,8 @@
 #include "precheader.h"
 #include "Camera.h"
 
-
 #include "core/Logger.h"
+#include "events/Input.h"
 #include "events/MouseEvents.h"
 
 namespace vengine
@@ -20,36 +20,33 @@ namespace vengine
 		{
 		case EventType::MOUSE_SCROLLED:
 		{
-			constexpr float FOV_MIN = 1.0f, FOV_MAX = 180.0f;
-			constexpr int SCROLL_MULTIPLIER = 4;
-				
 			const auto scroll_event = *static_cast<const MouseScrollEvent*>(&event);
-			m_fov -= scroll_event.get_yoffset() * SCROLL_MULTIPLIER;
-			if (m_fov < FOV_MIN)
-			{
-				m_fov = FOV_MIN;
-			}
-			else if(m_fov > FOV_MAX)
-			{
-				m_fov = FOV_MAX;
-			}
-				
-			recalculate_projection();
+			const glm::vec3 direction = glm::normalize(m_eye - m_target);
+			m_eye -= direction * scroll_event.get_yoffset();
+		
+			recalculate_view();
 			break;
 		}
 
 		case EventType::MOUSE_MOVED:
 		{
 			const auto move_event = *static_cast<const MouseMoveEvent*>(&event);
-			orbit(move_event.get_xoffset() * mouse_sensitivity, move_event.get_yoffset() * mouse_sensitivity);
-
+			if(Input::is_pressed(KeyCode::MIDDLE_MOUSE_BTN))
+			{
+				orbit(move_event.get_xoffset() * mouse_sensitivity, move_event.get_yoffset() * mouse_sensitivity);
+			}
+			
+			else if(Input::is_pressed(KeyCode::LEFT_SHIFT))
+			{
+				m_target += glm::vec3(move_event.get_xoffset() * mouse_sensitivity, 
+							move_event.get_yoffset() * mouse_sensitivity, 
+							move_event.get_xoffset() * mouse_sensitivity);
+				recalculate_view();
+			}
+			
 			break;
 		}
-		default:
-		{
-			Logger::log("Unhandled camera event", Logger::MessageSeverity::WARNING);
-			std::cout << "Unhandled camera event\n";
-		}
+	
 		}
 	}	
 

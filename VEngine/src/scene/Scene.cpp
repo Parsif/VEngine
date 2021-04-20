@@ -58,7 +58,19 @@ namespace vengine
 		shadowmap_material.set("u_light_space_matrix", light_space_matrix);
 		basic_material.set("u_light_space_matrix", light_space_matrix);
 
+		////calculation direct_light frustrum
+		//auto inverse = glm::inverse(get_camera().get_view_projection()) * glm::inverse();
+		//glm::vec4 corner1 = inverse * glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
+		//glm::vec4 corner2 = inverse * glm::vec4(1.0f, -1.0f, 1.0f, 1.0f);
+		//glm::vec4 corner3 = inverse * glm::vec4(1.0f, 1.0f, -1.0f, 1.0f);
+		//glm::vec4 corner4 = inverse * glm::vec4(-1.0f, 1.0f, 1.0f, 1.0f);
+		//glm::vec4 corner5 = inverse * glm::vec4(-1.0f, -1.0f, 1.0f, 1.0f);
+		//glm::vec4 corner6 = inverse * glm::vec4(1.0f, -1.0f, -1.0f, 1.0f);
+		//glm::vec4 corner7 = inverse * glm::vec4(-1.0f, 1.0f, -1.0f, 1.0f);
+		//glm::vec4 corner8 = inverse * glm::vec4(-1.0f, -1.0f, -1.0f, 1.0f);
 
+
+		
 		m_registry.each([&](auto entity)
 		{
 			if(m_registry.has<ModelComponent>(entity)) 

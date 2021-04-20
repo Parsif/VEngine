@@ -3,6 +3,7 @@
 #include "Application.h"
 
 
+
 namespace vengine
 {
 	Application::Application()
@@ -22,6 +23,8 @@ namespace vengine
 		m_scene->init();
 		
 		m_editor_ui.init(m_window, m_scene);
+
+		Input::init(m_window);
 	}
 
 	void Application::run()
@@ -71,8 +74,7 @@ namespace vengine
 			
 		case EventType::MOUSE_MOVED:
 			{
-				if (glfwGetMouseButton(static_cast<GLFWwindow*>(m_window->get_native()), GLFW_MOUSE_BUTTON_MIDDLE) == GLFW_PRESS
-					&& m_editor_ui.is_scene_view_focused())
+				if (m_editor_ui.is_scene_view_focused())
 				{
 					m_scene->on_event(event);
 				}
