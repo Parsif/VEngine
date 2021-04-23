@@ -15,7 +15,6 @@ namespace vengine
 
 		[[nodiscard]] auto get_selected_entity() const { return m_selected_entity; }
 
-
 	private:
 		Ref<Scene> m_scene;
 		entt::entity m_selected_entity{};

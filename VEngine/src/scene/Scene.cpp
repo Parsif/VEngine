@@ -10,11 +10,9 @@
 
 namespace vengine
 {
-	void Scene::init()
+	void Scene::init(Ref<Renderer> renderer)
 	{
-		m_renderer = Renderer::get_instance();
-
-		MaterialLibrary::init();
+		m_renderer = renderer;
 		m_skybox.init("./VEngine/assets/SkyCubemap/skybox_top.jpg", "./VEngine/assets/SkyCubemap/skybox_bottom.jpg",
 			"./VEngine/assets/SkyCubemap/skybox_left.jpg", "./VEngine/assets/SkyCubemap/skybox_right.jpg",
 			"./VEngine/assets/SkyCubemap/skybox_back.jpg", "./VEngine/assets/SkyCubemap/skybox_front.jpg");

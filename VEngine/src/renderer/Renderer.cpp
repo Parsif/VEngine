@@ -7,11 +7,8 @@
 
 namespace vengine
 {
-	Renderer* Renderer::s_instance = nullptr;
-
 	void Renderer::init()
 	{
-		s_instance = this;
 		m_render_pass_descriptor.depth_test_enabled = true;
 		m_render_pass_descriptor.need_clear_color = true;
 		m_render_pass_descriptor.need_clear_depth = true;
@@ -33,7 +30,6 @@ namespace vengine
 
 	void Renderer::render()
 	{
-		//TODO: make framebuffer creation only once
 		//render shadowmap
 		const auto viewport = m_viewport;
 		const auto [shadow_width, shadow_height] = m_shadow_map.get_size();
@@ -74,6 +70,7 @@ namespace vengine
 		m_viewport.height = height;
 		m_renderer_api.set_viewport(m_viewport.x, m_viewport.y, m_viewport.width, m_viewport.height);
 
+		//TODO; move framebuffer creation
 		m_final_frame_buffer.create(FrameBufferSpecifications{ m_viewport.width, m_viewport.height, FrameBufferType::COLOR_DEPTH_STENCIL, 4 });
 		m_intermediate_frame_buffer.create(FrameBufferSpecifications{ m_viewport.width, m_viewport.height, FrameBufferType::COLOR_DEPTH_STENCIL, 1 });
 	}

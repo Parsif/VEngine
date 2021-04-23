@@ -19,10 +19,12 @@
 
 namespace vengine
 {
-	void ImGuiUI::init(Ref<Window> window, Ref<Scene> scene)
+	void ImGuiUI::init(Ref<Window> window, Ref<Scene> scene, Ref<Renderer> renderer)
 	{
 		m_window = window;
 		m_scene = scene;
+		m_renderer = renderer;
+
 		m_scene_hierarchy_panel.init(scene);
 		init_imgui();
 	}
@@ -72,7 +74,7 @@ namespace vengine
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 8));
 		
 		ImGui::Begin("SceneView");
-		ImGui::Image((void*)Renderer::get_instance()->get_color_attachment(), ImGui::GetContentRegionAvail(), ImVec2(0, 1), ImVec2(1, 0));
+		ImGui::Image((void*)m_renderer->get_color_attachment(), ImGui::GetContentRegionAvail(), ImVec2(0, 1), ImVec2(1, 0));
 		draw_guizmo();
 		m_scene_view_focused = ImGui::IsWindowFocused();
 		ImGui::End();
@@ -159,7 +161,7 @@ namespace vengine
 
 	}
 
-	ImGuiUI::~ImGuiUI()
+	void ImGuiUI::shutdown() const
 	{
 		ImGui_ImplOpenGL3_Shutdown();
 		ImGui_ImplGlfw_Shutdown();

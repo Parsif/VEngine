@@ -12,14 +12,14 @@ namespace vengine
 	class ImGuiUI 
 	{
 	public:
-		void init(Ref<Window> window, Ref<Scene> scene);
+		void init(Ref<Window> window, Ref<Scene> scene, Ref<Renderer> renderer);
 		
 		void draw();
 		void on_event(const Event& event);
 
 		[[nodiscard]] bool is_scene_view_focused() const { return m_scene_view_focused; }
-		
-		~ImGuiUI();
+
+		void shutdown() const;
 
 	private:
 		void init_imgui() const;
@@ -33,6 +33,7 @@ namespace vengine
 	private:
 		Ref<Window> m_window;
 		Ref<Scene> m_scene;
+		Ref<Renderer> m_renderer;
 		
 		SceneHierarchyPanel m_scene_hierarchy_panel;
 		ConsolePanel m_console_panel;

@@ -18,7 +18,7 @@ namespace vengine
 	class Scene
 	{
 	public:
-		void init();
+		void init(Ref<Renderer> renderer);
 		void on_update();
 		void on_event(const Event& event);
 
@@ -45,11 +45,11 @@ namespace vengine
 		void create_dir_light();
 	
 	private:
-		Renderer* m_renderer;
 		entt::entity m_camera_entity;
 		entt::registry m_registry;
 		SkyboxGL m_skybox;
 		Grid m_grid;
+		Ref<Renderer> m_renderer;
 
 		friend SceneHierarchyPanel;
 		friend ImGuiUI;

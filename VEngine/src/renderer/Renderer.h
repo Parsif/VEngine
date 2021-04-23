@@ -15,7 +15,6 @@ namespace vengine
 	public:
 		void init();
 		void shutdown();
-		[[nodiscard]] static Renderer* get_instance() { return s_instance; }
 
 		void add_drawable(const Drawable& drawable);
 		
@@ -53,9 +52,6 @@ namespace vengine
 		FrameBufferGL m_final_frame_buffer;
 		FrameBufferGL m_shadow_map;
 		FrameBufferGL m_intermediate_frame_buffer;
-
-
-		static Renderer* s_instance;
 	};
 }
 

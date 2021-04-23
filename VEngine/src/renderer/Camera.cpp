@@ -1,9 +1,9 @@
 #include "precheader.h"
 #include "Camera.h"
 
-#include "core/Logger.h"
 #include "events/Input.h"
 #include "events/MouseEvents.h"
+#include "events/WindowEvents.h"
 
 namespace vengine
 {
@@ -18,6 +18,14 @@ namespace vengine
 	{
 		switch (event.get_type())
 		{
+		case EventType::WINDOW_RESIZED:
+		{
+			const auto window_resize_event = *static_cast<const WindowResizedEvent*>(&event);
+			m_aspect_ratio = (float)window_resize_event.get_width() / window_resize_event.get_height();
+			recalculate_projection();
+			break;
+		}
+			
 		case EventType::MOUSE_SCROLLED:
 		{
 			const auto scroll_event = *static_cast<const MouseScrollEvent*>(&event);
