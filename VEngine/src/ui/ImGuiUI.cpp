@@ -15,6 +15,7 @@
 #include <GLFW/glfw3.h>
 
 #include "core/Logger.h"
+#include "utils/Timer.h"
 
 
 namespace vengine
@@ -81,7 +82,16 @@ namespace vengine
 
 		m_scene_hierarchy_panel.draw();
 		m_console_panel.draw();
-		
+
+		ImGui::Begin("Debug");
+		for (auto&& time : Timer::get_times())
+		{
+			ImGui::Text((time.name + ": " + std::to_string(time.duration) + "ms").c_str());
+		}
+		Timer::clear();
+
+		ImGui::End();
+
 		ImGui::PopStyleVar();
 		ImGui::End();
 

@@ -3,7 +3,6 @@
 #include "VEngine.h"
 
 namespace vengine
-
 {
 	class Application
 	{

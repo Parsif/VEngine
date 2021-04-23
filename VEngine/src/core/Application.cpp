@@ -2,6 +2,7 @@
 
 #include "Application.h"
 
+
 namespace vengine
 {
 	void Application::init()
@@ -27,13 +28,15 @@ namespace vengine
 	{
 		while(m_window->is_open())
 		{
-			m_window->on_update();
-			
-			m_scene->on_update();
-			m_renderer->render();
-			m_editor_ui.draw();
-			
-			m_window->swap_buffers();
+			{
+				Timer timer{ "Frame time" };
+				m_window->on_update();
+				m_scene->on_update();
+				m_renderer->render();
+				m_editor_ui.draw();
+				m_window->swap_buffers();
+			}
+
 		}
 	}
 
