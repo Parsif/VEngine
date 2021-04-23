@@ -96,11 +96,7 @@ namespace vengine
 				default: return "UNKNOWN";
 				}
 			}();
-			std::cout << source_str << ", "
-				<< type_str << ", "
-				<< severity_str << ", "
-				<< id << ": "
-				<< message << '\n';
+			Logger::log(source_str + ", " + type_str + ", " + severity_str + ", " + std::to_string(id) + ", " + message, Logger::MessageSeverity::ERROR);
 		}
 #endif
 

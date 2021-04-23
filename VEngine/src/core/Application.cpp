@@ -12,10 +12,11 @@ namespace vengine
 
 	void Application::init()
 	{
+		//TODO: change init system
 		m_window = std::shared_ptr<Window>(Window::create_window());
 		m_window->init();
 		m_window->set_event_callback([this](const Event& event) { on_event(event); });
-		
+
 		m_renderer.init();
 		m_renderer.set_viewport(0, 0, m_window->get_width(), m_window->get_height());
 
@@ -23,7 +24,7 @@ namespace vengine
 		m_scene->init();
 		
 		m_editor_ui.init(m_window, m_scene);
-
+			
 		Input::init(m_window);
 	}
 

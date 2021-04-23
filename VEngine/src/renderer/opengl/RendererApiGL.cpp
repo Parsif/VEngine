@@ -5,7 +5,6 @@
 
 #include <GL/glew.h>
 
-
 namespace vengine
 {
 	void RendererApiGL::init()
@@ -19,6 +18,7 @@ namespace vengine
 		glEnable(GL_DEBUG_OUTPUT);
 		glDebugMessageCallback(MessageCallback, 0);
 #endif
+		glEnable(GL_MULTISAMPLE);
 	}
 
 	void RendererApiGL::shutdown()
@@ -75,10 +75,10 @@ namespace vengine
 	void RendererApiGL::draw_elements(RenderCommand& triangle_command) const
 	{
 		prepare_drawing(triangle_command);
+
 		glDrawElements(UtilsGL::to_gl_primitive_type(triangle_command.get_primitive_type()),
 			triangle_command.get_index_count(), UtilsGL::to_gl_index_type(triangle_command.get_index_type()), 
 			(GLvoid*)triangle_command.get_index_offset());
-
 	}
 
 	void RendererApiGL::prepare_drawing(RenderCommand& command) const

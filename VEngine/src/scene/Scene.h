@@ -43,7 +43,7 @@ namespace vengine
 		void clear();
 
 		void create_dir_light();
-		
+	
 	private:
 		Renderer* m_renderer;
 		entt::entity m_camera_entity;

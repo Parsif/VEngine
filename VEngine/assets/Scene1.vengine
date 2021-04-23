@@ -4,49 +4,49 @@ Entities:
     TagComponent:
       Tag: Serpent
     TransformComponent:
-      Translation: [7.30630207, 3.43546247, 1.26040983]
+      Translation: [4.34055996, 3.17245102, 5.90152359]
       Rotation: [0, 0, 0]
       Scale: [1, 1, 1]
     ModelComponent:
-      ModelFilepath: C:/Dev/Cpp/VEngine/VEngine/assets/tonemapping-replication/tonemapping-replication.obj
-  - Entity: 12837192831273
-    TagComponent:
-      Tag: Backpack
-    TransformComponent:
-      Translation: [5.19480991, 4.23335743, 5.08248138]
-      Rotation: [0, 0, 0]
-      Scale: [1, 1, 1]
-    ModelComponent:
-      ModelFilepath: C:/Dev/Cpp/VEngine/VEngine/assets/backpack/backpack.obj
-  - Entity: 12837192831273
-    TagComponent:
-      Tag: Gun
-    TransformComponent:
-      Translation: [-0.03365767, 3.34595823, 2.48158669]
-      Rotation: [0, 0, 0]
-      Scale: [0.100000001, 0.100000001, 0.100000001]
-    ModelComponent:
-      ModelFilepath: C:/Dev/Cpp/VEngine/VEngine/assets/gun-pbribl-obj/gun-pbribl.obj
-  - Entity: 12837192831273
-    TagComponent:
-      Tag: Directional light
-    DirLightComponent:
-      Position: [4, 7, 1.39999998]
-      Color: [1, 1, 1]
+      ModelFilepath: D:/Development/Cpp/VEngine/VEngine/assets/tonemapping-replication/tonemapping-replication.obj
   - Entity: 12837192831273
     TagComponent:
       Tag: Floor
     TransformComponent:
-      Translation: [0, 0.300000012, 0]
+      Translation: [0, 0.423513055, 0]
       Rotation: [0, 0, 0]
       Scale: [1, 1, 1]
     ModelComponent:
-      ModelFilepath: C:/Dev/Cpp/VEngine/VEngine/assets/floor-obj/floor.obj
+      ModelFilepath: D:/Development/Cpp/VEngine/VEngine/assets/floor-obj/floor.obj
+  - Entity: 12837192831273
+    TagComponent:
+      Tag: Backpack
+    TransformComponent:
+      Translation: [7.55539036, 4.56675243, 0]
+      Rotation: [0, 0, 0]
+      Scale: [1, 1, 1]
+    ModelComponent:
+      ModelFilepath: D:/Development/Cpp/VEngine/VEngine/assets/backpack/backpack.obj
+  - Entity: 12837192831273
+    TagComponent:
+      Tag: Directional light
+    DirLightComponent:
+      Position: [10.8999996, 23.1000004, -5.9000001]
+      Color: [1, 1, 1]
+  - Entity: 12837192831273
+    TagComponent:
+      Tag: Gun
+    TransformComponent:
+      Translation: [-3.86538506, 4.25720882, 0.611833334]
+      Rotation: [0, 0.899999976, 0]
+      Scale: [0.100000001, 0.100000001, 0.100000001]
+    ModelComponent:
+      ModelFilepath: D:/Development/Cpp/VEngine/VEngine/assets/gun-pbribl-obj/gun-pbribl.obj
   - Entity: 12837192831273
     TagComponent:
       Tag: Camera
     CameraComponent:
-      Position: [17.5919971, 14.2194901, 10.9228992]
-      PerspectiveFOV: 41
+      Position: [-5.90689325, 8.33299446, 0.522037327]
+      PerspectiveFOV: 45
       PerspectiveNear: 0.100000001
       PerspectiveFar: 500

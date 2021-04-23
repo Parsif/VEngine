@@ -16,6 +16,8 @@ namespace vengine
 		{
 			std::string text;
 			ImVec4 severity_color;
+
+			[[nodiscard]] bool operator==(const std::string& message) const { return message == text; }
 		};
 	
 	public:
@@ -42,7 +44,10 @@ namespace vengine
 				message_color = ImVec4{ 1.0f, 0.0f, 0.0f, 1.0f };
 				break;
 			}
-			s_messages.push_back(Message{ str_time + message, message_color });
+			if(std::find(s_messages.begin(), s_messages.end(), message) == s_messages.end())
+			{
+				s_messages.push_back(Message{ message, message_color });
+			}
 		}
 
 		[[nodiscard]] static auto& get_messages() { return s_messages; }

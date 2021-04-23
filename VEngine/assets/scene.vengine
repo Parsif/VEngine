@@ -1,0 +1,34 @@
+Scene: Untitled
+Entities:
+  - Entity: 12837192831273
+    TagComponent:
+      Tag: Florr
+    TransformComponent:
+      Translation: [0.0896401405, -3.76861572, 0]
+      Rotation: [0, 0, 0]
+      Scale: [1, 1, 1]
+    ModelComponent:
+      ModelFilepath: D:/Development/Cpp/VEngine/VEngine/assets/floor-obj/floor.obj
+  - Entity: 12837192831273
+    TagComponent:
+      Tag: Directional light
+    DirLightComponent:
+      Position: [13.6999998, 10, 1]
+      Color: [1, 1, 1]
+  - Entity: 12837192831273
+    TagComponent:
+      Tag: Gun
+    TransformComponent:
+      Translation: [0, -1.0314827, 0]
+      Rotation: [0, 0, 0]
+      Scale: [0.100000001, 0.100000001, 0.100000001]
+    ModelComponent:
+      ModelFilepath: D:/Development/Cpp/VEngine/VEngine/assets/gun-pbribl-obj/gun-pbribl.obj
+  - Entity: 12837192831273
+    TagComponent:
+      Tag: Camera
+    CameraComponent:
+      Position: [4.96282434, 12.4642496, 15.8182898]
+      PerspectiveFOV: 45
+      PerspectiveNear: 0.100000001
+      PerspectiveFar: 500

@@ -14,7 +14,7 @@ namespace vengine
 	
 		if (data)
 		{
-			glGenTextures(1, &m_id);
+			glCreateTextures(GL_TEXTURE_2D, 1, &m_id);
 			glBindTexture(GL_TEXTURE_2D, m_id);
 			glTexImage2D(GL_TEXTURE_2D, 0, GL_SRGB, m_width, m_height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
 			glGenerateMipmap(GL_TEXTURE_2D);

@@ -31,6 +31,7 @@ namespace vengine
 		glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
 		glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 		glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+		
 		m_glfw_window = glfwCreateWindow(m_data.width, m_data.height, title.c_str(), NULL, NULL);
 		if (!m_glfw_window)
 		{

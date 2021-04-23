@@ -45,6 +45,7 @@ namespace vengine
 			auto& dir_light_component = dir_light_view.get<DirLightComponent>(dir_light_entity);
 			basic_material.set("u_dirlight.position", dir_light_component.position);
 			basic_material.set("u_dirlight.color", dir_light_component.color);
+		
 			light_view = glm::lookAt(dir_light_component.position,
 				glm::vec3(0.0f, 0.0f, 0.0f),
 				glm::vec3(0.0f, 1.0f, 0.0f));
@@ -57,19 +58,7 @@ namespace vengine
 		auto& shadowmap_material = MaterialLibrary::get_material("Shadowmap");
 		shadowmap_material.set("u_light_space_matrix", light_space_matrix);
 		basic_material.set("u_light_space_matrix", light_space_matrix);
-
-		////calculation direct_light frustrum
-		//auto inverse = glm::inverse(get_camera().get_view_projection()) * glm::inverse();
-		//glm::vec4 corner1 = inverse * glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
-		//glm::vec4 corner2 = inverse * glm::vec4(1.0f, -1.0f, 1.0f, 1.0f);
-		//glm::vec4 corner3 = inverse * glm::vec4(1.0f, 1.0f, -1.0f, 1.0f);
-		//glm::vec4 corner4 = inverse * glm::vec4(-1.0f, 1.0f, 1.0f, 1.0f);
-		//glm::vec4 corner5 = inverse * glm::vec4(-1.0f, -1.0f, 1.0f, 1.0f);
-		//glm::vec4 corner6 = inverse * glm::vec4(1.0f, -1.0f, -1.0f, 1.0f);
-		//glm::vec4 corner7 = inverse * glm::vec4(-1.0f, 1.0f, -1.0f, 1.0f);
-		//glm::vec4 corner8 = inverse * glm::vec4(-1.0f, -1.0f, -1.0f, 1.0f);
-
-
+	
 		
 		m_registry.each([&](auto entity)
 		{
