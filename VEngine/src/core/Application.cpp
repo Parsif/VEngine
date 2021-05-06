@@ -95,7 +95,10 @@ namespace vengine
 	void Application::on_window_resize(const Event& event) const
 	{
 		const auto window_resize_event = *static_cast<const WindowResizedEvent*>(&event);
-		m_renderer->set_viewport(0, 0, window_resize_event.get_width(), window_resize_event.get_height());
-		m_scene->on_event(event);
+		if(window_resize_event.get_width() != 0 && window_resize_event.get_height() != 0)
+		{
+			m_renderer->set_viewport(0, 0, window_resize_event.get_width(), window_resize_event.get_height());
+			m_scene->on_event(event);
+		}
 	}
 }

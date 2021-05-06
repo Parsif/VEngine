@@ -129,6 +129,8 @@ namespace vengine
 
 					component.position = dir_light_component["Position"].as<glm::vec3>();
 					component.color = dir_light_component["Color"].as<glm::vec3>();
+					component.intensity = dir_light_component["Intensity"].as<float>();
+
 
 					m_scene->add_component<DirLightComponent>(entity, component);
 				}
@@ -204,6 +206,7 @@ namespace vengine
 
 			out << YAML::Key << "Position" << YAML::Value << dir_light_component.position;
 			out << YAML::Key << "Color" << YAML::Value << dir_light_component.color;
+			out << YAML::Key << "Intensity" << YAML::Value << dir_light_component.intensity;
 
 			out << YAML::EndMap; // ModelComponent
 		}

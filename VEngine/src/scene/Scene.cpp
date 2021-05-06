@@ -43,6 +43,8 @@ namespace vengine
 			auto& dir_light_component = dir_light_view.get<DirLightComponent>(dir_light_entity);
 			basic_material.set("u_dirlight.position", dir_light_component.position);
 			basic_material.set("u_dirlight.color", dir_light_component.color);
+			basic_material.set("u_dirlight.intensity", dir_light_component.intensity);
+
 		
 			light_view = glm::lookAt(dir_light_component.position,
 				glm::vec3(0.0f, 0.0f, 0.0f),
@@ -56,6 +58,7 @@ namespace vengine
 		auto& shadowmap_material = MaterialLibrary::get_material("Shadowmap");
 		shadowmap_material.set("u_light_space_matrix", light_space_matrix);
 		basic_material.set("u_light_space_matrix", light_space_matrix);
+
 	
 		
 		m_registry.each([&](auto entity)
@@ -67,7 +70,6 @@ namespace vengine
 				basic_material.set("u_transform", transform);
 				shadowmap_material.set("u_transform", transform);
 				auto& drawable = ModelLoader::get_drawable(model_component.filepath);
-				basic_material.set("u_material.has_normal_map", drawable.has_normal_map);
 
 				drawable.render_material = basic_material;
 				drawable.shadow_material = shadowmap_material;

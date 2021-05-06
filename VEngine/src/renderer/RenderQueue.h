@@ -11,8 +11,6 @@ namespace vengine
 		Material render_material;
 		bool is_casting_shadow;
 		Material shadow_material;
-		bool has_normal_map;
-		
 	};
 	
 	class RenderQueue

@@ -2,6 +2,8 @@
 #include "ModelLoader.h"
 
 #include "opengl/TextureGL.h"
+#include <assimp/pbrmaterial.h>
+
 
 namespace vengine
 {
@@ -46,7 +48,6 @@ namespace vengine
 			drawable.commands.push_back(process_mesh(scene->mMeshes[i], scene, file_dir));
 		}
 		
-		drawable.has_normal_map = scene->mMaterials[scene->mMeshes[0]->mMaterialIndex]->GetTextureCount(aiTextureType_HEIGHT) > 0;
 		s_drawables[filepath] = drawable;
 	}
 
@@ -106,11 +107,17 @@ namespace vengine
 			command.set_index_buffer(indices.data(), sizeof(indices.back()) * indices.size(), indices.size());
 		}
 
-		auto diffuse_textures = process_material(scene->mMaterials[ai_mesh->mMaterialIndex], file_dir, aiTextureType_DIFFUSE);
-		auto normals_textures = process_material(scene->mMaterials[ai_mesh->mMaterialIndex], file_dir, aiTextureType_HEIGHT);
+		auto albedo_textures = process_material(scene->mMaterials[ai_mesh->mMaterialIndex], file_dir, aiTextureType_DIFFUSE);
+		auto metallic_textures = process_material(scene->mMaterials[ai_mesh->mMaterialIndex], file_dir, aiTextureType_METALNESS);
+		auto roughness_textures = process_material(scene->mMaterials[ai_mesh->mMaterialIndex], file_dir, aiTextureType_SHININESS);
+		auto ao_textures = process_material(scene->mMaterials[ai_mesh->mMaterialIndex], file_dir, aiTextureType_AMBIENT_OCCLUSION);
+		auto normals_textures = process_material(scene->mMaterials[ai_mesh->mMaterialIndex], file_dir, aiTextureType_NORMALS);
 
 		std::vector<TextureGL> texture2ds;
-		texture2ds.insert(texture2ds.end(), std::make_move_iterator(diffuse_textures.begin()), std::make_move_iterator(diffuse_textures.end()));
+		texture2ds.insert(texture2ds.end(), std::make_move_iterator(albedo_textures.begin()), std::make_move_iterator(albedo_textures.end()));
+		texture2ds.insert(texture2ds.end(), std::make_move_iterator(metallic_textures.begin()), std::make_move_iterator(metallic_textures.end()));
+		texture2ds.insert(texture2ds.end(), std::make_move_iterator(roughness_textures.begin()), std::make_move_iterator(roughness_textures.end()));
+		texture2ds.insert(texture2ds.end(), std::make_move_iterator(ao_textures.begin()), std::make_move_iterator(ao_textures.end()));
 		texture2ds.insert(texture2ds.end(), std::make_move_iterator(normals_textures.begin()), std::make_move_iterator(normals_textures.end()));
 
 		command.set_textures2d(texture2ds);
@@ -127,7 +134,7 @@ namespace vengine
 			if (ai_material->GetTexture(ai_texture_type, 0, &texture_path) == AI_SUCCESS)
 			{
 				const auto fullpath = file_dir + '/' + texture_path.data;
-
+				Logger::log(fullpath, Logger::MessageSeverity::INFO);
 				if (s_loaded_textures.find(fullpath) != s_loaded_textures.end())
 				{
 					textures2d.push_back(s_loaded_textures[fullpath]);

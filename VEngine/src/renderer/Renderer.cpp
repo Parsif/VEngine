@@ -112,7 +112,7 @@ namespace vengine
 			if(drawable.is_casting_shadow)
 			{
 				TextureGL depth_texture{ m_shadow_map.get_depth_attachment() };
-				drawable.render_material.set("u_shadow_map", (int)i);
+				drawable.render_material.set("u_dirlight.shadow_map", (int)i);
 				depth_texture.bind(i);
 			}
 			drawable.render_material.use();

@@ -10,8 +10,9 @@ namespace vengine
 {
 	TextureGL::TextureGL(const std::string& filepath, aiTextureType type) : m_type(type)
 	{
+		stbi_set_flip_vertically_on_load(true);
+
 		unsigned char* data = stbi_load(filepath.data(), &m_width, &m_height, &m_channels, STBI_rgb);
-	
 		if (data)
 		{
 			glCreateTextures(GL_TEXTURE_2D, 1, &m_id);
@@ -30,15 +31,23 @@ namespace vengine
 		switch (m_type)
 		{
 		case aiTextureType_DIFFUSE:
-			m_string_type = "diffuse_texture";
+			m_string_type = "albedo_map";
 			break;
 
-		case aiTextureType_SPECULAR:
-			m_string_type = "specular_texture";
+		case aiTextureType_METALNESS:
+			m_string_type = "metallic_map";
 			break;
 
-		case aiTextureType_HEIGHT:
-			m_string_type = "normals_texture";
+		case aiTextureType_SHININESS:
+			m_string_type = "roughness_map";
+			break;
+
+		case aiTextureType_AMBIENT_OCCLUSION:
+			m_string_type = "ao_map";
+			break;
+
+		case aiTextureType_NORMALS:
+			m_string_type = "normal_map";
 			break;
 		}
 		

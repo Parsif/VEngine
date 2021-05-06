@@ -260,7 +260,7 @@ namespace vengine
 
 				if (ImGui::MenuItem("Import model", nullptr, false))
 				{
-					auto filename = FileDialogs::open_file_dialog("Obj, fbx (.obj, .fbx)\0*.obj;*.fbx\0", m_window);
+					auto filename = FileDialogs::open_file_dialog("Obj, fbx, gltf, dae (.obj, .fbx, .gltf, .dae)\0*.obj;*.fbx;*.gltf;*.dae\0", m_window);
 					if(filename)
 					{
 						std::replace(filename.value().begin(), filename.value().end(), '\\', '/');
