@@ -14,6 +14,7 @@ namespace vengine
 		void on_event(const Event& event);
 
 		void on_window_resize(const Event& event) const;
+		void on_drop_file(const Event& event) const;
 
 	private:
 		Ref<Window> m_window;

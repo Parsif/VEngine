@@ -8,15 +8,12 @@ namespace vengine
 	class SceneSerializer
 	{
 	public:
-		SceneSerializer(Ref<Scene> scene);
-		void serialize(const std::string& filepath);
-		void deserialize(const std::string& filepath) const;
+		void static serialize(const std::string& filepath, Ref<Scene> scene);
+		void static deserialize(const std::string& filepath, Ref<Scene> scene);
 	
 	private:
-		void serialize_entity(YAML::Emitter& out, entt::entity entity) const;
+		void static serialize_entity(YAML::Emitter& out, entt::entity entity, Ref<Scene> scene);
 
-	private:
-		Ref<Scene> m_scene;
 	};
 }
 

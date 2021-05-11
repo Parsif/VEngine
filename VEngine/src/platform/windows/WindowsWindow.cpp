@@ -109,6 +109,15 @@ namespace vengine
 			const MousePressedEvent event(button, action, mods);
 			data.event_callback(event);
 		});
+
+
+		glfwSetDropCallback(m_glfw_window, [](GLFWwindow* window, int count, const char** paths)
+		{
+			auto& data = *static_cast<WindowData*>(glfwGetWindowUserPointer(window));
+			
+			const FileDropEvent event(paths[0]);
+			data.event_callback(event);
+		});
 	}
 	
 	void WindowsWindow::on_update()

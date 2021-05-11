@@ -22,6 +22,9 @@ namespace vengine
 		void shutdown() const;
 
 	private:
+		void set_edin_black_style() const;
+		void set_maya_style() const;
+
 		void init_imgui() const;
 
 		void begin_frame();

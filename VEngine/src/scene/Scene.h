@@ -37,13 +37,13 @@ namespace vengine
 
 		void destroy_entity(entt::entity entity); 
 
-		//TODO: consider other camera implementation inside scene
+		//TODO: consider other camera implementation inside scene && check component existence before getting it
 		[[nodiscard]] auto& get_camera(){ return m_registry.get<CameraComponent>(m_camera_entity).camera; }
 		void set_camera_entity(entt::entity entity);
 		void clear();
 
 		void create_dir_light();
-	
+
 	private:
 		entt::entity m_camera_entity;
 		entt::registry m_registry;

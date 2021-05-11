@@ -1,5 +1,6 @@
 #include "precheader.h"
 #include "Scene.h"
+#include "SceneSerializer.h"
 
 #include "renderer/ModelLoader.h"
 #include "renderer/Renderer.h"

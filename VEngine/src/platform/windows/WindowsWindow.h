@@ -49,7 +49,6 @@ namespace vengine
 		WindowData m_data;
 
 	};
-
 	
 
 	inline Window* Window::create_window()

@@ -29,4 +29,19 @@ namespace vengine
 			m_event_type = EventType::WINDOW_CLOSED;
 		}
 	};
+
+
+	class FileDropEvent : public Event
+	{
+	public:
+		FileDropEvent(std::string path) : m_path(std::move(path))
+		{
+			m_event_type = EventType::FILE_DROP;
+		}
+
+		[[nodiscard]] auto& get_path() { return m_path; }
+
+	private:
+		std::string m_path;
+	};
 }

@@ -2,6 +2,7 @@
 
 #include "Application.h"
 
+#include "scene/SceneSerializer.h"
 
 namespace vengine
 {
@@ -51,44 +52,51 @@ namespace vengine
 		switch (event.get_type())
 		{
 		case EventType::WINDOW_RESIZED:
-			{
-				on_window_resize(event);
-				break;
-			}
+		{
+			on_window_resize(event);
+			break;
+		}
 
 		case EventType::KEY_PRESSED:
-			{
-				m_editor_ui.on_event(event);
-				break;
-			}
+		{
+			m_editor_ui.on_event(event);
+			break;
+		}
 
 		case EventType::MOUSE_SCROLLED:
+		{
+			//TODO: move focus check in scene
+			if (m_editor_ui.is_scene_view_focused())
 			{
-				//TODO: move focus check in scene
-				if(m_editor_ui.is_scene_view_focused())
-				{
-					m_scene->on_event(event);
-				}
-				break;
+				m_scene->on_event(event);
 			}
-			
+			break;
+		}
+
 		case EventType::MOUSE_MOVED:
+		{
+			if (m_editor_ui.is_scene_view_focused())
 			{
-				if (m_editor_ui.is_scene_view_focused())
-				{
-					m_scene->on_event(event);
-				}
-				break;
+				m_scene->on_event(event);
 			}
+			break;
+		}
 
 		case EventType::MOUSE_PRESSED:
+		{
+			if (m_editor_ui.is_scene_view_focused())
 			{
-				if (m_editor_ui.is_scene_view_focused())
-				{
-					m_scene->on_event(event);
-				}
-				break;
+				m_scene->on_event(event);
 			}
+			break;
+		}
+
+		case EventType::FILE_DROP:
+		{
+			on_drop_file(event);
+			break;
+		}
+			
 		}
 	}
 
@@ -100,5 +108,11 @@ namespace vengine
 			m_renderer->set_viewport(0, 0, window_resize_event.get_width(), window_resize_event.get_height());
 			m_scene->on_event(event);
 		}
+	}
+
+	void Application::on_drop_file(const Event& event) const
+	{
+		auto drop_file_event = *static_cast<const FileDropEvent*>(&event);
+		SceneSerializer::deserialize(drop_file_event.get_path(), m_scene);
 	}
 }
