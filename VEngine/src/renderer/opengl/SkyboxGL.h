@@ -9,7 +9,8 @@ namespace vengine
 	class SkyboxGL
 	{
 	public:
-		void init(const std::string& top_texture, const std::string& bottom_texture, const std::string& left_texture,
+		SkyboxGL() = default;
+		SkyboxGL(const std::string& top_texture, const std::string& bottom_texture, const std::string& left_texture,
 			const std::string& right_texture, const std::string& back_texture, const std::string& front_texture);
 
 		void bind() const;

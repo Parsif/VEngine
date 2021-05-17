@@ -117,9 +117,18 @@ namespace vengine
 
             if (ImGui::TreeNodeEx((void*)typeid(TransformComponent).hash_code(), ImGuiTreeNodeFlags_DefaultOpen, "DirLight"))
             {
-                ImGui::DragFloat3("Position", glm::value_ptr(dir_light_component.position), DRAG_SPEED);
-                ImGui::DragFloat3("Color", glm::value_ptr(dir_light_component.color), DRAG_SPEED);
-                ImGui::DragFloat("Intensity", &dir_light_component.intensity, DRAG_SPEED);
+                if(ImGui::DragFloat3("Position", glm::value_ptr(dir_light_component.position), DRAG_SPEED))
+                {
+                    m_scene->m_registry.replace<DirLightComponent>(entity, dir_light_component);
+                }
+                if(ImGui::DragFloat3("Color", glm::value_ptr(dir_light_component.color), DRAG_SPEED))
+                {
+                    m_scene->m_registry.replace<DirLightComponent>(entity, dir_light_component);
+                }
+                if(ImGui::DragFloat("Intensity", &dir_light_component.intensity, DRAG_SPEED))
+                {
+                    m_scene->m_registry.replace<DirLightComponent>(entity, dir_light_component);
+                }
 
                 ImGui::TreePop();
             }

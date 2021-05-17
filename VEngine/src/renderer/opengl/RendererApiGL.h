@@ -1,11 +1,5 @@
 #pragma once
 
-#include "core/Vtypes.h"
-
-#include "Buffer.h"
-#include "FrameBufferGL.h"
-#include "VertexArray.h"
-
 #include "../RenderPassDescriptor.h"
 #include "renderer/Material.h"
 #include "renderer/RenderCommand.h"
@@ -15,38 +9,20 @@ namespace vengine
 	class RendererApiGL
 	{
 	public:
-		void init();
-		void shutdown();
+		void static init();
+		void static shutdown();
 
-		void begin_render_pass(const RenderPassDescriptor& descriptor);
-		void end_render_pass() const;
+		void static begin_render_pass(const RenderPassDescriptor& descriptor);
+		void static end_render_pass();
 
-		void set_viewport(int x, int y, unsigned int width, unsigned int height);
+		void static set_viewport(int x, int y, unsigned int width, unsigned int height);
 
-		void draw_elements(RenderCommand& triangle_command) const;
+		void static draw_elements(RenderCommand& triangle_command);
 
 	private:
-		void prepare_drawing(RenderCommand& command) const;
+		void static prepare_drawing(RenderCommand& command);
 
 		
-	private:
-		struct Viewport
-		{
-			int x = 0;
-			int y = 0;
-			unsigned int width = 0;
-			unsigned int height = 0;
-		};
-		
-		Ref<VertexBuffer> m_vertex_buffer;
-		Ref<IndexBuffer> m_index_buffer;
-		Ref<VertexArray> m_vertex_array;
-		//TODO: CHANGE DEFAULT INIT OF BUFFER LAYOUT
-		BufferLayout m_buffer_layout{};
-		Material m_material{};
-		
-		Viewport m_viewport;
-
 	private:
 #ifdef V_CONFIGURATION_DEBUG
 		static void GLAPIENTRY

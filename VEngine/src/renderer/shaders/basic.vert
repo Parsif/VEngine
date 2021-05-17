@@ -14,10 +14,19 @@ out VertexOutput
 	mat3 TBN;
 } vs_output;
 
+struct DirLight
+{
+    vec3 position;
+    vec3 color;
+    float intensity;
+	mat4 light_space_matrix;
+};
+
+uniform int u_dir_light_count;
 
 uniform mat4 u_transform;
 uniform mat4 u_view_projection;
-uniform mat4 u_light_space_matrix;
+uniform DirLight u_dirlight;
 
 void main()
 {
@@ -25,7 +34,10 @@ void main()
 	gl_Position = u_view_projection * vec4(vs_output.frag_pos, 1.0f);
 	vs_output.tex_coord = tex_coord;
 	vs_output.normal = normal;
-	vs_output.frag_pos_light_space = u_light_space_matrix * vec4(vs_output.frag_pos, 1.0f);
+	
+	vs_output.frag_pos_light_space = u_dirlight.light_space_matrix * vec4(vs_output.frag_pos, 1.0f);
+	
+
 
 	vec3 T = normalize(vec3(u_transform * vec4(tangent, 0.0)));
     vec3 N = normalize(vec3(u_transform * vec4(normal, 0.0)));

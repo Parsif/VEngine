@@ -14,7 +14,7 @@ namespace vengine
 	class ModelLoader
 	{
 	public:
-		[[nodiscard]] static Drawable& get_drawable(const std::string& filepath);
+		[[nodiscard]] static Mesh& get_drawable(const std::string& filepath);
 
 
 	private:
@@ -25,8 +25,8 @@ namespace vengine
 
 	
 	private:
-		inline static std::unordered_map<std::string, Drawable> s_drawables =
-			std::unordered_map<std::string, Drawable>();
+		inline static std::unordered_map<std::string, Mesh> s_drawables =
+			std::unordered_map<std::string, Mesh>();
 
 		inline static std::unordered_map<std::string, TextureGL> s_loaded_textures =
 			std::unordered_map<std::string, TextureGL>();

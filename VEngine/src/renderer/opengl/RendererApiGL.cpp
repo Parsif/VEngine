@@ -58,21 +58,17 @@ namespace vengine
 
 	}
 
-	void RendererApiGL::end_render_pass() const
+	void RendererApiGL::end_render_pass()
 	{
 	}
 
 	void RendererApiGL::set_viewport(int x, int y, unsigned int width, unsigned int height)
 	{
 		glViewport(x, y, width, height);
-		m_viewport.x = x;
-		m_viewport.y = y;
-		m_viewport.width = width;
-		m_viewport.height = height;
 	}
 
 
-	void RendererApiGL::draw_elements(RenderCommand& triangle_command) const
+	void RendererApiGL::draw_elements(RenderCommand& triangle_command)
 	{
 		prepare_drawing(triangle_command);
 
@@ -81,7 +77,7 @@ namespace vengine
 			(GLvoid*)triangle_command.get_index_offset());
 	}
 
-	void RendererApiGL::prepare_drawing(RenderCommand& command) const
+	void RendererApiGL::prepare_drawing(RenderCommand& command)
 	{
 		const auto& vertex_array = command.get_vertex_array();
 		if (vertex_array->is_data_bound())

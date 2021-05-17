@@ -5,7 +5,7 @@
 
 namespace vengine
 {
-	void RenderQueue::push_back(const Drawable& drawable)
+	void RenderQueue::push_back(const Mesh& drawable)
 	{
 		m_drawables.push_back(drawable);
 	}

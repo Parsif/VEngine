@@ -32,7 +32,6 @@ namespace vengine
 		void create_camera();
 		void create_model(const std::string& model_path);	
 
-		void draw_skybox();
 		void draw_grid();
 
 		void destroy_entity(entt::entity entity); 
@@ -45,9 +44,11 @@ namespace vengine
 		void create_dir_light();
 
 	private:
+		void on_dir_light_update(entt::registry& registry, entt::entity entity) const;
+	
+	private:
 		entt::entity m_camera_entity;
 		entt::registry m_registry;
-		SkyboxGL m_skybox;
 		Grid m_grid;
 		Ref<Renderer> m_renderer;
 

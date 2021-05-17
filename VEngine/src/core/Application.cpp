@@ -2,8 +2,6 @@
 
 #include "Application.h"
 
-#include "scene/SceneSerializer.h"
-
 namespace vengine
 {
 	void Application::init()
@@ -12,6 +10,8 @@ namespace vengine
 		m_window->init();
 		m_window->set_event_callback([this](const Event& event) { on_event(event); });
 
+		RendererApiGL::init();
+		
 		m_renderer = std::make_shared<Renderer>();
 		m_renderer->init();
 		m_renderer->set_viewport(0, 0, m_window->get_width(), m_window->get_height());

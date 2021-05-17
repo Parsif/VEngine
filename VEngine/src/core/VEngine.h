@@ -17,6 +17,8 @@
 #include "events/Input.h"
 
 #include "scene/Scene.h"
+#include "scene/SceneSerializer.h"
+
 
 #include "utils/Timer.h"
 

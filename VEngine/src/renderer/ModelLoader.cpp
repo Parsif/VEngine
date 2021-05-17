@@ -7,7 +7,7 @@
 
 namespace vengine
 {
-	Drawable& ModelLoader::get_drawable(const std::string& filepath)
+	Mesh& ModelLoader::get_drawable(const std::string& filepath)
 	{
 		if (s_drawables.find(filepath) == s_drawables.end())
 		{
@@ -41,7 +41,7 @@ namespace vengine
 
 	void ModelLoader::process_scene(const aiScene* scene, const std::string& filepath)
 	{
-		Drawable drawable;
+		Mesh drawable;
 		const auto file_dir = filepath.substr(0, filepath.find_last_of('/'));
 		for(size_t i = 0; i < scene->mNumMeshes; ++i)
 		{

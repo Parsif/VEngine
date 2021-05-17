@@ -7,7 +7,7 @@
 
 namespace vengine
 {
-	void SkyboxGL::init(const std::string& top_texture, const std::string& bottom_texture,
+	SkyboxGL::SkyboxGL(const std::string& top_texture, const std::string& bottom_texture,
 		const std::string& left_texture, const std::string& right_texture, const std::string& back_texture,
 		const std::string& front_texture)
 	{
@@ -28,7 +28,6 @@ namespace vengine
 		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
 	}
-	
 
 	void SkyboxGL::bind() const
 	{

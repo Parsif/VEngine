@@ -5,18 +5,17 @@
 
 namespace vengine
 {
-	struct Drawable
+	struct Mesh
 	{
 		std::vector<RenderCommand> commands;
-		Material render_material;
 		bool is_casting_shadow;
-		Material shadow_material;
+		glm::mat4 transform;
 	};
 	
 	class RenderQueue
 	{
 	public:
-		void push_back(const Drawable& render_command);
+		void push_back(const Mesh& render_command);
 		[[nodiscard]] size_t size() const { return m_drawables.size(); }
 		void clear();
 
@@ -29,7 +28,7 @@ namespace vengine
 	private:
 	
 	private:
-		std::deque<Drawable> m_drawables;
+		std::deque<Mesh> m_drawables;
 		
 	};
 }

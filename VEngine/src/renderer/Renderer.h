@@ -1,5 +1,6 @@
 #pragma once
 
+#include "MaterialLibrary.h"
 #include "RenderCommand.h"
 #include "RenderQueue.h"
 
@@ -7,6 +8,8 @@
 
 #include "RenderPassDescriptor.h"
 #include "opengl/FrameBufferGL.h"
+#include "opengl/SkyboxGL.h"
+#include "scene/Components.h"
 
 namespace vengine
 {
@@ -16,11 +19,15 @@ namespace vengine
 		void init();
 		void shutdown();
 
-		void add_drawable(const Drawable& drawable);
+		void add_drawable(const Mesh& drawable);
 		
 		void render();
 		void set_viewport(int x, int y, unsigned int width, unsigned int height);
 		void set_viewport_size(unsigned int width, unsigned int height);
+		void set_dir_light(DirLightComponent dir_lights);
+		void set_camera_params(const glm::mat4& view_projection, const glm::vec3& position);
+
+		void set_skybox(const SkyboxGL& skybox);
 
 		[[nodiscard]] auto get_color_attachment() const { return m_intermediate_frame_buffer.get_color_attachment(); }
 
@@ -29,8 +36,9 @@ namespace vengine
 	private:
 		void begin_render_pass(const FrameBufferGL& frame_buffer);
 		void end_render_pass(const FrameBufferGL& frame_buffer) const;
-		void render_drawable(Drawable& drawable) const;
-		void render_shadow(Drawable& drawable) const;
+		void render_mesh(Mesh& mesh) const;
+		void render_shadow(Mesh& mesh) const;
+		void render_skybox();
 
 	
 	private:
@@ -45,13 +53,22 @@ namespace vengine
 		Viewport m_viewport;
 		
 		RenderQueue m_render_queue;
-		RendererApiGL m_renderer_api;
-
 		RenderPassDescriptor m_render_pass_descriptor;
 
 		FrameBufferGL m_final_frame_buffer;
-		FrameBufferGL m_shadow_map;
 		FrameBufferGL m_intermediate_frame_buffer;
+		const FrameBufferSpecifications m_shadow_map_specs{ 1024, 1024, FrameBufferType::DEPTH_ONLY };
+		FrameBufferGL m_dir_light_shadow_map;
+
+		Material& m_render_material = MaterialLibrary::get_material("Basic");
+		Material& m_direct_shadow_map_material = MaterialLibrary::get_material("Shadowmap");
+		Material& m_skybox_material = MaterialLibrary::get_material("Skybox");
+
+		SkyboxGL m_skybox;
+		
+		DirLightComponent m_dir_light;
+		glm::mat4 m_camera_view_projection;
+		glm::vec3 m_camera_pos;
 	};
 }
 

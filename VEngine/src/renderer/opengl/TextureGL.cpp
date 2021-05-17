@@ -55,7 +55,6 @@ namespace vengine
 
 	TextureGL::TextureGL(const unsigned int id) : m_id(id)
 	{
-		
 	}
 
 	void TextureGL::bind(const GLenum slot) const

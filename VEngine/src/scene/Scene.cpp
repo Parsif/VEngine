@@ -1,6 +1,5 @@
 #include "precheader.h"
 #include "Scene.h"
-#include "SceneSerializer.h"
 
 #include "renderer/ModelLoader.h"
 #include "renderer/Renderer.h"
@@ -14,13 +13,14 @@ namespace vengine
 	void Scene::init(Ref<Renderer> renderer)
 	{
 		m_renderer = renderer;
-		m_skybox.init("./VEngine/assets/SkyCubemap/skybox_top.jpg", "./VEngine/assets/SkyCubemap/skybox_bottom.jpg",
-			"./VEngine/assets/SkyCubemap/skybox_left.jpg", "./VEngine/assets/SkyCubemap/skybox_right.jpg",
-			"./VEngine/assets/SkyCubemap/skybox_back.jpg", "./VEngine/assets/SkyCubemap/skybox_front.jpg");
 		m_grid.init();
 		create_camera();
+		m_renderer->set_skybox(SkyboxGL{ "./VEngine/assets/SkyCubemap/skybox_top.jpg", "./VEngine/assets/SkyCubemap/skybox_bottom.jpg",
+			"./VEngine/assets/SkyCubemap/skybox_left.jpg", "./VEngine/assets/SkyCubemap/skybox_right.jpg",
+			"./VEngine/assets/SkyCubemap/skybox_back.jpg", "./VEngine/assets/SkyCubemap/skybox_front.jpg" });
+		m_registry.on_update<DirLightComponent>().connect<&Scene::on_dir_light_update>(this);
 	}
-
+	
 	void Scene::on_update()
 	{
 		if (Grid::s_enabled)
@@ -28,63 +28,28 @@ namespace vengine
 			//TODO: fix grid
 			//draw_grid();
 		}
-		
-		draw_skybox();
 
-		auto& basic_material = MaterialLibrary::get_material("Basic");
-		basic_material.set("u_view_projection", get_camera().get_view_projection());
-		basic_material.set("u_view_pos", get_camera().get_position());
-
-		glm::mat4 light_view;
-		
-		auto dir_light_view = m_registry.view<DirLightComponent>();
-
-		for (auto dir_light_entity : dir_light_view)
-		{
-			auto& dir_light_component = dir_light_view.get<DirLightComponent>(dir_light_entity);
-			basic_material.set("u_dirlight.position", dir_light_component.position);
-			basic_material.set("u_dirlight.color", dir_light_component.color);
-			basic_material.set("u_dirlight.intensity", dir_light_component.intensity);
-
-		
-			light_view = glm::lookAt(dir_light_component.position,
-				glm::vec3(0.0f, 0.0f, 0.0f),
-				glm::vec3(0.0f, 1.0f, 0.0f));
-		}
-		
-		const float near_plane = 1.0f, far_plane = 50.0f;
-		const glm::mat4 light_projection = glm::ortho(-20.0f, 20.0f, -20.0f, 20.0f, near_plane, far_plane);
-		const glm::mat4 light_space_matrix = light_projection * light_view;
-
-		auto& shadowmap_material = MaterialLibrary::get_material("Shadowmap");
-		shadowmap_material.set("u_light_space_matrix", light_space_matrix);
-		basic_material.set("u_light_space_matrix", light_space_matrix);
-
-	
-		
 		m_registry.each([&](auto entity)
 		{
 			if(m_registry.has<ModelComponent>(entity)) 
 			{
 				ModelComponent& model_component = m_registry.get<ModelComponent>(entity);
-				const auto& transform = m_registry.get<TransformComponent>(entity).get_transform();
-				basic_material.set("u_transform", transform);
-				shadowmap_material.set("u_transform", transform);
-				auto& drawable = ModelLoader::get_drawable(model_component.filepath);
+				auto& mesh = ModelLoader::get_drawable(model_component.filepath);
 
-				drawable.render_material = basic_material;
-				drawable.shadow_material = shadowmap_material;
+				mesh.is_casting_shadow = true;
+				mesh.transform = m_registry.get<TransformComponent>(entity).get_transform();
 
-				drawable.is_casting_shadow = true;
-
-				m_renderer->add_drawable(drawable);
+				m_renderer->add_drawable(mesh);
 			}
 		});
 	}
 
+	
 	void Scene::on_event(const Event& event)
 	{
-		get_camera().on_event(event);
+		Camera& camera = get_camera();
+		camera.on_event(event);
+		m_renderer->set_camera_params(camera.get_view_projection(), camera.get_position());
 	}
 	
 	[[nodiscard]] entt::entity Scene::create_empty_entity(const std::string& tag)
@@ -112,16 +77,6 @@ namespace vengine
 		m_registry.emplace<ModelComponent>(entity, model_path);
 	}
 
-	void Scene::draw_skybox()
-	{
-		auto& render_command = m_skybox.get_render_command();
-		auto& skybox_material = MaterialLibrary::get_material("Skybox");
-		m_renderer->add_drawable(Drawable{
-			std::vector<RenderCommand>{render_command},
-			skybox_material,
-			false
-		});
-	}
 
 	void Scene::draw_grid()
 	{
@@ -129,11 +84,6 @@ namespace vengine
 		auto& grid_material = MaterialLibrary::get_material("Grid");
 		grid_material.set("u_view", get_camera().get_view());
 		grid_material.set("u_projection", get_camera().get_projection());
-		m_renderer->add_drawable(Drawable{
-			std::vector<RenderCommand>{render_command},
-			grid_material,
-			false
-			});
 	}
 
 	void Scene::destroy_entity(entt::entity entity)
@@ -144,6 +94,8 @@ namespace vengine
 	void Scene::set_camera_entity(entt::entity entity)
 	{
 		m_camera_entity = entity;
+		Camera& camera = get_camera();
+		m_renderer->set_camera_params(camera.get_view_projection(), camera.get_position());
 	}
 
 	void Scene::clear()
@@ -156,5 +108,11 @@ namespace vengine
 		const auto entity = m_registry.create();
 		m_registry.emplace<TagComponent>(entity, "Directional light");
 		m_registry.emplace<DirLightComponent>(entity);
+	}
+
+	void Scene::on_dir_light_update(entt::registry& registry, entt::entity entity) const
+	{
+		auto& dir_light_component = registry.get<DirLightComponent>(entity);
+		m_renderer->set_dir_light(dir_light_component);
 	}
 }

@@ -2,6 +2,8 @@
 
 out vec4 fr_color;
 
+const float PI = 3.14159265359;
+
 in VertexOutput
 {
 	vec2 tex_coord;
@@ -26,15 +28,14 @@ struct DirLight
     vec3 position;
     vec3 color;
     float intensity;
-    sampler2D shadow_map;
+    mat4 light_space_matrix;
 };
 
 uniform Material u_material;
 uniform DirLight u_dirlight;
+uniform sampler2D u_dir_light_shadow_map;
+
 uniform vec3 u_view_pos;
-
-
-const float PI = 3.14159265359;
 
 
 float distribution_GGX(vec3 N, vec3 H, float roughness);
@@ -42,7 +43,7 @@ float geometry_schlick_GGX(float NdotV, float roughness);
 float geometry_smith(vec3 N, vec3 V, vec3 L, float roughness);
 vec3  fresnel_schlick(float cosTheta, vec3 F0);
 
-float calc_shadow(vec3 normal, vec3 light_dir, sampler2D shadow_map);
+float calc_shadow(vec3 normal, vec3 light_dir, sampler2D shadow_map, vec4 frag_pos_light_space);
 
 void main()
 {
@@ -60,8 +61,11 @@ void main()
     vec3 F0 = vec3(0.04); 
     F0 = mix(F0, albedo, metallic);
 
-    vec3 surface_to_light = normalize(u_dirlight.position);
     vec3 view_direction = normalize(u_view_pos - vs_output.frag_pos);
+
+    vec3 L0 = vec3(0.0);
+    
+    vec3 surface_to_light = normalize(u_dirlight.position);
     vec3 half_way_direction = normalize(view_direction + surface_to_light);
     vec3 radiance = u_dirlight.color * u_dirlight.intensity;
 
@@ -81,19 +85,20 @@ void main()
     // add to outgoing radiance Lo
     float NdotL = max(dot(normal, surface_to_light), 0.0);                
     vec3 color = (kD * albedo / PI + specular) * radiance * NdotL; 
-
     //shadows
-    color *= (1 - calc_shadow(normal, surface_to_light, u_dirlight.shadow_map));
-
+    color *= (1 - calc_shadow(normal, surface_to_light, u_dir_light_shadow_map, vs_output.frag_pos_light_space));
+    L0 += color;
+   
+ 
     //abmient
     vec3 ambient = vec3(0.03) * albedo * ao;
-    color += ambient;
+    L0 += ambient;
 
     //hdr
-    color = color / (color + vec3(1.0));
+    L0 = L0 / (L0 + vec3(1.0));
     // apply gamma correction
-    color = pow(color, vec3(1.0 / gamma));
-    fr_color = vec4(color, 1.0);
+    L0 = pow(L0, vec3(1.0 / gamma));
+    fr_color = vec4(L0, 1.0);
 }   
 
 float distribution_GGX(vec3 N, vec3 H, float roughness)
@@ -136,9 +141,9 @@ vec3 fresnel_schlick(float cosTheta, vec3 F0)
     return F0 + (1.0 - F0) * pow(max(1.0 - cosTheta, 0.0), 5.0);
 }  
 
-float calc_shadow(vec3 normal, vec3 light_dir, sampler2D shadow_map)
+float calc_shadow(vec3 normal, vec3 light_dir, sampler2D shadow_map, vec4 frag_pos_light_space)
 {
-    vec3 proj_coords = vs_output.frag_pos_light_space.xyz / vs_output.frag_pos_light_space.w;
+    vec3 proj_coords = frag_pos_light_space.xyz / frag_pos_light_space.w;
     proj_coords = proj_coords * 0.5 + 0.5;
     const float closest_depth = texture(shadow_map, proj_coords.xy).r;
     const float current_depth = proj_coords.z;
