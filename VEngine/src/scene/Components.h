@@ -7,6 +7,8 @@
 #include <glm/ext/matrix_transform.hpp>
 #include <utility>
 
+#include "renderer/opengl/TextureGL.h"
+
 
 namespace vengine
 {
@@ -60,5 +62,14 @@ namespace vengine
         glm::vec3 position{ 1.0f };
         glm::vec3 color{1.0f};
         float intensity{ 1.0f };
+	};
+
+	struct MaterialsComponent
+	{
+        TextureGL albedo_texture;
+        TextureGL metallic_texture;
+        TextureGL roughness_texture;
+        TextureGL ao_texture;
+        TextureGL normal_texture;
 	};
 }

@@ -79,7 +79,7 @@ namespace vengine
 
         if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
         {
-            Logger::log("Framebuffer error, status code: " + glCheckFramebufferStatus(GL_FRAMEBUFFER), Logger::MessageSeverity::ERROR);
+            Logger::error("Framebuffer error, status code: " + glCheckFramebufferStatus(GL_FRAMEBUFFER));
         }
 
         unbind();

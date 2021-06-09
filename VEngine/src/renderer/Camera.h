@@ -35,8 +35,7 @@ namespace vengine
 		[[nodiscard]] auto get_near_z() const { return m_near_z; }
 		[[nodiscard]] auto get_far_z() const { return m_far_z; }
 
-		[[nodiscard]] auto* get_position_pointer() { return glm::value_ptr(m_eye); }
-		[[nodiscard]] auto get_position() const { return m_eye; }
+		[[nodiscard]] auto& get_position() const  { return m_eye; }
 
 
 	private:

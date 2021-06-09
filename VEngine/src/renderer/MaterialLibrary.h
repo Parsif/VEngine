@@ -7,7 +7,7 @@ namespace vengine
 	class MaterialLibrary
 	{
 	public:
-		static void init();
+		static Material& load(const std::string& vertex_shader, const std::string& fragment_shader, const std::string& name);
 		[[nodiscard]] static auto& get_material(const std::string& name) { return s_materials[name]; }
 	
 	private:

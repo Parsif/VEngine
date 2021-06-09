@@ -26,7 +26,7 @@ namespace vengine
 		m_scene = scene;
 		m_renderer = renderer;
 
-		m_scene_hierarchy_panel.init(scene);
+		m_scene_hierarchy_panel.init(window, scene);
 		init_imgui();
 	}
 
@@ -126,7 +126,7 @@ namespace vengine
 
 		else
 		{
-			Logger::log("Unhandled imgui event", Logger::MessageSeverity::WARNING);
+			Logger::warning("Unhandled imgui event");
 		}
 	}
 

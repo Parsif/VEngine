@@ -72,7 +72,7 @@ namespace vengine
 				default: return "UNKNOWN";
 				}
 			}();
-			Logger::log(source_str + ", " + type_str + ", " + severity_str + ", " + std::to_string(id) + ", " + message, Logger::MessageSeverity::ERROR);
+			Logger::error(source_str + ", " + type_str + ", " + severity_str + ", " + std::to_string(id) + ", " + message);
 		}
 #endif
 

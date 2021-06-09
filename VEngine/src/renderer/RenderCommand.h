@@ -23,7 +23,6 @@ namespace vengine
 		void set_index_buffer(const IndexBuffer& index_buffer);
 
 		void set_buffer_layout(const BufferLayout& buffer_layout);
-		void set_transform(const glm::mat4& transform);
 
 		void set_textures2d(std::vector<TextureGL> textures2d);
 
@@ -37,7 +36,6 @@ namespace vengine
 		[[nodiscard]] auto get_index_type() const { return m_index_type; }
 		[[nodiscard]] auto get_index_offset() const { return m_index_buffer->get_offset(); }
 		[[nodiscard]] auto& get_buffer_layout() const { return m_buffer_layout; }
-		[[nodiscard]] auto& get_transform() const { return m_transform; }
 
 		[[nodiscard]] auto& get_textures2d() const { return m_textures2d; }
 
@@ -48,7 +46,6 @@ namespace vengine
 		Ref<IndexBuffer> m_index_buffer;
 		Ref<VertexArray> m_vertex_array = std::make_shared<VertexArray>();
 		BufferLayout m_buffer_layout{};
-		glm::mat4 m_transform{1.0f};
 		
 		std::vector<TextureGL> m_textures2d;
 

@@ -2,6 +2,8 @@
 
 #include "Application.h"
 
+#include "renderer/opengl/RendererApiGL.h"
+
 namespace vengine
 {
 	void Application::init()
@@ -22,7 +24,6 @@ namespace vengine
 		m_editor_ui.init(m_window, m_scene, m_renderer);
 			
 		Input::init(m_window);
-		MaterialLibrary::init();
 	}
 
 	void Application::run()

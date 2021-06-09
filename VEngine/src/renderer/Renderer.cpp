@@ -1,11 +1,14 @@
 #include "precheader.h"
 #include "Renderer.h"
 
-#include "MaterialLibrary.h"
 #include "RenderCommand.h"
 
 #include <glm/ext/matrix_clip_space.hpp>
 #include <glm/ext/matrix_transform.hpp>
+
+
+#include "MaterialLibrary.h"
+#include "opengl/RendererApiGL.h"
 
 namespace vengine
 {
@@ -16,8 +19,19 @@ namespace vengine
 		m_render_pass_descriptor.need_clear_depth = true;
 		m_render_pass_descriptor.need_culling = true;
 		
-		
 		m_dir_light_shadow_map.create(m_shadow_map_specs);
+		m_pbr_render_material = MaterialLibrary::load("./VEngine/src/renderer/shaders/pbr.vert", 
+													"./VEngine/src/renderer/shaders/pbr.frag", "PBR");
+
+		m_basic_render_material = MaterialLibrary::load("./VEngine/src/renderer/shaders/basic.vert", 
+			"./VEngine/src/renderer/shaders/basic.frag", "Basic");
+
+
+		m_skybox_material = MaterialLibrary::load("./VEngine/src/renderer/shaders/skybox.vert",
+			"./VEngine/src/renderer/shaders/skybox.frag", "Skybox");
+
+		m_direct_shadow_map_material = MaterialLibrary::load("./VEngine/src/renderer/shaders/shadowmap.vert",
+			"./VEngine/src/renderer/shaders/shadowmap.frag", "Shadowmap");
 	}
 
 	void Renderer::shutdown()
@@ -92,12 +106,12 @@ namespace vengine
 		m_intermediate_frame_buffer.create(FrameBufferSpecifications{ m_viewport.width, m_viewport.height, FrameBufferType::COLOR_DEPTH_STENCIL, 1 });
 	}
 
-	void Renderer::set_dir_light(DirLightComponent dir_lights)
+	void Renderer::set_dir_light(const DirLightComponent& dir_lights)
 	{
 		m_dir_light = dir_lights;
-		m_render_material.set("u_dirlight.position", m_dir_light.position);
-		m_render_material.set("u_dirlight.color", m_dir_light.color);
-		m_render_material.set("u_dirlight.intensity", m_dir_light.intensity);
+		m_pbr_render_material.set("u_dirlight.position", m_dir_light.position);
+		m_pbr_render_material.set("u_dirlight.color", m_dir_light.color);
+		m_pbr_render_material.set("u_dirlight.intensity", m_dir_light.intensity);
 
 		const float near_plane = 1.0f, far_plane = 50.0f;
 		const glm::mat4 light_projection = glm::ortho(-20.0f, 20.0f, -20.0f, 20.0f, near_plane, far_plane);
@@ -108,7 +122,7 @@ namespace vengine
 
 		const glm::mat4 light_space_matrix = light_projection * light_view;
 		m_direct_shadow_map_material.set("u_light_space_matrix", light_space_matrix);
-		m_render_material.set("u_dirlight.light_space_matrix", light_space_matrix);
+		m_pbr_render_material.set("u_dirlight.light_space_matrix", light_space_matrix);
 	}
 
 	void Renderer::set_camera_params(const glm::mat4& view_projection, const glm::vec3& position)
@@ -116,8 +130,10 @@ namespace vengine
 		m_camera_view_projection = view_projection;
 		m_camera_pos = position;
 		
-		m_render_material.set("u_view_projection", m_camera_view_projection);
-		m_render_material.set("u_view_pos", m_camera_pos);
+		m_pbr_render_material.set("u_view_projection", m_camera_view_projection);
+		m_pbr_render_material.set("u_view_pos", m_camera_pos);
+
+		m_basic_render_material.set("u_view_projection", m_camera_view_projection);
 	}
 
 	void Renderer::set_skybox(const SkyboxGL& skybox)
@@ -138,26 +154,55 @@ namespace vengine
 	}
 
 	//TODO: try to move textures to materials
-	void Renderer::render_mesh(Mesh& mesh) const
+	void Renderer::render_mesh(Mesh& mesh) 
 	{
-		m_render_material.set("u_transform", mesh.transform);
-
+		m_pbr_render_material.set("u_transform", mesh.transform);
+		m_pbr_render_material.set("u_material.has_albedo", mesh.has_albedo_texture || mesh.materials.albedo_texture);
+		m_pbr_render_material.set("u_material.has_metallic", mesh.has_metallic_texture || mesh.materials.metallic_texture);
+		m_pbr_render_material.set("u_material.has_roughness", mesh.has_roughness_texture || mesh.materials.roughness_texture);
+		m_pbr_render_material.set("u_material.has_ao", mesh.has_ao_texture || mesh.materials.ao_texture);
+		m_pbr_render_material.set("u_material.has_normal_map", mesh.has_normal_texture || mesh.materials.normal_texture);
+		
 		for (auto&& render_command : mesh.commands)
 		{
-			size_t i = 0;
-	
-			//setting other textures
+			size_t texture_slot = 0;
+			if (mesh.materials.albedo_texture)
+			{
+				m_pbr_render_material.set("u_material." + mesh.materials.albedo_texture.get_string_type(), (int)texture_slot);
+				mesh.materials.albedo_texture.bind(texture_slot++);
+			}
+			if (mesh.materials.metallic_texture)
+			{
+				m_pbr_render_material.set("u_material." + mesh.materials.metallic_texture.get_string_type(), (int)texture_slot);
+				mesh.materials.metallic_texture.bind(texture_slot++);
+			}
+			if (mesh.materials.roughness_texture)
+			{
+				m_pbr_render_material.set("u_material." + mesh.materials.roughness_texture.get_string_type(), (int)texture_slot);
+				mesh.materials.roughness_texture.bind(texture_slot++);
+			}
+			if (mesh.materials.ao_texture)
+			{
+				m_pbr_render_material.set("u_material." + mesh.materials.ao_texture.get_string_type(), (int)texture_slot);
+				mesh.materials.ao_texture.bind(texture_slot++);
+			}
+			if (mesh.materials.normal_texture)
+			{
+				m_pbr_render_material.set("u_material." + mesh.materials.normal_texture.get_string_type(), (int)texture_slot);
+				mesh.materials.normal_texture.bind(texture_slot++);
+			}
+			
 			for (const auto& texture_2d : render_command.get_textures2d())
 			{
-				m_render_material.set("u_material." + texture_2d.get_string_type(), (int)i);
-				texture_2d.bind(i++);
+				m_pbr_render_material.set("u_material." + texture_2d.get_string_type(), (int)texture_slot);
+				texture_2d.bind(texture_slot++);
 			}
 
-			m_render_material.set("u_dir_light_shadow_map", (int)i);
+			m_pbr_render_material.set("u_dir_light_shadow_map", (int)texture_slot);
 			TextureGL shadow_map_texture{ m_dir_light_shadow_map.get_depth_attachment() };
-			shadow_map_texture.bind(i++);
+			shadow_map_texture.bind(texture_slot++);
 			
-			m_render_material.use();
+			m_pbr_render_material.use();
 			RendererApiGL::draw_elements(render_command);
 		}
 	}

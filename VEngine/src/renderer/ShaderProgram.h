@@ -95,7 +95,7 @@ namespace vengine
 			
 			else
 			{
-				Logger::log("Uniform type unsupported or uniform name not found: " + uniform_name, Logger::MessageSeverity::ERROR);
+				Logger::error("Uniform type unsupported or uniform name not found: " + uniform_name);
 			}
 		}
 

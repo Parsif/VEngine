@@ -3,42 +3,10 @@
 
 namespace vengine
 {
-	void MaterialLibrary::init()
+	Material& MaterialLibrary::load(const std::string& vertex_shader, const std::string& fragment_shader,
+		const std::string& name)
 	{
-		s_materials["Basic"] = Material
-		{
-			ShaderProgram
-			{
-			"./VEngine/src/renderer/shaders/basic.vert",
-			"./VEngine/src/renderer/shaders/basic.frag"
-			}
-		};
-		
-		s_materials["Skybox"] = Material
-		{
-			ShaderProgram
-			{
-			"./VEngine/src/renderer/shaders/skybox.vert",
-			"./VEngine/src/renderer/shaders/skybox.frag"
-			}
-		};
-
-		s_materials["Grid"] = Material
-		{
-			ShaderProgram
-			{
-			"./VEngine/src/renderer/shaders/grid.vert",
-			"./VEngine/src/renderer/shaders/grid.frag"
-			}
-		};
-
-		s_materials["Shadowmap"] = Material
-		{
-			ShaderProgram
-			{
-			"./VEngine/src/renderer/shaders/shadowmap.vert",
-			"./VEngine/src/renderer/shaders/shadowmap.frag"
-			}
-		};
+		s_materials[name] = Material{ ShaderProgram{vertex_shader, fragment_shader} };
+		return s_materials[name];
 	}
 }

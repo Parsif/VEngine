@@ -1,12 +1,12 @@
 #pragma once
 
 #include "RenderCommand.h"
-#include "RenderQueue.h"
 
 #include <assimp/Importer.hpp>      // C++ importer interface
 #include <assimp/postprocess.h>     // Post processing flags
 #include <assimp/scene.h>           // Output data structure
 
+#include "Mesh.h"
 
 
 namespace vengine
@@ -14,7 +14,7 @@ namespace vengine
 	class ModelLoader
 	{
 	public:
-		[[nodiscard]] static Mesh& get_drawable(const std::string& filepath);
+		[[nodiscard]] static Mesh& get_mesh(const std::string& filepath);
 
 
 	private:
@@ -25,7 +25,7 @@ namespace vengine
 
 	
 	private:
-		inline static std::unordered_map<std::string, Mesh> s_drawables =
+		inline static std::unordered_map<std::string, Mesh> s_meshes =
 			std::unordered_map<std::string, Mesh>();
 
 		inline static std::unordered_map<std::string, TextureGL> s_loaded_textures =

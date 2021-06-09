@@ -7,14 +7,14 @@
 
 namespace vengine
 {
-	Mesh& ModelLoader::get_drawable(const std::string& filepath)
+	Mesh& ModelLoader::get_mesh(const std::string& filepath)
 	{
-		if (s_drawables.find(filepath) == s_drawables.end())
+		if (s_meshes.find(filepath) == s_meshes.end())
 		{
 			load_model(filepath);
 		}
 		//TODO: add check if model was not loaded
-		return s_drawables[filepath];
+		return s_meshes[filepath];
 	}
 
 
@@ -30,7 +30,7 @@ namespace vengine
 
 		if (!scene)
 		{
-			Logger::log(importer.GetErrorString(), Logger::MessageSeverity::ERROR);
+			Logger::error(importer.GetErrorString());
 
 			return;
 		}
@@ -41,14 +41,19 @@ namespace vengine
 
 	void ModelLoader::process_scene(const aiScene* scene, const std::string& filepath)
 	{
-		Mesh drawable;
+		Mesh mesh;
 		const auto file_dir = filepath.substr(0, filepath.find_last_of('/'));
 		for(size_t i = 0; i < scene->mNumMeshes; ++i)
 		{
-			drawable.commands.push_back(process_mesh(scene->mMeshes[i], scene, file_dir));
+			mesh.commands.push_back(process_mesh(scene->mMeshes[i], scene, file_dir));
 		}
-		
-		s_drawables[filepath] = drawable;
+		mesh.has_albedo_texture = scene->mMaterials[scene->mMeshes[0]->mMaterialIndex]->GetTextureCount(aiTextureType_DIFFUSE) > 0;
+		mesh.has_roughness_texture = scene->mMaterials[scene->mMeshes[0]->mMaterialIndex]->GetTextureCount(aiTextureType_SHININESS) > 0;
+		mesh.has_metallic_texture = scene->mMaterials[scene->mMeshes[0]->mMaterialIndex]->GetTextureCount(aiTextureType_METALNESS) > 0;
+		mesh.has_ao_texture = scene->mMaterials[scene->mMeshes[0]->mMaterialIndex]->GetTextureCount(aiTextureType_AMBIENT_OCCLUSION) > 0;
+		mesh.has_normal_texture = scene->mMaterials[scene->mMeshes[0]->mMaterialIndex]->GetTextureCount(aiTextureType_NORMALS) > 0;
+
+		s_meshes[filepath] = mesh;
 	}
 
 	RenderCommand ModelLoader::process_mesh(aiMesh* ai_mesh, const aiScene* scene, const std::string& file_dir)
@@ -134,7 +139,7 @@ namespace vengine
 			if (ai_material->GetTexture(ai_texture_type, 0, &texture_path) == AI_SUCCESS)
 			{
 				const auto fullpath = file_dir + '/' + texture_path.data;
-				Logger::log(fullpath, Logger::MessageSeverity::INFO);
+				Logger::info(fullpath);
 				if (s_loaded_textures.find(fullpath) != s_loaded_textures.end())
 				{
 					textures2d.push_back(s_loaded_textures[fullpath]);

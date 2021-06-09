@@ -1,10 +1,7 @@
 #pragma once
 
-#include "MaterialLibrary.h"
+#include "Mesh.h"
 #include "RenderCommand.h"
-#include "RenderQueue.h"
-
-#include "opengl/RendererApiGL.h"
 
 #include "RenderPassDescriptor.h"
 #include "opengl/FrameBufferGL.h"
@@ -24,7 +21,7 @@ namespace vengine
 		void render();
 		void set_viewport(int x, int y, unsigned int width, unsigned int height);
 		void set_viewport_size(unsigned int width, unsigned int height);
-		void set_dir_light(DirLightComponent dir_lights);
+		void set_dir_light(const DirLightComponent& dir_lights);
 		void set_camera_params(const glm::mat4& view_projection, const glm::vec3& position);
 
 		void set_skybox(const SkyboxGL& skybox);
@@ -36,7 +33,7 @@ namespace vengine
 	private:
 		void begin_render_pass(const FrameBufferGL& frame_buffer);
 		void end_render_pass(const FrameBufferGL& frame_buffer) const;
-		void render_mesh(Mesh& mesh) const;
+		void render_mesh(Mesh& mesh) ;
 		void render_shadow(Mesh& mesh) const;
 		void render_skybox();
 
@@ -52,7 +49,7 @@ namespace vengine
 
 		Viewport m_viewport;
 		
-		RenderQueue m_render_queue;
+		std::vector<Mesh> m_render_queue;
 		RenderPassDescriptor m_render_pass_descriptor;
 
 		FrameBufferGL m_final_frame_buffer;
@@ -60,9 +57,10 @@ namespace vengine
 		const FrameBufferSpecifications m_shadow_map_specs{ 1024, 1024, FrameBufferType::DEPTH_ONLY };
 		FrameBufferGL m_dir_light_shadow_map;
 
-		Material& m_render_material = MaterialLibrary::get_material("Basic");
-		Material& m_direct_shadow_map_material = MaterialLibrary::get_material("Shadowmap");
-		Material& m_skybox_material = MaterialLibrary::get_material("Skybox");
+		Material m_pbr_render_material;
+		Material m_basic_render_material;
+		Material m_direct_shadow_map_material;
+		Material m_skybox_material;
 
 		SkyboxGL m_skybox;
 		

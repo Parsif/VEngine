@@ -19,11 +19,6 @@ namespace vengine
 		m_buffer_layout = buffer_layout;
 	}
 
-	void RenderCommand::set_transform(const glm::mat4& transform)
-	{
-		m_transform = transform;
-	}
-
 	void RenderCommand::set_textures2d(std::vector<TextureGL> textures2d)
 	{
 		m_textures2d = std::move(textures2d);

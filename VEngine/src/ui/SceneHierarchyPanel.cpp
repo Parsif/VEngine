@@ -2,16 +2,20 @@
 #include "SceneHierarchyPanel.h"
 
 #include <imgui.h>
+
+#include "imgui_internal.h"
+#include "renderer/ModelLoader.h"
 #include "scene/Components.h"
+#include "utils/PlatformUtils.h"
 
 
 namespace vengine
 {
-	void SceneHierarchyPanel::init(Ref<Scene> scene)
+	void SceneHierarchyPanel::init(Ref<Window> window, Ref<Scene> scene) 
 	{
+        m_window = window;
         m_scene = scene;
 	}
-
 
 	void SceneHierarchyPanel::draw()
 	{
@@ -67,7 +71,6 @@ namespace vengine
             }
         }
 
-        constexpr float DRAG_SPEED = 0.1f;
 
         if (m_scene->m_registry.has<TransformComponent>(entity))
         {
@@ -75,57 +78,63 @@ namespace vengine
 
             if (ImGui::TreeNodeEx((void*)typeid(TransformComponent).hash_code(), ImGuiTreeNodeFlags_DefaultOpen, "Transform"))
             {
-                ImGui::DragFloat3("Position", glm::value_ptr(transform_component.translation), DRAG_SPEED);
-                ImGui::DragFloat3("Rotation", glm::value_ptr(transform_component.rotation), DRAG_SPEED);
-                ImGui::DragFloat3("Scale", glm::value_ptr(transform_component.scale), DRAG_SPEED);
+                draw_vec3_component("Position", transform_component.translation);
+                draw_vec3_component("Rotation", transform_component.rotation);
+                draw_vec3_component("Scale", transform_component.scale);
                 ImGui::TreePop();
             }
         }
 
-		
+
         if (m_scene->m_registry.has<CameraComponent>(entity))
         {
+            constexpr float DRAG_SPEED = 0.1f;
+
             if (ImGui::TreeNodeEx((void*)typeid(CameraComponent).hash_code(), ImGuiTreeNodeFlags_DefaultOpen, "Camera prop"))
             {
-               
                 const std::string fov = "Fov: " + std::to_string((int)m_scene->get_camera().get_fov());
                 ImGui::Text(fov.c_str());
 
-                if (ImGui::DragFloat("Near_z", m_scene->get_camera().get_near_z_pointer(), DRAG_SPEED))
+
+                ImGui::Text("Near_z");
+                ImGui::SameLine();
+                if (ImGui::DragFloat("##Near_z", m_scene->get_camera().get_near_z_pointer(), DRAG_SPEED))
                 {
                     m_scene->get_camera().recalculate_projection();
                 }
 
-                if (ImGui::DragFloat("Far_z", m_scene->get_camera().get_far_z_pointer(), DRAG_SPEED))
+                ImGui::Text("Far_z");
+                ImGui::SameLine();
+                if (ImGui::DragFloat("##Far_z", m_scene->get_camera().get_far_z_pointer(), DRAG_SPEED))
                 {
                     m_scene->get_camera().recalculate_projection();
                 }
-
-            	//TODO: fix
-                if (ImGui::DragFloat3("Position", m_scene->get_camera().get_position_pointer(), DRAG_SPEED))
-                {
-                    m_scene->get_camera().recalculate_view();
-                }
-
+               
                 ImGui::TreePop();
             }
         }
 
         if (m_scene->m_registry.has<DirLightComponent>(entity))
         {
+            constexpr float DRAG_SPEED = 0.05f;
+
             auto& dir_light_component = m_scene->m_registry.get<DirLightComponent>(entity);
 
-            if (ImGui::TreeNodeEx((void*)typeid(TransformComponent).hash_code(), ImGuiTreeNodeFlags_DefaultOpen, "DirLight"))
+            if (ImGui::TreeNodeEx((void*)typeid(DirLightComponent).hash_code(), ImGuiTreeNodeFlags_DefaultOpen, "DirLight"))
             {
-                if(ImGui::DragFloat3("Position", glm::value_ptr(dir_light_component.position), DRAG_SPEED))
+                if(draw_vec3_component("Position", dir_light_component.position))
                 {
                     m_scene->m_registry.replace<DirLightComponent>(entity, dir_light_component);
                 }
-                if(ImGui::DragFloat3("Color", glm::value_ptr(dir_light_component.color), DRAG_SPEED))
+            	
+                if (draw_vec3_component("Color", dir_light_component.color))
                 {
                     m_scene->m_registry.replace<DirLightComponent>(entity, dir_light_component);
                 }
-                if(ImGui::DragFloat("Intensity", &dir_light_component.intensity, DRAG_SPEED))
+
+                ImGui::Text("Intensity");
+                ImGui::SameLine();
+                if(ImGui::DragFloat("##Intensity", &dir_light_component.intensity, DRAG_SPEED))
                 {
                     m_scene->m_registry.replace<DirLightComponent>(entity, dir_light_component);
                 }
@@ -134,8 +143,132 @@ namespace vengine
             }
         }
 
+		if(m_scene->m_registry.has<MaterialsComponent>(entity))
+		{
+            if (ImGui::TreeNodeEx((void*)typeid(MaterialsComponent).hash_code(), ImGuiTreeNodeFlags_DefaultOpen, "Materials"))
+            {
+                MaterialsComponent& materials = m_scene->m_registry.get<MaterialsComponent>(entity);
+                const std::string& filepath = m_scene->m_registry.get<ModelComponent>(entity).filepath;
+                Mesh& mesh = ModelLoader::get_mesh(filepath);
+            	
+                if (!mesh.has_albedo_texture)
+                {
+                    draw_material_texture_component(materials.albedo_texture, aiTextureType_DIFFUSE, "Albedo");
+                }
 
+                if (!mesh.has_metallic_texture)
+                {
+                    draw_material_texture_component(materials.metallic_texture, aiTextureType_METALNESS, "Metallic");
+                }
+
+                if (!mesh.has_roughness_texture)
+                {
+                    draw_material_texture_component(materials.roughness_texture, aiTextureType_SHININESS, "Roughness");
+                }
+                if (!mesh.has_ao_texture)
+                {
+                    draw_material_texture_component(materials.ao_texture, aiTextureType_AMBIENT_OCCLUSION, "AO");
+                }
+
+                if (!mesh.has_normal_texture)
+                {
+                    draw_material_texture_component(materials.normal_texture, aiTextureType_NORMALS, "Normal");
+                }
+            	
+                ImGui::TreePop();
+            }
+		}
 	}
 
+    bool SceneHierarchyPanel::draw_vec3_component(const std::string& label, glm::vec3& values, float reset_value, float column_width)
+    {
+        ImGuiIO& io = ImGui::GetIO();
+        auto boldFont = io.Fonts->Fonts[0];
 
+        ImGui::PushID(label.c_str());
+
+        ImGui::Columns(2);
+        ImGui::SetColumnWidth(0, column_width);
+        ImGui::Text(label.c_str());
+        ImGui::NextColumn();
+
+        ImGui::PushMultiItemsWidths(3, ImGui::CalcItemWidth());
+        ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2{ 0, 0 });
+
+        float lineHeight = GImGui->Font->FontSize + GImGui->Style.FramePadding.y * 2.0f;
+        ImVec2 buttonSize = { lineHeight + 3.0f, lineHeight };
+
+        ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{ 0.8f, 0.1f, 0.15f, 1.0f });
+        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4{ 0.9f, 0.2f, 0.2f, 1.0f });
+        ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4{ 0.8f, 0.1f, 0.15f, 1.0f });
+        ImGui::PushFont(boldFont);
+        if (ImGui::Button("X", buttonSize))
+            values.x = reset_value;
+        ImGui::PopFont();
+        ImGui::PopStyleColor(3);
+
+        ImGui::SameLine();
+        bool is_used = ImGui::DragFloat("##X", &values.x, 0.1f, 0.0f, 0.0f, "%.2f");
+        ImGui::PopItemWidth();
+        ImGui::SameLine();
+
+        ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{ 0.2f, 0.7f, 0.2f, 1.0f });
+        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4{ 0.3f, 0.8f, 0.3f, 1.0f });
+        ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4{ 0.2f, 0.7f, 0.2f, 1.0f });
+        ImGui::PushFont(boldFont);
+        if (ImGui::Button("Y", buttonSize))
+            values.y = reset_value;
+        ImGui::PopFont();
+        ImGui::PopStyleColor(3);
+
+        ImGui::SameLine();
+        is_used |= ImGui::DragFloat("##Y", &values.y, 0.1f, 0.0f, 0.0f, "%.2f");
+        ImGui::PopItemWidth();
+        ImGui::SameLine();
+
+        ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{ 0.1f, 0.25f, 0.8f, 1.0f });
+        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4{ 0.2f, 0.35f, 0.9f, 1.0f });
+        ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4{ 0.1f, 0.25f, 0.8f, 1.0f });
+        ImGui::PushFont(boldFont);
+        if (ImGui::Button("Z", buttonSize))
+            values.z = reset_value;
+        ImGui::PopFont();
+        ImGui::PopStyleColor(3);
+
+        ImGui::SameLine();
+        is_used |= ImGui::DragFloat("##Z", &values.z, 0.1f, 0.0f, 0.0f, "%.2f");
+        ImGui::PopItemWidth();
+
+        ImGui::PopStyleVar();
+
+        ImGui::Columns(1);
+
+        ImGui::PopID();
+
+        return is_used;
+    }
+
+	void SceneHierarchyPanel::draw_material_texture_component(TextureGL& texture, aiTextureType texture_type,
+		const std::string& label) const
+	{
+        ImGui::Text((label + " texture").c_str());
+        ImGui::SameLine();
+        if (ImGui::Button(("Choose file##" + label).c_str()))
+        {
+            const auto filename = FileDialogs::open_file_dialog("Png, Jpeg, Jpg, Tga (.png, .jpeg, .jpg, .tga)\0*.png;*.jpeg;*.jpg;*.tga\0", m_window);
+            if (filename)
+            {
+                texture = TextureGL{ filename.value(), texture_type };
+            }
+        }
+        ImGui::SameLine();
+		if(ImGui::Button(("Delete##" + label).c_str()))
+		{
+            texture = TextureGL{};
+		}
+        if (texture)
+        {
+            ImGui::Image((void*)texture.get_id(), ImVec2(100, 100));
+        }
+	}
 }

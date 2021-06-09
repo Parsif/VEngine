@@ -8,7 +8,8 @@ namespace vengine
 	{
 	public:
 		Material() = default;
-		explicit Material(const ShaderProgram& shader_program);
+		Material(const ShaderProgram& shader_program);
+
 
 		template<class T>
 		void set(const std::string& uniform_name, T value)

@@ -18,6 +18,7 @@ namespace vengine
 		m_renderer->set_skybox(SkyboxGL{ "./VEngine/assets/SkyCubemap/skybox_top.jpg", "./VEngine/assets/SkyCubemap/skybox_bottom.jpg",
 			"./VEngine/assets/SkyCubemap/skybox_left.jpg", "./VEngine/assets/SkyCubemap/skybox_right.jpg",
 			"./VEngine/assets/SkyCubemap/skybox_back.jpg", "./VEngine/assets/SkyCubemap/skybox_front.jpg" });
+		m_registry.on_construct<DirLightComponent>().connect<&Scene::on_dir_light_update>(this);
 		m_registry.on_update<DirLightComponent>().connect<&Scene::on_dir_light_update>(this);
 	}
 	
@@ -34,11 +35,11 @@ namespace vengine
 			if(m_registry.has<ModelComponent>(entity)) 
 			{
 				ModelComponent& model_component = m_registry.get<ModelComponent>(entity);
-				auto& mesh = ModelLoader::get_drawable(model_component.filepath);
+				auto& mesh = ModelLoader::get_mesh(model_component.filepath);
 
 				mesh.is_casting_shadow = true;
 				mesh.transform = m_registry.get<TransformComponent>(entity).get_transform();
-
+				mesh.materials = m_registry.get<MaterialsComponent>(entity);
 				m_renderer->add_drawable(mesh);
 			}
 		});
@@ -75,6 +76,7 @@ namespace vengine
 		m_registry.emplace<TagComponent>(entity, "Model entity");
 		m_registry.emplace<TransformComponent>(entity);
 		m_registry.emplace<ModelComponent>(entity, model_path);
+		m_registry.emplace<MaterialsComponent>(entity);
 	}
 
 

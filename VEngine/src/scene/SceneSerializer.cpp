@@ -77,11 +77,11 @@ namespace vengine
 		}
 		catch (YAML::ParserException& exception)
 		{
-			Logger::log(exception.what(), Logger::MessageSeverity::ERROR);
+			Logger::error(exception.what());
 		}
 		if (!data["Scene"])
 		{
-			Logger::log("File is corrupted", Logger::MessageSeverity::ERROR);
+			Logger::error("File is corrupted");
 		}
 
 		auto yaml_entities = data["Entities"];
@@ -126,6 +126,20 @@ namespace vengine
 				{
 					scene->add_component<ModelComponent>(entity, model_component["ModelFilepath"].as<std::string>());
 				}
+
+				auto materials_component = yaml_entity["MaterialsComponent"];
+				if (model_component)
+				{
+					MaterialsComponent component;
+					component.albedo_texture = TextureGL{ materials_component["AlbedoTexture"].as<std::string>(), aiTextureType_DIFFUSE };
+					component.metallic_texture = TextureGL{ materials_component["MetallicTexture"].as<std::string>(), aiTextureType_METALNESS };
+					component.roughness_texture = TextureGL{ materials_component["RoughnessTexture"].as<std::string>(), aiTextureType_SHININESS };
+					component.ao_texture = TextureGL{ materials_component["AOTexture"].as<std::string>(), aiTextureType_AMBIENT_OCCLUSION };
+					component.normal_texture = TextureGL{ materials_component["NormalTexture"].as<std::string>(), aiTextureType_NORMALS };
+
+					scene->add_component<MaterialsComponent>(entity, component);
+				}
+
 
 				auto dir_light_component = yaml_entity["DirLightComponent"];
 				if (dir_light_component)
@@ -200,11 +214,27 @@ namespace vengine
 			out << YAML::EndMap; // ModelComponent
 		}
 
+		if (scene->m_registry.has<MaterialsComponent>(entity))
+		{
+			out << YAML::Key << "MaterialsComponent";
+			out << YAML::BeginMap; // MaterialComponent
+
+			auto& materials = scene->m_registry.get<MaterialsComponent>(entity);
+
+			out << YAML::Key << "AlbedoTexture" << YAML::Value << materials.albedo_texture.get_filepath();
+			out << YAML::Key << "MetallicTexture" << YAML::Value << materials.metallic_texture.get_filepath();
+			out << YAML::Key << "RoughnessTexture" << YAML::Value << materials.roughness_texture.get_filepath();
+			out << YAML::Key << "AOTexture" << YAML::Value << materials.ao_texture.get_filepath();
+			out << YAML::Key << "NormalTexture" << YAML::Value << materials.normal_texture.get_filepath();
+
+			out << YAML::EndMap; // MaterialComponent
+		}
+
 
 		if (scene->m_registry.has<DirLightComponent>(entity))
 		{
 			out << YAML::Key << "DirLightComponent";
-			out << YAML::BeginMap; // ModelComponent
+			out << YAML::BeginMap; // DirLightComponent
 
 			auto& dir_light_component = scene->m_registry.get<DirLightComponent>(entity);
 
@@ -212,7 +242,7 @@ namespace vengine
 			out << YAML::Key << "Color" << YAML::Value << dir_light_component.color;
 			out << YAML::Key << "Intensity" << YAML::Value << dir_light_component.intensity;
 
-			out << YAML::EndMap; // ModelComponent
+			out << YAML::EndMap; // DirLightComponent
 		}
 
 		out << YAML::EndMap; // Entity

@@ -8,8 +8,21 @@
 
 namespace vengine
 {
-	TextureGL::TextureGL(const std::string& filepath, aiTextureType type) : m_type(type)
+	TextureGL::TextureGL()
 	{
+		m_type = aiTextureType_NONE;
+	}
+
+	TextureGL::TextureGL(const std::string& filepath, aiTextureType type)
+	{
+		if(filepath.empty())
+		{
+			m_type = aiTextureType_NONE;
+			return;
+		}
+		m_filepath = filepath;
+		m_type = type;
+		
 		stbi_set_flip_vertically_on_load(true);
 
 		unsigned char* data = stbi_load(filepath.data(), &m_width, &m_height, &m_channels, STBI_rgb);
@@ -23,7 +36,7 @@ namespace vengine
 		
 		else
 		{
-			Logger::log("Failed to load texture " + filepath, Logger::MessageSeverity::ERROR);
+			Logger::error("Failed to load texture " + filepath);
 		}
 		stbi_image_free(data);
 
