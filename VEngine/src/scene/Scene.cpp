@@ -15,9 +15,9 @@ namespace vengine
 		m_renderer = renderer;
 		m_grid.init();
 		create_camera();
-		m_renderer->set_skybox(SkyboxGL{ "./VEngine/assets/SkyCubemap/skybox_top.jpg", "./VEngine/assets/SkyCubemap/skybox_bottom.jpg",
-			"./VEngine/assets/SkyCubemap/skybox_left.jpg", "./VEngine/assets/SkyCubemap/skybox_right.jpg",
-			"./VEngine/assets/SkyCubemap/skybox_back.jpg", "./VEngine/assets/SkyCubemap/skybox_front.jpg" });
+		m_renderer->set_skybox(SkyboxGL{ "./VEngine/assets/default/SkyCubemap/skybox_top.jpg", "./VEngine/assets/default/SkyCubemap/skybox_bottom.jpg",
+			"./VEngine/assets/default/SkyCubemap/skybox_left.jpg", "./VEngine/assets/default/SkyCubemap/skybox_right.jpg",
+			"./VEngine/assets/default/SkyCubemap/skybox_back.jpg", "./VEngine/assets/default/SkyCubemap/skybox_front.jpg" });
 		m_registry.on_construct<DirLightComponent>().connect<&Scene::on_dir_light_update>(this);
 		m_registry.on_update<DirLightComponent>().connect<&Scene::on_dir_light_update>(this);
 	}
