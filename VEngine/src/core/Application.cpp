@@ -85,7 +85,6 @@ namespace vengine
 
 		case EventType::MOUSE_PRESSED:
 		{
-			LOG_INFO("Click");
 			if (m_editor_ui.is_scene_view_focused())
 			{
 				m_scene->on_event(event);

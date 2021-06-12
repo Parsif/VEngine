@@ -29,6 +29,8 @@ namespace vengine
 			//TODO: fix grid
 			//draw_grid();
 		}
+		Camera& camera = get_editor_camera();
+		m_renderer->set_camera_params(camera.get_view_projection(), camera.get_position());
 
 		m_registry.each([&](auto entity)
 		{
@@ -48,9 +50,8 @@ namespace vengine
 	
 	void Scene::on_event(const Event& event)
 	{
-		Camera& camera = get_camera();
+		Camera& camera = get_editor_camera();
 		camera.on_event(event);
-		m_renderer->set_camera_params(camera.get_view_projection(), camera.get_position());
 	}
 	
 	[[nodiscard]] entt::entity Scene::create_empty_entity(const std::string& tag)
@@ -62,12 +63,12 @@ namespace vengine
 
 	void Scene::create_camera()
 	{
-		m_camera_entity = m_registry.create();
-		m_registry.emplace<TagComponent>(m_camera_entity, "Camera");
+		m_editor_camera_entity = m_registry.create();
+		m_registry.emplace<TagComponent>(m_editor_camera_entity, "Camera");
 
 		const Camera camera{ 45.0f, 0.1f, 500.f };
 		
-		m_registry.emplace<CameraComponent>(m_camera_entity, camera);
+		m_registry.emplace<CameraComponent>(m_editor_camera_entity, camera);
 	}
 
 	void Scene::create_model(const std::string& model_path)
@@ -84,8 +85,8 @@ namespace vengine
 	{
 		auto& render_command = m_grid.get_render_command();
 		auto& grid_material = MaterialLibrary::get_material("Grid");
-		grid_material.set("u_view", get_camera().get_view());
-		grid_material.set("u_projection", get_camera().get_projection());
+		grid_material.set("u_view", get_editor_camera().get_view());
+		grid_material.set("u_projection", get_editor_camera().get_projection());
 	}
 
 	void Scene::destroy_entity(entt::entity entity)
@@ -95,8 +96,8 @@ namespace vengine
 
 	void Scene::set_camera_entity(entt::entity entity)
 	{
-		m_camera_entity = entity;
-		Camera& camera = get_camera();
+		m_editor_camera_entity = entity;
+		Camera& camera = get_editor_camera();
 		m_renderer->set_camera_params(camera.get_view_projection(), camera.get_position());
 	}
 

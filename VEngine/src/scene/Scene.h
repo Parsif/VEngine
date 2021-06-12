@@ -37,7 +37,7 @@ namespace vengine
 		void destroy_entity(entt::entity entity); 
 
 		//TODO: consider other camera implementation inside scene && check component existence before getting it
-		[[nodiscard]] auto& get_camera(){ return m_registry.get<CameraComponent>(m_camera_entity).camera; }
+		[[nodiscard]] auto& get_editor_camera(){ return m_registry.get<CameraComponent>(m_editor_camera_entity).camera; }
 		void set_camera_entity(entt::entity entity);
 		void clear();
 
@@ -47,7 +47,7 @@ namespace vengine
 		void on_dir_light_update(entt::registry& registry, entt::entity entity) const;
 	
 	private:
-		entt::entity m_camera_entity;
+		entt::entity m_editor_camera_entity;
 		entt::registry m_registry;
 		Grid m_grid;
 		Ref<Renderer> m_renderer;

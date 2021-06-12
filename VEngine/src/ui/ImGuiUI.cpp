@@ -59,8 +59,14 @@ namespace vengine
 
 		// scene view
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 8));
-		
+		static ImVec2 scene_view_size;
 		ImGui::Begin("SceneView");
+		ImVec2 size = ImGui::GetWindowSize();
+		if((int)scene_view_size.x != (int)size.x || (int)scene_view_size.y != (int)size.y)
+		{
+			scene_view_size = size;
+			m_scene->get_editor_camera().set_aspect_ratio(scene_view_size.x / scene_view_size.y);
+		}
 		ImGui::Image((void*)m_renderer->get_color_attachment(), ImGui::GetContentRegionAvail(), ImVec2(0, 1), ImVec2(1, 0));
 		draw_guizmo();
 		m_scene_view_focused = ImGui::IsWindowFocused();
@@ -410,8 +416,8 @@ namespace vengine
 
 			float snap_values[3] = { snap_value, snap_value, snap_value };
 			
-			ImGuizmo::Manipulate(glm::value_ptr(m_scene->get_camera().get_view()),
-				glm::value_ptr(m_scene->get_camera().get_projection()),
+			ImGuizmo::Manipulate(glm::value_ptr(m_scene->get_editor_camera().get_view()),
+				glm::value_ptr(m_scene->get_editor_camera().get_projection()),
 				static_cast<ImGuizmo::OPERATION>(m_guizmo_type),
 				ImGuizmo::LOCAL,
 				glm::value_ptr(transform),

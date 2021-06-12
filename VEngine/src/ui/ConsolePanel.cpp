@@ -21,12 +21,12 @@ namespace vengine
         static int type_idx = 0;
         if (ImGui::Combo("##Type", &type_idx, "Info\0Warning\0Error\0"))
         {
-            switch (type_idx)
-            {
-            case 0: m_text_buffer = Logger::get_info_text_buffer(); break;
-            case 1: m_text_buffer = Logger::get_warning_text_buffer(); break;
-            case 2: m_text_buffer = Logger::get_error_text_buffer(); break;
-            }
+        }
+        switch (type_idx)
+        {
+        case 0: m_text_buffer = Logger::get_info_text_buffer(); break;
+        case 1: m_text_buffer = Logger::get_warning_text_buffer(); break;
+        case 2: m_text_buffer = Logger::get_error_text_buffer(); break;
         }
         ImGui::Separator();
         ImGui::BeginChild("scrolling");

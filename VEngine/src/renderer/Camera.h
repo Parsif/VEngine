@@ -20,8 +20,9 @@ namespace vengine
 		void orbit(float delta_x, float delta_y);
 
 		void set_position(const glm::vec3& position);
+		void set_aspect_ratio(float scene_view_ratio);
 		void set_projection(const float fov, const float aspect_ratio, const float near_z, const float far_z);
-		
+
 		void recalculate_view();
 		void recalculate_projection();
 		

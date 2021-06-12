@@ -81,10 +81,18 @@ namespace vengine
 		recalculate_view();
 	}
 
+
+	void Camera::set_aspect_ratio(float scene_view_ratio)
+	{
+		m_aspect_ratio = scene_view_ratio;
+		recalculate_projection();
+	}
+	
 	void Camera::set_projection(const float fov, const float aspect_ratio, const float near_z, const float far_z)
 	{
 		m_projection = glm::perspective(glm::radians(m_fov), m_aspect_ratio, m_near_z, m_far_z);
 	}
+
 
 	void Camera::recalculate_view()
 	{

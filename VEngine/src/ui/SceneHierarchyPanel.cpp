@@ -92,22 +92,22 @@ namespace vengine
 
             if (ImGui::TreeNodeEx((void*)typeid(CameraComponent).hash_code(), ImGuiTreeNodeFlags_DefaultOpen, "Camera prop"))
             {
-                const std::string fov = "Fov: " + std::to_string((int)m_scene->get_camera().get_fov());
+                const std::string fov = "Fov: " + std::to_string((int)m_scene->get_editor_camera().get_fov());
                 ImGui::Text(fov.c_str());
 
 
                 ImGui::Text("Near_z");
                 ImGui::SameLine();
-                if (ImGui::DragFloat("##Near_z", m_scene->get_camera().get_near_z_pointer(), DRAG_SPEED))
+                if (ImGui::DragFloat("##Near_z", m_scene->get_editor_camera().get_near_z_pointer(), DRAG_SPEED))
                 {
-                    m_scene->get_camera().recalculate_projection();
+                    m_scene->get_editor_camera().recalculate_projection();
                 }
 
                 ImGui::Text("Far_z");
                 ImGui::SameLine();
-                if (ImGui::DragFloat("##Far_z", m_scene->get_camera().get_far_z_pointer(), DRAG_SPEED))
+                if (ImGui::DragFloat("##Far_z", m_scene->get_editor_camera().get_far_z_pointer(), DRAG_SPEED))
                 {
-                    m_scene->get_camera().recalculate_projection();
+                    m_scene->get_editor_camera().recalculate_projection();
                 }
                
                 ImGui::TreePop();

@@ -49,7 +49,6 @@ namespace vengine
 		//render shadowmaps
 		const auto viewport = m_viewport;
 		RendererApiGL::set_viewport(m_viewport.x, m_viewport.y, m_shadow_map_specs.width, m_shadow_map_specs.height);
-		
 
 		begin_render_pass(m_dir_light_shadow_map);
 		for (auto& drawable : m_render_queue)
@@ -132,8 +131,6 @@ namespace vengine
 		
 		m_pbr_render_material.set("u_view_projection", m_camera_view_projection);
 		m_pbr_render_material.set("u_view_pos", m_camera_pos);
-
-		m_basic_render_material.set("u_view_projection", m_camera_view_projection);
 	}
 
 	void Renderer::set_skybox(const SkyboxGL& skybox)
