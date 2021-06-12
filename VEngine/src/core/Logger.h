@@ -1,11 +1,15 @@
 #pragma once
-
 #include <imgui.h>
+
+#define LOG_INFO(message) Logger::info(message, __FILE__, __LINE__);
+#define LOG_WARNING(message) Logger::warning(message, __FILE__, __LINE__);
+#define LOG_ERROR(message) Logger::error(message, __FILE__, __LINE__);
+
 
 namespace vengine
 {
 	class ConsolePanel;
-	
+
 	class Logger
 	{
 	public:
@@ -15,41 +19,40 @@ namespace vengine
 		};
 	
 	public:
-		static void info(const std::string& message)
+		static void info(const std::string& message, const std::string& filename, int line_number)
 		{
-			log(message, MessageSeverity::INFO);
+			std::string result = "File " + filename.substr(filename.find_last_of("/\\") + 1) + " line: " + std::to_string(line_number) + " : " + message + '\n';
+			s_info_text_buffer.append(result.c_str());
 		}
 
-		static void warning(const std::string& message)
+		static void warning(const std::string& message, const std::string& filename, int line_number)
 		{
-			log(message, MessageSeverity::WARNING);
+			std::string result = "File " + filename.substr(filename.find_last_of("/\\") + 1) + " line: " + std::to_string(line_number) + " : " + message + '\n';
+			s_warning_text_buffer.append(result.c_str());
 		}
 
-		static void error(const std::string& message)
+		static void error(const std::string& message, const std::string& filename, int line_number)
 		{
-			log(message, MessageSeverity::ERROR);
+			std::string result = "File " + filename.substr(filename.find_last_of("/\\") + 1) + " line: " + std::to_string(line_number) + " : " + message + '\n';
+			s_error_text_buffer.append(result.c_str());
 		}
 		
-		[[nodiscard]] static auto& get_imgui_text_buffer() { return s_imgui_text_buffer; }
+		[[nodiscard]] static auto& get_info_text_buffer() { return s_info_text_buffer; }
+		[[nodiscard]] static auto& get_warning_text_buffer() { return s_warning_text_buffer; }
+		[[nodiscard]] static auto& get_error_text_buffer() { return s_error_text_buffer; }
 	
 	private:
-		static void log(const std::string& message, const MessageSeverity severity)
-		{
-			//TODO: change date format and check str_time size
-			auto now_time = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-			char str_time[26] = {};
-			ctime_s(str_time, 26, &now_time);
-			
-			s_imgui_text_buffer.append(message.data(), message.data() + message.size() + 1);
-		}
-
 		static void clear()
 		{
-			s_imgui_text_buffer.clear();
+			s_info_text_buffer.clear();
+			s_warning_text_buffer.clear();
+			s_error_text_buffer.clear();
 		}
 	
 	private:
-		inline static ImGuiTextBuffer s_imgui_text_buffer = ImGuiTextBuffer{};
+		inline static ImGuiTextBuffer s_info_text_buffer = ImGuiTextBuffer{};
+		inline static ImGuiTextBuffer s_warning_text_buffer = ImGuiTextBuffer{};
+		inline static ImGuiTextBuffer s_error_text_buffer = ImGuiTextBuffer{};
 
 		friend ConsolePanel;
 	};

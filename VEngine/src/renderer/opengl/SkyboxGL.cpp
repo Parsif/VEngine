@@ -74,7 +74,7 @@ namespace vengine
 		}
 		else
 		{
-			Logger::error("Failed to load texture " + texture_path);
+			LOG_ERROR("Failed to load texture " + texture_path);
 		}
 		stbi_image_free(data);
 	}

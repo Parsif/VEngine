@@ -77,11 +77,11 @@ namespace vengine
 		}
 		catch (YAML::ParserException& exception)
 		{
-			Logger::error(exception.what());
+			LOG_ERROR(exception.what());
 		}
 		if (!data["Scene"])
 		{
-			Logger::error("File is corrupted");
+			LOG_ERROR("File is corrupted");
 		}
 
 		auto yaml_entities = data["Entities"];

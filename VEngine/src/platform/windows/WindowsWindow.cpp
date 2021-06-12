@@ -26,7 +26,7 @@ namespace vengine
 		
 		if (!glfwInit())
 		{
-			Logger::error("Initialization failed");
+			LOG_ERROR("Initialization failed");
 		}
 		glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
 		glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
@@ -35,7 +35,7 @@ namespace vengine
 		m_glfw_window = glfwCreateWindow(m_data.width, m_data.height, title.c_str(), NULL, NULL);
 		if (!m_glfw_window)
 		{
-			Logger::error("Window or OpenGL context creation failed");
+			LOG_ERROR("Window or OpenGL context creation failed");
 		}
 		glfwMakeContextCurrent(m_glfw_window);
 

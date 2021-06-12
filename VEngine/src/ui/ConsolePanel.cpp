@@ -12,18 +12,28 @@ namespace vengine
         ImGui::Begin("Console");
         if (ImGui::Button("Clear"))
         {
+            m_text_buffer.clear();
             Logger::clear();
         }
         ImGui::SameLine();
         bool copy = ImGui::Button("Copy");
+        ImGui::SameLine();
+        static int type_idx = 0;
+        if (ImGui::Combo("##Type", &type_idx, "Info\0Warning\0Error\0"))
+        {
+            switch (type_idx)
+            {
+            case 0: m_text_buffer = Logger::get_info_text_buffer(); break;
+            case 1: m_text_buffer = Logger::get_warning_text_buffer(); break;
+            case 2: m_text_buffer = Logger::get_error_text_buffer(); break;
+            }
+        }
         ImGui::Separator();
         ImGui::BeginChild("scrolling");
         ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0, 1));
         if (copy) ImGui::LogToClipboard();
-        ImGui::TextUnformatted(Logger::get_imgui_text_buffer().begin());
-        if (m_scroll_to_bottom)
-            ImGui::SetScrollHere(1.0f);
-        m_scroll_to_bottom = false;
+        ImGui::TextUnformatted(m_text_buffer.begin());
+       
         ImGui::PopStyleVar();
         ImGui::EndChild();
         ImGui::End();

@@ -11,7 +11,7 @@ namespace vengine
 	{
 		if (glewInit() != GLEW_OK)
 		{
-			Logger::error("Failed to init glew");
+			LOG_ERROR("Failed to init glew");
 		}
 
 #ifdef V_CONFIGURATION_DEBUG

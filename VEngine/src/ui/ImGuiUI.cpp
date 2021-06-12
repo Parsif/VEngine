@@ -126,7 +126,7 @@ namespace vengine
 
 		else
 		{
-			Logger::warning("Unhandled imgui event");
+			LOG_WARNING("Unhandled imgui event");
 		}
 	}
 

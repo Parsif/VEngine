@@ -36,7 +36,7 @@ namespace vengine
 		
 		else
 		{
-			Logger::error("Failed to load texture " + filepath);
+			LOG_ERROR("Failed to load texture " + filepath);
 		}
 		stbi_image_free(data);
 
