@@ -432,6 +432,11 @@ namespace vengine
 				//TODO: fix rotation
 				//transform_component.rotation += rotation - transform_component.rotation;
 				transform_component.scale = scale;
+				if(m_scene->m_registry.has<DirLightComponent>(selected_entity))
+				{
+					auto& dir_light_component = m_scene->m_registry.get<DirLightComponent>(selected_entity);
+					m_scene->m_registry.replace<DirLightComponent>(selected_entity, dir_light_component);
+				}
 			}
 			
 		}

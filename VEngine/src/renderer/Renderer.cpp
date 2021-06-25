@@ -105,23 +105,23 @@ namespace vengine
 		m_intermediate_frame_buffer.create(FrameBufferSpecifications{ m_viewport.width, m_viewport.height, FrameBufferType::COLOR_DEPTH_STENCIL, 1 });
 	}
 
-	void Renderer::set_dir_light(const DirLightComponent& dir_lights)
+	void Renderer::set_dir_light(const DirLightComponent& dir_lights, const glm::vec3& position)
 	{
-		m_dir_light = dir_lights;
-		m_pbr_render_material.set("u_dirlight.position", m_dir_light.position);
-		m_pbr_render_material.set("u_dirlight.color", m_dir_light.color);
-		m_pbr_render_material.set("u_dirlight.intensity", m_dir_light.intensity);
+		m_pbr_render_material.set("u_dirlight.position", position);
+		m_pbr_render_material.set("u_dirlight.color", dir_lights.color);
+		m_pbr_render_material.set("u_dirlight.intensity", dir_lights.intensity);
 
 		const float near_plane = 1.0f, far_plane = 50.0f;
 		const glm::mat4 light_projection = glm::ortho(-20.0f, 20.0f, -20.0f, 20.0f, near_plane, far_plane);
 
-		glm::mat4 light_view = glm::lookAt(m_dir_light.position,
+		glm::mat4 light_view = glm::lookAt(position,
 		                                   glm::vec3(0.0f, 0.0f, 0.0f),
 		                                   glm::vec3(0.0f, 1.0f, 0.0f));
 
 		const glm::mat4 light_space_matrix = light_projection * light_view;
 		m_direct_shadow_map_material.set("u_light_space_matrix", light_space_matrix);
 		m_pbr_render_material.set("u_dirlight.light_space_matrix", light_space_matrix);
+
 	}
 
 	void Renderer::set_camera_params(const glm::mat4& view_projection, const glm::vec3& position)
@@ -136,6 +136,15 @@ namespace vengine
 	void Renderer::set_skybox(const SkyboxGL& skybox)
 	{
 		m_skybox = skybox;
+	}
+
+	void Renderer::destroy_dir_lights()
+	{
+		m_pbr_render_material.set("u_dirlight.position", glm::vec3(0.0f));
+		m_pbr_render_material.set("u_dirlight.color", glm::vec3(0.0f));
+		m_pbr_render_material.set("u_dirlight.intensity", 0.0f);
+		m_direct_shadow_map_material.set("u_light_space_matrix", glm::mat4(0.0f));
+		m_pbr_render_material.set("u_dirlight.light_space_matrix", glm::mat4(0.0f));
 	}
 
 	void Renderer::begin_render_pass(const FrameBufferGL& frame_buffer)

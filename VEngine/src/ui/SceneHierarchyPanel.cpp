@@ -29,7 +29,14 @@ namespace vengine
         if (ImGui::BeginPopupContextWindow(0, 1, false))
         {
             if (ImGui::MenuItem("Create dir light"))
+            {
                 m_scene->create_dir_light();
+            }
+
+            if (ImGui::MenuItem("Create camera"))
+            {
+                m_scene->create_camera();
+            }
 
             ImGui::EndPopup();
         }
@@ -78,7 +85,14 @@ namespace vengine
 
             if (ImGui::TreeNodeEx((void*)typeid(TransformComponent).hash_code(), ImGuiTreeNodeFlags_DefaultOpen, "Transform"))
             {
-                draw_vec3_component("Position", transform_component.translation);
+                if(draw_vec3_component("Position", transform_component.translation))
+                {
+                    if (m_scene->m_registry.has<DirLightComponent>(entity))
+                    {
+                        auto& dir_light_component = m_scene->m_registry.get<DirLightComponent>(entity);
+                        m_scene->m_registry.replace<DirLightComponent>(entity, dir_light_component);
+                    }
+                }
                 draw_vec3_component("Rotation", transform_component.rotation);
                 draw_vec3_component("Scale", transform_component.scale);
                 ImGui::TreePop();
@@ -89,23 +103,24 @@ namespace vengine
         if (m_scene->m_registry.has<CameraComponent>(entity))
         {
             constexpr float DRAG_SPEED = 0.1f;
+            auto& camera = m_scene->m_registry.get<CameraComponent>(entity).camera;
 
             if (ImGui::TreeNodeEx((void*)typeid(CameraComponent).hash_code(), ImGuiTreeNodeFlags_DefaultOpen, "Camera prop"))
             {
-                const std::string fov = "Fov: " + std::to_string((int)m_scene->get_editor_camera().get_fov());
+                const std::string fov = "Fov: " + std::to_string((int)camera.get_fov());
                 ImGui::Text(fov.c_str());
 
 
                 ImGui::Text("Near_z");
                 ImGui::SameLine();
-                if (ImGui::DragFloat("##Near_z", m_scene->get_editor_camera().get_near_z_pointer(), DRAG_SPEED))
+                if (ImGui::DragFloat("##Near_z", camera.get_near_z_pointer(), DRAG_SPEED))
                 {
                     m_scene->get_editor_camera().recalculate_projection();
                 }
 
                 ImGui::Text("Far_z");
                 ImGui::SameLine();
-                if (ImGui::DragFloat("##Far_z", m_scene->get_editor_camera().get_far_z_pointer(), DRAG_SPEED))
+                if (ImGui::DragFloat("##Far_z", camera.get_far_z_pointer(), DRAG_SPEED))
                 {
                     m_scene->get_editor_camera().recalculate_projection();
                 }
@@ -122,11 +137,6 @@ namespace vengine
 
             if (ImGui::TreeNodeEx((void*)typeid(DirLightComponent).hash_code(), ImGuiTreeNodeFlags_DefaultOpen, "DirLight"))
             {
-                if(draw_vec3_component("Position", dir_light_component.position))
-                {
-                    m_scene->m_registry.replace<DirLightComponent>(entity, dir_light_component);
-                }
-            	
                 if (draw_vec3_component("Color", dir_light_component.color))
                 {
                     m_scene->m_registry.replace<DirLightComponent>(entity, dir_light_component);
@@ -268,7 +278,7 @@ namespace vengine
 		}
         if (texture)
         {
-            ImGui::Image((void*)texture.get_id(), ImVec2(100, 100));
+            ImGui::Image((void*)texture.get_id(), ImVec2(100, 100), ImVec2(0, 1), ImVec2(1, 0));
         }
 	}
 }

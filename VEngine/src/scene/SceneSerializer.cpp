@@ -118,7 +118,7 @@ namespace vengine
 					Camera camera{ fov, near_z, far_z };
 					camera.set_position(position);
 					scene->add_component<CameraComponent>(entity, camera);
-					scene->set_camera_entity(entity);
+					scene->set_game_camera_entity(entity);
 				}
 
 				auto model_component = yaml_entity["ModelComponent"];
@@ -146,7 +146,6 @@ namespace vengine
 				{
 					DirLightComponent component;
 
-					component.position = dir_light_component["Position"].as<glm::vec3>();
 					component.color = dir_light_component["Color"].as<glm::vec3>();
 					component.intensity = dir_light_component["Intensity"].as<float>();
 
@@ -238,7 +237,6 @@ namespace vengine
 
 			auto& dir_light_component = scene->m_registry.get<DirLightComponent>(entity);
 
-			out << YAML::Key << "Position" << YAML::Value << dir_light_component.position;
 			out << YAML::Key << "Color" << YAML::Value << dir_light_component.color;
 			out << YAML::Key << "Intensity" << YAML::Value << dir_light_component.intensity;
 

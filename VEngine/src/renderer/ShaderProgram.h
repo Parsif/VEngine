@@ -99,6 +99,7 @@ namespace vengine
 			}
 		}
 
+
 	private:
 		unsigned int m_render_id;
 		std::unordered_map<std::string, UniformInfo<int>> m_int_uniforms;

@@ -18,8 +18,9 @@ namespace vengine
 		m_renderer->set_skybox(SkyboxGL{ "./VEngine/assets/default/SkyCubemap/skybox_top.jpg", "./VEngine/assets/default/SkyCubemap/skybox_bottom.jpg",
 			"./VEngine/assets/default/SkyCubemap/skybox_left.jpg", "./VEngine/assets/default/SkyCubemap/skybox_right.jpg",
 			"./VEngine/assets/default/SkyCubemap/skybox_back.jpg", "./VEngine/assets/default/SkyCubemap/skybox_front.jpg" });
-		m_registry.on_construct<DirLightComponent>().connect<&Scene::on_dir_light_update>(this);
-		m_registry.on_update<DirLightComponent>().connect<&Scene::on_dir_light_update>(this);
+		m_registry.on_construct<DirLightComponent>().connect<&Scene::on_dir_light_create_update>(this);
+		m_registry.on_update<DirLightComponent>().connect<&Scene::on_dir_light_create_update>(this);
+		m_registry.on_destroy<DirLightComponent>().connect<&Scene::on_dir_light_destroy>(this);
 	}
 	
 	void Scene::on_update()
@@ -29,9 +30,10 @@ namespace vengine
 			//TODO: fix grid
 			//draw_grid();
 		}
-		Camera& camera = get_editor_camera();
-		m_renderer->set_camera_params(camera.get_view_projection(), camera.get_position());
+		//Try to move setting params from loop
+		m_renderer->set_camera_params(m_editor_camera.get_view_projection(), m_editor_camera.get_position());
 
+		
 		m_registry.each([&](auto entity)
 		{
 			if(m_registry.has<ModelComponent>(entity)) 
@@ -50,8 +52,7 @@ namespace vengine
 	
 	void Scene::on_event(const Event& event)
 	{
-		Camera& camera = get_editor_camera();
-		camera.on_event(event);
+		m_editor_camera.on_event(event);
 	}
 	
 	[[nodiscard]] entt::entity Scene::create_empty_entity(const std::string& tag)
@@ -63,12 +64,11 @@ namespace vengine
 
 	void Scene::create_camera()
 	{
-		m_editor_camera_entity = m_registry.create();
-		m_registry.emplace<TagComponent>(m_editor_camera_entity, "Camera");
-
+		m_game_camera_entity = m_registry.create();
+		m_registry.emplace<TagComponent>(m_game_camera_entity, "Camera");
 		const Camera camera{ 45.0f, 0.1f, 500.f };
-		
-		m_registry.emplace<CameraComponent>(m_editor_camera_entity, camera);
+		m_registry.emplace<CameraComponent>(m_game_camera_entity, camera);
+		m_registry.emplace<TransformComponent>(m_game_camera_entity);
 	}
 
 	void Scene::create_model(const std::string& model_path)
@@ -94,11 +94,9 @@ namespace vengine
 		m_registry.destroy(entity);
 	}
 
-	void Scene::set_camera_entity(entt::entity entity)
+	void Scene::set_game_camera_entity(entt::entity entity)
 	{
-		m_editor_camera_entity = entity;
-		Camera& camera = get_editor_camera();
-		m_renderer->set_camera_params(camera.get_view_projection(), camera.get_position());
+		m_game_camera_entity = entity;
 	}
 
 	void Scene::clear()
@@ -108,14 +106,30 @@ namespace vengine
 
 	void Scene::create_dir_light()
 	{
-		const auto entity = m_registry.create();
+		const entt::entity entity = m_registry.create();
 		m_registry.emplace<TagComponent>(entity, "Directional light");
+		m_registry.emplace<TransformComponent>(entity); // should be created before dir_light_component
 		m_registry.emplace<DirLightComponent>(entity);
 	}
 
-	void Scene::on_dir_light_update(entt::registry& registry, entt::entity entity) const
+	void Scene::on_dir_light_create_update(entt::registry& registry, entt::entity entity) const
 	{
-		auto& dir_light_component = registry.get<DirLightComponent>(entity);
-		m_renderer->set_dir_light(dir_light_component);
+		const auto& transform_component = m_registry.get<TransformComponent>(entity);
+		const auto& dir_light_component = m_registry.get<DirLightComponent>(entity);
+		m_renderer->set_dir_light(dir_light_component, transform_component.translation);
+	}
+
+	void Scene::on_dir_light_destroy(entt::registry& registry, entt::entity entity) const
+	{
+		m_renderer->destroy_dir_lights();
+
+		for (auto&& [view_entity, dir_light_component, transform_component] : registry.view<DirLightComponent, TransformComponent>().each())
+		{
+			if(view_entity != entity)
+			{
+				m_renderer->set_dir_light(dir_light_component, transform_component.translation);
+			}
+		}
+
 	}
 }

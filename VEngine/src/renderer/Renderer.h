@@ -21,7 +21,7 @@ namespace vengine
 		void render();
 		void set_viewport(int x, int y, unsigned int width, unsigned int height);
 		void set_viewport_size(unsigned int width, unsigned int height);
-		void set_dir_light(const DirLightComponent& dir_lights);
+		void set_dir_light(const DirLightComponent& dir_lights, const glm::vec3& position);
 		void set_camera_params(const glm::mat4& view_projection, const glm::vec3& position);
 
 		void set_skybox(const SkyboxGL& skybox);
@@ -29,7 +29,8 @@ namespace vengine
 		[[nodiscard]] auto get_color_attachment() const { return m_intermediate_frame_buffer.get_color_attachment(); }
 
 		[[nodiscard]] auto get_viewport() const { return m_viewport; }
-	
+		void destroy_dir_lights();
+
 	private:
 		void begin_render_pass(const FrameBufferGL& frame_buffer);
 		void end_render_pass(const FrameBufferGL& frame_buffer) const;
@@ -64,7 +65,6 @@ namespace vengine
 
 		SkyboxGL m_skybox;
 		
-		DirLightComponent m_dir_light;
 		glm::mat4 m_camera_view_projection;
 		glm::vec3 m_camera_pos;
 	};
