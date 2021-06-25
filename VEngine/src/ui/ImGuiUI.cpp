@@ -61,11 +61,22 @@ namespace vengine
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 8));
 		static ImVec2 scene_view_size;
 		ImGui::Begin("SceneView");
+		if(ImGui::Button("Play"))
+		{
+			m_scene->start_game();
+			m_guizmo_type = -1; //TODO: change this
+		}
+		ImGui::SameLine();
+		if (ImGui::Button("Stop"))
+		{
+			m_scene->stop_game();
+		}
+		
 		ImVec2 size = ImGui::GetWindowSize();
 		if((int)scene_view_size.x != (int)size.x || (int)scene_view_size.y != (int)size.y)
 		{
 			scene_view_size = size;
-			m_scene->get_editor_camera().set_aspect_ratio(scene_view_size.x / scene_view_size.y);
+			m_scene->get_active_camera().set_aspect_ratio(scene_view_size.x / scene_view_size.y);
 		}
 		ImGui::Image((void*)m_renderer->get_color_attachment(), ImGui::GetContentRegionAvail(), ImVec2(0, 1), ImVec2(1, 0));
 		draw_guizmo();
@@ -94,7 +105,6 @@ namespace vengine
 	{
 		if(event.get_type() == EventType::KEY_PRESSED)
 		{
-
 			const auto key_pressed_event = *static_cast<const KeyPressedEvent*>(&event);
 			switch (key_pressed_event.get_keycode())
 				{
@@ -173,9 +183,13 @@ namespace vengine
 	void ImGuiUI::set_edin_black_style() const
 	{
 		ImGuiStyle& style = ImGui::GetStyle();
-		style.WindowRounding = 6.f;
-		style.ScrollbarRounding = 2.f;
-		style.WindowTitleAlign.x = 0.45f;
+		style.ChildRounding = 3.f;
+		style.GrabRounding = 0.f;
+		style.WindowRounding = 0.f;
+		style.ScrollbarRounding = 3.f;
+		style.FrameRounding = 3.f;
+		style.WindowTitleAlign = ImVec2(0.5f, 0.5f);
+		style.WindowBorderSize = style.FrameBorderSize = 1.f;
 		style.Colors[ImGuiCol_Text] = ImVec4(0.98f, 0.98f, 0.98f, 1.00f);
 		style.Colors[ImGuiCol_TextDisabled] = ImVec4(0.98f, 0.98f, 0.98f, 0.50f);
 		style.Colors[ImGuiCol_WindowBg] = ImVec4(0.10f, 0.10f, 0.10f, 1.00f);
@@ -416,8 +430,8 @@ namespace vengine
 
 			float snap_values[3] = { snap_value, snap_value, snap_value };
 			
-			ImGuizmo::Manipulate(glm::value_ptr(m_scene->get_editor_camera().get_view()),
-				glm::value_ptr(m_scene->get_editor_camera().get_projection()),
+			ImGuizmo::Manipulate(glm::value_ptr(m_scene->get_active_camera().get_view()),
+				glm::value_ptr(m_scene->get_active_camera().get_projection()),
 				static_cast<ImGuizmo::OPERATION>(m_guizmo_type),
 				ImGuizmo::LOCAL,
 				glm::value_ptr(transform),

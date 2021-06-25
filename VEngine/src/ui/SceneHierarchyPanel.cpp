@@ -115,14 +115,14 @@ namespace vengine
                 ImGui::SameLine();
                 if (ImGui::DragFloat("##Near_z", camera.get_near_z_pointer(), DRAG_SPEED))
                 {
-                    m_scene->get_editor_camera().recalculate_projection();
+                    m_scene->get_active_camera().recalculate_projection();
                 }
 
                 ImGui::Text("Far_z");
                 ImGui::SameLine();
                 if (ImGui::DragFloat("##Far_z", camera.get_far_z_pointer(), DRAG_SPEED))
                 {
-                    m_scene->get_editor_camera().recalculate_projection();
+                    m_scene->get_active_camera().recalculate_projection();
                 }
                
                 ImGui::TreePop();

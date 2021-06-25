@@ -13,7 +13,7 @@ namespace vengine
 		m_window->set_event_callback([this](const Event& event) { on_event(event); });
 
 		RendererApiGL::init();
-		
+
 		m_renderer = std::make_shared<Renderer>();
 		m_renderer->init();
 		m_renderer->set_viewport(0, 0, m_window->get_width(), m_window->get_height());
@@ -60,14 +60,18 @@ namespace vengine
 
 		case EventType::KEY_PRESSED:
 		{
-			m_editor_ui.on_event(event);
+			if (!m_scene->is_gamemode_on())
+			{
+				m_editor_ui.on_event(event);
+			}
+				
 			break;
 		}
 
 		case EventType::MOUSE_SCROLLED:
 		{
 			//TODO: move focus check in scene
-			if (m_editor_ui.is_scene_view_focused())
+			if (m_editor_ui.is_scene_view_focused() && !m_scene->is_gamemode_on())
 			{
 				m_scene->on_event(event);
 			}
@@ -76,7 +80,7 @@ namespace vengine
 
 		case EventType::MOUSE_MOVED:
 		{
-			if (m_editor_ui.is_scene_view_focused())
+			if (m_editor_ui.is_scene_view_focused() && !m_scene->is_gamemode_on())
 			{
 				m_scene->on_event(event);
 			}
@@ -85,7 +89,7 @@ namespace vengine
 
 		case EventType::MOUSE_PRESSED:
 		{
-			if (m_editor_ui.is_scene_view_focused())
+			if (m_editor_ui.is_scene_view_focused() && !m_scene->is_gamemode_on())
 			{
 				m_scene->on_event(event);
 			}
@@ -94,7 +98,10 @@ namespace vengine
 
 		case EventType::FILE_DROP:
 		{
-			on_drop_file(event);
+			if(!m_scene->is_gamemode_on())
+			{
+				on_drop_file(event);
+			}
 			break;
 		}
 			

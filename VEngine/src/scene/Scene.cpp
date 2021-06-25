@@ -31,7 +31,7 @@ namespace vengine
 			//draw_grid();
 		}
 		//Try to move setting params from loop
-		m_renderer->set_camera_params(m_editor_camera.get_view_projection(), m_editor_camera.get_position());
+		m_renderer->set_camera_params(m_active_camera.get_view_projection(), m_active_camera.get_position());
 
 		
 		m_registry.each([&](auto entity)
@@ -52,7 +52,7 @@ namespace vengine
 	
 	void Scene::on_event(const Event& event)
 	{
-		m_editor_camera.on_event(event);
+		m_active_camera.on_event(event);
 	}
 	
 	[[nodiscard]] entt::entity Scene::create_empty_entity(const std::string& tag)
@@ -85,8 +85,8 @@ namespace vengine
 	{
 		auto& render_command = m_grid.get_render_command();
 		auto& grid_material = MaterialLibrary::get_material("Grid");
-		grid_material.set("u_view", get_editor_camera().get_view());
-		grid_material.set("u_projection", get_editor_camera().get_projection());
+		grid_material.set("u_view", get_active_camera().get_view());
+		grid_material.set("u_projection", get_active_camera().get_projection());
 	}
 
 	void Scene::destroy_entity(entt::entity entity)
@@ -110,6 +110,27 @@ namespace vengine
 		m_registry.emplace<TagComponent>(entity, "Directional light");
 		m_registry.emplace<TransformComponent>(entity); // should be created before dir_light_component
 		m_registry.emplace<DirLightComponent>(entity);
+	}
+
+	void Scene::start_game()
+	{
+		if(m_registry.valid(m_game_camera_entity) && m_registry.has<CameraComponent>(m_game_camera_entity))
+		{
+			m_is_gamemode_on = true;
+			m_active_camera = m_registry.get<CameraComponent>(m_game_camera_entity).camera;
+			m_active_camera.set_position(m_registry.get<TransformComponent>(m_game_camera_entity).translation);
+		}
+		else
+		{
+			LOG_ERROR("There is no camera in the scene")
+		}
+		
+	}
+
+	void Scene::stop_game()
+	{
+		m_is_gamemode_on = false;
+		m_active_camera = m_editor_camera;
 	}
 
 	void Scene::on_dir_light_create_update(entt::registry& registry, entt::entity entity) const
