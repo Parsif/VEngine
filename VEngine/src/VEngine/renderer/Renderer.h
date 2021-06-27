@@ -21,7 +21,7 @@ namespace vengine
 		void render();
 		void set_viewport(int x, int y, unsigned int width, unsigned int height);
 		void set_viewport_size(unsigned int width, unsigned int height);
-		void set_dir_light(const DirLightComponent& dir_lights, const glm::vec3& position);
+		void add_dir_light(const DirLightComponent& dir_lights, const glm::vec3& position);
 		void set_camera_params(const glm::mat4& view_projection, const glm::vec3& position);
 
 		void set_skybox(const SkyboxGL& skybox);
@@ -56,8 +56,11 @@ namespace vengine
 		FrameBufferGL m_final_frame_buffer;
 		FrameBufferGL m_intermediate_frame_buffer;
 		const FrameBufferSpecifications m_shadow_map_specs{ 1024, 1024, FrameBufferType::DEPTH_ONLY };
-		FrameBufferGL m_dir_light_shadow_map;
 
+		const static unsigned int MAX_NUMBER_OF_DIR_LIGHTS = 4;
+		std::array<FrameBufferGL, MAX_NUMBER_OF_DIR_LIGHTS> m_dir_light_shadow_map_textures{};
+		std::vector<glm::mat4> m_dir_light_space_matrices;
+		
 		Material m_pbr_render_material;
 		Material m_basic_render_material;
 		Material m_direct_shadow_map_material;

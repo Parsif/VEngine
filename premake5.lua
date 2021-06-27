@@ -19,23 +19,21 @@ project "VEngine"
     cppdialect "C++17"
     targetdir ("bin-int/bin/" .. outputdir .. "/%{prj.name}")
     objdir ("bin-int/bin-int/" .. outputdir .. "/%{prj.name}")
-    
-    
 
 
     pchheader "precheader.h"
-	pchsource "%{prj.name}/src/precheader.cpp"
+	pchsource "%{prj.name}/src/VEngine/precheader.cpp"
 
     files 
     {
-        "%{prj.name}/src/**.h",
-        "%{prj.name}/src/**.cpp"
+        "%{prj.name}/src/VEngine/**.h",
+        "%{prj.name}/src/VEngine/**.cpp"
     }
 
 
     includedirs
     {
-        "%{prj.name}/src",
+        "%{prj.name}/src/VEngine",
         "%{prj.name}/vendor/glew/include",
         "%{prj.name}/vendor/glfw/include",
         "%{prj.name}/vendor/imgui",

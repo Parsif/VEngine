@@ -1,15 +1,16 @@
 #version 430 core
 
-out vec4 fr_color;
-
 const float PI = 3.14159265359;
+const uint MAX_DIR_LIGHTS = 4;
+
+out vec4 fr_color;
 
 in VertexOutput
 {
 	vec2 tex_coord;
 	vec3 normal;
 	vec3 frag_pos;
-    vec4 frag_pos_light_space;
+    vec4 frag_pos_light_space[MAX_DIR_LIGHTS];
     mat3 TBN;
 } vs_output;
 
@@ -34,11 +35,12 @@ struct DirLight
     vec3 color;
     float intensity;
     mat4 light_space_matrix;
+    sampler2D shadow_map;
 };
 
 uniform Material u_material;
-uniform DirLight u_dirlight;
-uniform sampler2D u_dir_light_shadow_map;
+uniform DirLight u_dirlights[MAX_DIR_LIGHTS];
+uniform int u_number_of_dir_lights;
 
 uniform vec3 u_view_pos;
 
@@ -72,31 +74,32 @@ void main()
     vec3 view_direction = normalize(u_view_pos - vs_output.frag_pos);
 
     vec3 L0 = vec3(0.0);
-    
-    vec3 surface_to_light = normalize(u_dirlight.position);
-    vec3 half_way_direction = normalize(view_direction + surface_to_light);
-    vec3 radiance = u_dirlight.color * u_dirlight.intensity;
+    for(int i = 0; i < u_number_of_dir_lights; i++)
+    {
+        vec3 surface_to_light = normalize(u_dirlights[i].position);
+        vec3 half_way_direction = normalize(view_direction + surface_to_light);
+        vec3 radiance = u_dirlights[i].color * u_dirlights[i].intensity;
 
-    // Cook-Torrance BRDF
-    float NDF = distribution_GGX(normal, half_way_direction, roughness);        
-    float G   = geometry_smith(normal, view_direction, surface_to_light, roughness);    
-    vec3  F   = fresnel_schlick(max(dot(half_way_direction, view_direction), 0.0), F0);       
+        // Cook-Torrance BRDF
+        float NDF = distribution_GGX(normal, half_way_direction, roughness);        
+        float G   = geometry_smith(normal, view_direction, surface_to_light, roughness);    
+        vec3  F   = fresnel_schlick(max(dot(half_way_direction, view_direction), 0.0), F0);       
 
-    vec3 nominator    = NDF * G * F; 
-    float denominator = 4 * max(dot(normal, view_direction), 0.0) * max(dot(normal, surface_to_light), 0.0) + 0.001; // 0.001 to prevent divide by zero.
-    vec3 specular = nominator / denominator;
+        vec3 nominator    = NDF * G * F; 
+        float denominator = 4 * max(dot(normal, view_direction), 0.0) * max(dot(normal, surface_to_light), 0.0) + 0.001; // 0.001 to prevent divide by zero.
+        vec3 specular = nominator / denominator;
 
-    vec3 kS = F;
-    vec3 kD = vec3(1.0) - kS;
-    kD *= 1.0 - metallic;	  
+        vec3 kS = F;
+        vec3 kD = vec3(1.0) - kS;
+        kD *= 1.0 - metallic;	  
             
-    // add to outgoing radiance Lo
-    float NdotL = max(dot(normal, surface_to_light), 0.0);                
-    vec3 color = (kD * albedo / PI + specular) * radiance * NdotL; 
-    //shadows
-    color *= (1 - calc_shadow(normal, surface_to_light, u_dir_light_shadow_map, vs_output.frag_pos_light_space));
-    L0 += color;
-   
+        // add to outgoing radiance Lo
+        float NdotL = max(dot(normal, surface_to_light), 0.0);                
+        vec3 color = (kD * albedo / PI + specular) * radiance * NdotL; 
+        //shadows
+        color *= (1 - calc_shadow(normal, surface_to_light, u_dirlights[i].shadow_map, vs_output.frag_pos_light_space[i]));
+        L0 += color;
+    }
     //abmient
     if(u_material.has_ao)
     {

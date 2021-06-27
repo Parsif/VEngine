@@ -135,9 +135,11 @@ namespace vengine
 
 	void Scene::on_dir_light_create_update(entt::registry& registry, entt::entity entity) const
 	{
-		const auto& transform_component = m_registry.get<TransformComponent>(entity);
-		const auto& dir_light_component = m_registry.get<DirLightComponent>(entity);
-		m_renderer->set_dir_light(dir_light_component, transform_component.translation);
+		m_renderer->destroy_dir_lights();
+		for (auto&& [view_entity, dir_light_component, transform_component] : registry.view<DirLightComponent, TransformComponent>().each())
+		{
+			m_renderer->add_dir_light(dir_light_component, transform_component.translation);
+		}
 	}
 
 	void Scene::on_dir_light_destroy(entt::registry& registry, entt::entity entity) const
@@ -148,7 +150,7 @@ namespace vengine
 		{
 			if(view_entity != entity)
 			{
-				m_renderer->set_dir_light(dir_light_component, transform_component.translation);
+				m_renderer->add_dir_light(dir_light_component, transform_component.translation);
 			}
 		}
 
