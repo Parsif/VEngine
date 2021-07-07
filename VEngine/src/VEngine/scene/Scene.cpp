@@ -18,9 +18,6 @@ namespace vengine
 		m_renderer->set_skybox(SkyboxGL{ "./VEngine/assets/default/SkyCubemap/skybox_top.jpg", "./VEngine/assets/default/SkyCubemap/skybox_bottom.jpg",
 			"./VEngine/assets/default/SkyCubemap/skybox_left.jpg", "./VEngine/assets/default/SkyCubemap/skybox_right.jpg",
 			"./VEngine/assets/default/SkyCubemap/skybox_back.jpg", "./VEngine/assets/default/SkyCubemap/skybox_front.jpg" });
-		m_registry.on_construct<DirLightComponent>().connect<&Scene::on_dir_light_create_update>(this);
-		m_registry.on_update<DirLightComponent>().connect<&Scene::on_dir_light_create_update>(this);
-		m_registry.on_destroy<DirLightComponent>().connect<&Scene::on_dir_light_destroy>(this);
 	}
 	
 	void Scene::on_update()
@@ -32,9 +29,23 @@ namespace vengine
 		}
 		//Try to move setting params from loop
 		m_renderer->set_camera_params(m_active_camera.get_view_projection(), m_active_camera.get_position());
+		for (auto&& [view_entity, dir_light_component, transform_component] : m_registry.view<DirLightComponent, TransformComponent>().each())
+		{
+			m_renderer->add_dir_light(dir_light_component, transform_component.translation);
+		}
 
+		for (auto&& [view_entity, model_component, transform_component, materials_component] 
+			: m_registry.view<ModelComponent, TransformComponent, MaterialsComponent>().each())
+		{
+			auto& mesh = ModelLoader::get_mesh(model_component.filepath);
+
+			mesh.is_casting_shadow = true;
+			mesh.transform = transform_component.get_transform();
+			mesh.materials = materials_component;
+			m_renderer->add_drawable(mesh);
+		}
 		
-		m_registry.each([&](auto entity)
+		/*m_registry.each([&](auto entity)
 		{
 			if(m_registry.has<ModelComponent>(entity)) 
 			{
@@ -46,7 +57,7 @@ namespace vengine
 				mesh.materials = m_registry.get<MaterialsComponent>(entity);
 				m_renderer->add_drawable(mesh);
 			}
-		});
+		});*/
 	}
 
 	
@@ -133,26 +144,4 @@ namespace vengine
 		m_active_camera = m_editor_camera;
 	}
 
-	void Scene::on_dir_light_create_update(entt::registry& registry, entt::entity entity) const
-	{
-		m_renderer->destroy_dir_lights();
-		for (auto&& [view_entity, dir_light_component, transform_component] : registry.view<DirLightComponent, TransformComponent>().each())
-		{
-			m_renderer->add_dir_light(dir_light_component, transform_component.translation);
-		}
-	}
-
-	void Scene::on_dir_light_destroy(entt::registry& registry, entt::entity entity) const
-	{
-		m_renderer->destroy_dir_lights();
-
-		for (auto&& [view_entity, dir_light_component, transform_component] : registry.view<DirLightComponent, TransformComponent>().each())
-		{
-			if(view_entity != entity)
-			{
-				m_renderer->add_dir_light(dir_light_component, transform_component.translation);
-			}
-		}
-
-	}
 }

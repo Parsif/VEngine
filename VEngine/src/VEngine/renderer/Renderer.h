@@ -12,12 +12,27 @@ namespace vengine
 {
 	class Renderer
 	{
+	private:
+		struct DirLight
+		{
+			DirLightComponent dir_light_component;
+			glm::vec3 position;
+		};
+
+		struct Viewport
+		{
+			int x = 0;
+			int y = 0;
+			unsigned int width = 0;
+			unsigned int height = 0;
+		};
+		
 	public:
 		void init();
 		void shutdown();
 
 		void add_drawable(const Mesh& drawable);
-		
+
 		void render();
 		void set_viewport(int x, int y, unsigned int width, unsigned int height);
 		void set_viewport_size(unsigned int width, unsigned int height);
@@ -37,17 +52,10 @@ namespace vengine
 		void render_mesh(Mesh& mesh) ;
 		void render_shadow(Mesh& mesh) const;
 		void render_skybox();
+		glm::mat4 calc_dir_light_space_matrix(const DirLight& dir_light) const;
 
 	
 	private:
-		struct Viewport	
-		{
-			int x = 0;
-			int y = 0;
-			unsigned int width = 0;
-			unsigned int height = 0;
-		};
-
 		Viewport m_viewport;
 		
 		std::vector<Mesh> m_render_queue;
@@ -59,7 +67,10 @@ namespace vengine
 
 		const static unsigned int MAX_NUMBER_OF_DIR_LIGHTS = 4;
 		std::array<FrameBufferGL, MAX_NUMBER_OF_DIR_LIGHTS> m_dir_light_shadow_map_textures{};
-		std::vector<glm::mat4> m_dir_light_space_matrices;
+
+	
+		
+		std::vector<DirLight> m_dir_lights;
 		
 		Material m_pbr_render_material;
 		Material m_basic_render_material;

@@ -46,11 +46,6 @@ namespace vengine
 		void start_game();
 		void stop_game();
 		[[nodiscard]] bool is_gamemode_on() const { return m_is_gamemode_on; };
-	
-	private:
-		void on_dir_light_create_update(entt::registry& registry, entt::entity entity) const;
-		void on_dir_light_destroy(entt::registry& registry, entt::entity entity) const;
-
 
 	private:
 		Camera m_editor_camera{45.0f, 0.1f, 500.f};

@@ -55,7 +55,7 @@ namespace vengine
 		RendererApiGL::set_viewport(m_viewport.x, m_viewport.y, m_shadow_map_specs.width, m_shadow_map_specs.height);
 
 		//for every dir light render shadow map
-		for(size_t i = 0; i < m_dir_light_space_matrices.size(); ++i)
+		for(size_t i = 0; i < m_dir_lights.size(); ++i)
 		{
 			begin_render_pass(m_dir_light_shadow_map_textures[i]);
 			for (auto& drawable : m_render_queue)
@@ -63,7 +63,9 @@ namespace vengine
 				if (drawable.is_casting_shadow)
 				{
 					m_direct_shadow_map_material.set("u_transform", drawable.transform);
-					m_direct_shadow_map_material.set("u_light_space_matrix", m_dir_light_space_matrices[i]);
+					const glm::mat4 light_space_matrix = calc_dir_light_space_matrix(m_dir_lights[i]);
+					m_direct_shadow_map_material.set("u_light_space_matrix", light_space_matrix);
+					m_pbr_render_material.set("u_dirlights[" + std::to_string(i) + "].light_space_matrix", light_space_matrix);
 					m_direct_shadow_map_material.use();
 					render_shadow(drawable);
 				}
@@ -89,6 +91,7 @@ namespace vengine
 		end_render_pass(m_final_frame_buffer);
 		
 		m_render_queue.clear();
+		destroy_dir_lights();
 	}
 
 
@@ -115,29 +118,16 @@ namespace vengine
 		m_intermediate_frame_buffer.create(FrameBufferSpecifications{ m_viewport.width, m_viewport.height, FrameBufferType::COLOR_DEPTH_STENCIL, 1 });
 	}
 
-	void Renderer::add_dir_light(const DirLightComponent& dir_lights, const glm::vec3& position)
+	void Renderer::add_dir_light(const DirLightComponent& dir_light, const glm::vec3& position)
 	{
-		if(m_dir_light_space_matrices.size() == MAX_NUMBER_OF_DIR_LIGHTS)
+		if(m_dir_lights.size() == MAX_NUMBER_OF_DIR_LIGHTS)
 		{
 			return;
 		}
-		m_pbr_render_material.set("u_dirlights[" + std::to_string(m_dir_light_space_matrices.size()) + "].position", position);
-		m_pbr_render_material.set("u_dirlights[" + std::to_string(m_dir_light_space_matrices.size()) + "].color", dir_lights.color);
-		m_pbr_render_material.set("u_dirlights[" + std::to_string(m_dir_light_space_matrices.size()) + "].intensity", dir_lights.intensity);
-
-		const float near_plane = 1.0f, far_plane = 50.0f;
-		const glm::mat4 light_projection = glm::ortho(-20.0f, 20.0f, -20.0f, 20.0f, near_plane, far_plane);
-
-		glm::mat4 light_view = glm::lookAt(position,
-		                                   glm::vec3(0.0f, 0.0f, 0.0f),
-		                                   glm::vec3(0.0f, 1.0f, 0.0f));
-
-		const glm::mat4 light_space_matrix = light_projection * light_view;
-		m_pbr_render_material.set("u_dirlights[" + std::to_string(m_dir_light_space_matrices.size()) + "].light_space_matrix", light_space_matrix);
-
-
-		m_dir_light_space_matrices.push_back(light_space_matrix);
-		m_pbr_render_material.set("u_number_of_dir_lights", (int)m_dir_light_space_matrices.size());
+		m_pbr_render_material.set("u_dirlights[" + std::to_string(m_dir_lights.size()) + "].position", position);
+		m_pbr_render_material.set("u_dirlights[" + std::to_string(m_dir_lights.size()) + "].color", dir_light.color);
+		m_pbr_render_material.set("u_dirlights[" + std::to_string(m_dir_lights.size()) + "].intensity", dir_light.intensity);
+		m_dir_lights.push_back(DirLight{ dir_light, position });
 	}
 
 	void Renderer::set_camera_params(const glm::mat4& view_projection, const glm::vec3& position)
@@ -156,19 +146,20 @@ namespace vengine
 
 	void Renderer::destroy_dir_lights()
 	{
-		for (size_t i = 0; i < m_dir_light_space_matrices.size(); ++i)
+		for (size_t i = 0; i < m_dir_lights.size(); ++i)
 		{
 			m_pbr_render_material.set("u_dirlights[" + std::to_string(i) + "].position", glm::vec3(0.0f));
 			m_pbr_render_material.set("u_dirlights[" + std::to_string(i) + "].color", glm::vec3(0.0f));
 			m_pbr_render_material.set("u_dirlights[" + std::to_string(i) + "].intensity", 0.0f);
 			m_pbr_render_material.set("u_dirlights[" + std::to_string(i) + "].light_space_matrix", glm::mat4(0.0f));
 		}
-		m_pbr_render_material.set("u_number_of_dir_lights", (int)0);
+		m_pbr_render_material.set<int>("u_number_of_dir_lights", 0);
 		
 		m_direct_shadow_map_material.set("u_light_space_matrix", glm::mat4(0.0f));
 
-		m_dir_light_space_matrices.clear();
+		m_dir_lights.clear();
 	}
+
 
 	void Renderer::begin_render_pass(const FrameBufferGL& frame_buffer)
 	{
@@ -185,6 +176,9 @@ namespace vengine
 	//TODO: try to move textures to materials
 	void Renderer::render_mesh(Mesh& mesh) 
 	{
+
+		m_pbr_render_material.set<int>("u_number_of_dir_lights", m_dir_lights.size());
+
 		m_pbr_render_material.set("u_transform", mesh.transform);
 		m_pbr_render_material.set("u_material.has_albedo", mesh.has_albedo_texture || mesh.materials.albedo_texture);
 		m_pbr_render_material.set("u_material.has_metallic", mesh.has_metallic_texture || mesh.materials.metallic_texture);
@@ -197,39 +191,39 @@ namespace vengine
 			size_t texture_slot = 0;
 			if (mesh.materials.albedo_texture)
 			{
-				m_pbr_render_material.set("u_material." + mesh.materials.albedo_texture.get_string_type(), (int)texture_slot);
+				m_pbr_render_material.set<int>("u_material." + mesh.materials.albedo_texture.get_string_type(), texture_slot);
 				mesh.materials.albedo_texture.bind(texture_slot++);
 			}
 			if (mesh.materials.metallic_texture)
 			{
-				m_pbr_render_material.set("u_material." + mesh.materials.metallic_texture.get_string_type(), (int)texture_slot);
+				m_pbr_render_material.set<int>("u_material." + mesh.materials.metallic_texture.get_string_type(), texture_slot);
 				mesh.materials.metallic_texture.bind(texture_slot++);
 			}
 			if (mesh.materials.roughness_texture)
 			{
-				m_pbr_render_material.set("u_material." + mesh.materials.roughness_texture.get_string_type(), (int)texture_slot);
+				m_pbr_render_material.set<int>("u_material." + mesh.materials.roughness_texture.get_string_type(), texture_slot);
 				mesh.materials.roughness_texture.bind(texture_slot++);
 			}
 			if (mesh.materials.ao_texture)
 			{
-				m_pbr_render_material.set("u_material." + mesh.materials.ao_texture.get_string_type(), (int)texture_slot);
+				m_pbr_render_material.set<int>("u_material." + mesh.materials.ao_texture.get_string_type(), texture_slot);
 				mesh.materials.ao_texture.bind(texture_slot++);
 			}
 			if (mesh.materials.normal_texture)
 			{
-				m_pbr_render_material.set("u_material." + mesh.materials.normal_texture.get_string_type(), (int)texture_slot);
+				m_pbr_render_material.set<int>("u_material." + mesh.materials.normal_texture.get_string_type(), texture_slot);
 				mesh.materials.normal_texture.bind(texture_slot++);
 			}
 			
 			for (const auto& texture_2d : render_command.get_textures2d())
 			{
-				m_pbr_render_material.set("u_material." + texture_2d.get_string_type(), (int)texture_slot);
+				m_pbr_render_material.set<int>("u_material." + texture_2d.get_string_type(), texture_slot);
 				texture_2d.bind(texture_slot++);
 			}
 
-			for (size_t i = 0; i < m_dir_light_space_matrices.size(); ++i)
+			for (size_t i = 0; i < m_dir_lights.size(); ++i)
 			{
-				m_pbr_render_material.set("u_dirlights[" + std::to_string(i) + "].shadow_map", (int)texture_slot);
+				m_pbr_render_material.set<int>("u_dirlights[" + std::to_string(i) + "].shadow_map", texture_slot);
 				TextureGL shadow_map_texture{ m_dir_light_shadow_map_textures[i].get_depth_attachment() };
 				shadow_map_texture.bind(texture_slot++);
 			}
@@ -253,5 +247,17 @@ namespace vengine
 		m_skybox_material.use();
 		m_skybox.bind();
 		RendererApiGL::draw_elements(m_skybox.get_render_command());
+	}
+
+	glm::mat4 Renderer::calc_dir_light_space_matrix(const DirLight& dir_light) const
+	{
+		const float near_plane = 1.0f, far_plane = 50.0f;
+		const glm::mat4 light_projection = glm::ortho(-20.0f, 20.0f, -20.0f, 20.0f, near_plane, far_plane);
+
+		glm::mat4 light_view = glm::lookAt(dir_light.position,
+			glm::vec3(0.0f, 0.0f, 0.0f),
+			glm::vec3(0.0f, 1.0f, 0.0f));
+
+		return light_projection * light_view;
 	}
 }
