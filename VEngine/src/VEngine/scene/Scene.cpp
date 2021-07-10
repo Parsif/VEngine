@@ -15,9 +15,6 @@ namespace vengine
 		m_renderer = renderer;
 		m_grid.init();
 		create_camera();
-		m_renderer->set_skybox(SkyboxGL{ "./VEngine/assets/default/SkyCubemap/skybox_top.jpg", "./VEngine/assets/default/SkyCubemap/skybox_bottom.jpg",
-			"./VEngine/assets/default/SkyCubemap/skybox_left.jpg", "./VEngine/assets/default/SkyCubemap/skybox_right.jpg",
-			"./VEngine/assets/default/SkyCubemap/skybox_back.jpg", "./VEngine/assets/default/SkyCubemap/skybox_front.jpg" });
 	}
 	
 	void Scene::on_update()
@@ -28,10 +25,15 @@ namespace vengine
 			//draw_grid();
 		}
 		//Try to move setting params from loop
-		m_renderer->set_camera_params(m_active_camera.get_view_projection(), m_active_camera.get_position());
+		m_renderer->set_camera_params(m_active_camera);
 		for (auto&& [view_entity, dir_light_component, transform_component] : m_registry.view<DirLightComponent, TransformComponent>().each())
 		{
 			m_renderer->add_dir_light(dir_light_component, transform_component.translation);
+		}
+
+		for (auto&& [view_entity, point_light_component, transform_component] : m_registry.view<PointLightComponent, TransformComponent>().each())
+		{
+			m_renderer->add_point_light(point_light_component, transform_component.translation);
 		}
 
 		for (auto&& [view_entity, model_component, transform_component, materials_component] 
@@ -44,20 +46,6 @@ namespace vengine
 			mesh.materials = materials_component;
 			m_renderer->add_drawable(mesh);
 		}
-		
-		/*m_registry.each([&](auto entity)
-		{
-			if(m_registry.has<ModelComponent>(entity)) 
-			{
-				ModelComponent& model_component = m_registry.get<ModelComponent>(entity);
-				auto& mesh = ModelLoader::get_mesh(model_component.filepath);
-
-				mesh.is_casting_shadow = true;
-				mesh.transform = m_registry.get<TransformComponent>(entity).get_transform();
-				mesh.materials = m_registry.get<MaterialsComponent>(entity);
-				m_renderer->add_drawable(mesh);
-			}
-		});*/
 	}
 
 	
@@ -119,8 +107,16 @@ namespace vengine
 	{
 		const entt::entity entity = m_registry.create();
 		m_registry.emplace<TagComponent>(entity, "Directional light");
-		m_registry.emplace<TransformComponent>(entity); // should be created before dir_light_component
+		m_registry.emplace<TransformComponent>(entity); 
 		m_registry.emplace<DirLightComponent>(entity);
+	}
+
+	void Scene::create_point_light()
+	{
+		const entt::entity entity = m_registry.create();
+		m_registry.emplace<TagComponent>(entity, "Point light");
+		m_registry.emplace<TransformComponent>(entity); 
+		m_registry.emplace<PointLightComponent>(entity);
 	}
 
 	void Scene::start_game()
@@ -144,4 +140,13 @@ namespace vengine
 		m_active_camera = m_editor_camera;
 	}
 
+	void Scene::set_environment_texture(const TextureGL& texture) const
+	{
+		m_renderer->set_scene_environment_map(texture);
+	}
+
+	void Scene::toggle_bloom(bool is_bloom)
+	{
+		
+	}
 }

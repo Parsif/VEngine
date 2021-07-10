@@ -42,10 +42,14 @@ namespace vengine
 		void clear();
 
 		void create_dir_light();
+		void create_point_light();
+
 
 		void start_game();
 		void stop_game();
-		[[nodiscard]] bool is_gamemode_on() const { return m_is_gamemode_on; };
+		[[nodiscard]] bool is_gamemode_on() const { return m_is_gamemode_on; }
+		void set_environment_texture(const TextureGL& texture) const;
+		void toggle_bloom(bool is_bloom);
 
 	private:
 		Camera m_editor_camera{45.0f, 0.1f, 500.f};
@@ -61,7 +65,6 @@ namespace vengine
 		friend SceneHierarchyPanel;
 		friend ImGuiUI;
 		friend SceneSerializer;
-
 	};
 }
 

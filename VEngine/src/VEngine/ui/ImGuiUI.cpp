@@ -27,6 +27,8 @@ namespace vengine
 		m_renderer = renderer;
 
 		m_scene_hierarchy_panel.init(window, scene);
+		m_scene_settings_panel.init(window, scene);
+
 		init_imgui();
 	}
 
@@ -85,6 +87,8 @@ namespace vengine
 
 		m_scene_hierarchy_panel.draw();
 		m_console_panel.draw();
+		m_scene_settings_panel.draw();
+		
 
 		ImGui::Begin("Debug");
 		for (auto&& time : Timer::get_times())
@@ -92,7 +96,6 @@ namespace vengine
 			ImGui::Text((time.name + ": " + std::to_string(time.duration) + "ms").c_str());
 		}
 		Timer::clear();
-
 		ImGui::End();
 
 		ImGui::PopStyleVar();

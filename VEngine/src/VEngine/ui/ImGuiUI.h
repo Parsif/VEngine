@@ -1,6 +1,7 @@
 #pragma once
 
 #include "ConsolePanel.h"
+#include "SceneSettingsPanel.h"
 #include "SceneHierarchyPanel.h"
 #include "core/Vtypes.h"
 #include "core/Window.h"
@@ -40,6 +41,7 @@ namespace vengine
 		
 		SceneHierarchyPanel m_scene_hierarchy_panel;
 		ConsolePanel m_console_panel;
+		SceneSettingsPanel m_scene_settings_panel;
 
 		int m_guizmo_type = -1;
 		bool m_scene_view_focused;

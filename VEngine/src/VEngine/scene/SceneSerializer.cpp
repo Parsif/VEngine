@@ -149,8 +149,18 @@ namespace vengine
 					component.color = dir_light_component["Color"].as<glm::vec3>();
 					component.intensity = dir_light_component["Intensity"].as<float>();
 
-
 					scene->add_component<DirLightComponent>(entity, component);
+				}
+
+				auto point_light_component = yaml_entity["PointLightComponent"];
+				if (point_light_component)
+				{
+					PointLightComponent component;
+
+					component.color = point_light_component["Color"].as<glm::vec3>();
+					component.intensity = point_light_component["Intensity"].as<float>();
+
+					scene->add_component<PointLightComponent>(entity, component);
 				}
 			}
 		}
@@ -241,6 +251,19 @@ namespace vengine
 			out << YAML::Key << "Intensity" << YAML::Value << dir_light_component.intensity;
 
 			out << YAML::EndMap; // DirLightComponent
+		}
+
+		if (scene->m_registry.has<PointLightComponent>(entity))
+		{
+			out << YAML::Key << "PointLightComponent";
+			out << YAML::BeginMap; // PointLightComponent
+
+			auto& point_light_component = scene->m_registry.get<PointLightComponent>(entity);
+
+			out << YAML::Key << "Color" << YAML::Value << point_light_component.color;
+			out << YAML::Key << "Intensity" << YAML::Value << point_light_component.intensity;
+
+			out << YAML::EndMap; // PointLightComponent
 		}
 
 		out << YAML::EndMap; // Entity

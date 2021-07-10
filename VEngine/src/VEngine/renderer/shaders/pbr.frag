@@ -2,6 +2,7 @@
 
 const float PI = 3.14159265359;
 const uint MAX_DIR_LIGHTS = 4;
+const uint MAX_POINT_LIGHTS = 4;
 
 out vec4 fr_color;
 
@@ -38,11 +39,23 @@ struct DirLight
     sampler2D shadow_map;
 };
 
+struct PointLight
+{
+    vec3 position;
+    vec3 color;
+    float intensity;
+};
+
 uniform Material u_material;
 uniform DirLight u_dirlights[MAX_DIR_LIGHTS];
+uniform PointLight u_point_lights[MAX_POINT_LIGHTS];
+
 uniform int u_number_of_dir_lights;
+uniform int u_number_of_point_lights;
 
 uniform vec3 u_view_pos;
+
+uniform samplerCube u_irradiance_map;
 
 float distribution_GGX(vec3 N, vec3 H, float roughness);
 float geometry_schlick_GGX(float NdotV, float roughness);
@@ -74,6 +87,8 @@ void main()
     vec3 view_direction = normalize(u_view_pos - vs_output.frag_pos);
 
     vec3 L0 = vec3(0.0);
+
+    //dirlights
     for(int i = 0; i < u_number_of_dir_lights; i++)
     {
         vec3 surface_to_light = normalize(u_dirlights[i].position);
@@ -100,13 +115,48 @@ void main()
         color *= (1 - calc_shadow(normal, surface_to_light, u_dirlights[i].shadow_map, vs_output.frag_pos_light_space[i]));
         L0 += color;
     }
+
+    //point lights
+    for(int i = 0; i < u_number_of_point_lights; i++)
+    {
+        vec3 surface_to_light = normalize(u_point_lights[i].position - vs_output.frag_pos);
+        vec3 half_way_direction = normalize(view_direction + surface_to_light);
+        float distance_to_light = length(u_point_lights[i].position - vs_output.frag_pos);
+        float attenuation = 1.0 / (distance_to_light * distance_to_light);
+        vec3 radiance = u_point_lights[i].color * u_point_lights[i].intensity * attenuation;
+
+        // Cook-Torrance BRDF
+        float NDF = distribution_GGX(normal, half_way_direction, roughness);        
+        float G   = geometry_smith(normal, view_direction, surface_to_light, roughness);    
+        vec3  F   = fresnel_schlick(max(dot(half_way_direction, view_direction), 0.0), F0);       
+
+        vec3 nominator    = NDF * G * F; 
+        float denominator = 4 * max(dot(normal, view_direction), 0.0) * max(dot(normal, surface_to_light), 0.0) + 0.001; // 0.001 to prevent divide by zero.
+        vec3 specular = nominator / denominator;
+
+        vec3 kS = F;
+        vec3 kD = vec3(1.0) - kS;
+        kD *= 1.0 - metallic;	  
+            
+        // add to outgoing radiance Lo
+        float NdotL = max(dot(normal, surface_to_light), 0.0);                
+        vec3 color = (kD * albedo / PI + specular) * radiance * NdotL; 
+        L0 += color;
+    }
+
+
     //abmient
+    vec3 kS = fresnel_schlick(max(dot(normal, view_direction), 0.0), F0);
+    vec3 kD = 1.0 - kS;
+    vec3 irradiance = texture(u_irradiance_map, normal).rgb;
+    vec3 diffuse    = irradiance * albedo;
+    vec3 ambient    = kD * diffuse; 
     if(u_material.has_ao)
     {
         float ao = texture(u_material.ao_map, vs_output.tex_coord).r;
-        vec3 ambient = vec3(0.03) * albedo * ao;
-        L0 += ambient;
+        ambient = ambient * ao;
     }
+    L0 += ambient;
     
     //hdr
     L0 = L0 / (L0 + vec3(1.0));
@@ -117,7 +167,7 @@ void main()
 
 float distribution_GGX(vec3 N, vec3 H, float roughness)
 {
-     float a = roughness*roughness;
+    float a = roughness*roughness;
     float a2 = a*a;
     float NdotH = max(dot(N, H), 0.0);
     float NdotH2 = NdotH*NdotH;

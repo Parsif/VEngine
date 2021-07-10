@@ -18,15 +18,16 @@ namespace vengine
 		[[nodiscard]] auto get_id() const { return m_id; }
 		[[nodiscard]] const std::string& get_filepath() const { return m_filepath; }
 
-		explicit operator bool() const { return m_type != aiTextureType_NONE; }
+		explicit operator bool() const { return m_is_texture_loaded; }
 		
 	private:
-		unsigned int m_id;
-		int m_width{ 0 }, m_height{ 0 }, m_channels;
+		unsigned int m_id{};
+		int m_width{ 0 }, m_height{ 0 }, m_channels{};
 
 		std::string m_filepath;
 		std::string m_string_type;
-		aiTextureType m_type;
+		aiTextureType m_type = aiTextureType_NONE;
+		bool m_is_texture_loaded = false;
 	};
 }
 

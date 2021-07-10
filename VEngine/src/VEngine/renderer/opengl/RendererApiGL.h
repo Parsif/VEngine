@@ -18,7 +18,6 @@ namespace vengine
 		void static set_viewport(int x, int y, unsigned int width, unsigned int height);
 
 		void static draw_elements(RenderCommand& triangle_command);
-
 	private:
 		void static prepare_drawing(RenderCommand& command);
 

@@ -77,6 +77,7 @@ namespace vengine
 			(GLvoid*)triangle_command.get_index_offset());
 	}
 
+
 	void RendererApiGL::prepare_drawing(RenderCommand& command)
 	{
 		const auto& vertex_array = command.get_vertex_array();

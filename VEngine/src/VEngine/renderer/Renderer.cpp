@@ -3,11 +3,12 @@
 
 #include "RenderCommand.h"
 
+#include "MaterialLibrary.h"
+#include "opengl/RendererApiGL.h"
+
 #include <glm/ext/matrix_clip_space.hpp>
 #include <glm/ext/matrix_transform.hpp>
 
-#include "MaterialLibrary.h"
-#include "opengl/RendererApiGL.h"
 
 namespace vengine
 {
@@ -20,22 +21,25 @@ namespace vengine
 
 		for (auto& shadow_map : m_dir_light_shadow_map_textures)
 		{
-			shadow_map.create(m_shadow_map_specs);
+			shadow_map.create(FrameBufferSpecifications{ 1024, 1024, FrameBufferType::DEPTH_ONLY });
 		}
+		m_environment_map_frame_buffer.create(FrameBufferSpecifications{ 1024, 1024, FrameBufferType::ENVIRONMENT_MAP });
+		m_irradiance_map_frame_buffer.create(FrameBufferSpecifications{ 32, 32, FrameBufferType::ENVIRONMENT_MAP });
 
-		
 		m_pbr_render_material = MaterialLibrary::load("./VEngine/src/VEngine/renderer/shaders/pbr.vert", 
 													"./VEngine/src/VEngine/renderer/shaders/pbr.frag", "PBR");
 
-		m_basic_render_material = MaterialLibrary::load("./VEngine/src/VEngine/renderer/shaders/basic.vert", 
-			"./VEngine/src/VEngine/renderer/shaders/basic.frag", "Basic");
-
+		m_hdr_to_cubemap_render_material = MaterialLibrary::load("./VEngine/src/VEngine/renderer/shaders/hdr_to_cubemap.vert", 
+			"./VEngine/src/VEngine/renderer/shaders/hdr_to_cubemap.frag", "HDR_to_cubemap");
 
 		m_skybox_material = MaterialLibrary::load("./VEngine/src/VEngine/renderer/shaders/skybox.vert",
 			"./VEngine/src/VEngine/renderer/shaders/skybox.frag", "Skybox");
-
+			
 		m_direct_shadow_map_material = MaterialLibrary::load("./VEngine/src/VEngine/renderer/shaders/shadowmap.vert",
 			"./VEngine/src/VEngine/renderer/shaders/shadowmap.frag", "Shadowmap");
+		
+		m_irradiance_material = MaterialLibrary::load("./VEngine/src/VEngine/renderer/shaders/irradiance.vert",
+			"./VEngine/src/VEngine/renderer/shaders/irradiance.frag", "Irradiance");
 	}
 
 	void Renderer::shutdown()
@@ -50,10 +54,13 @@ namespace vengine
 
 	void Renderer::render()
 	{
+		m_intermediate_frame_buffer.create(FrameBufferSpecifications{ m_viewport.width, m_viewport.height, FrameBufferType::COLOR_DEPTH_STENCIL, 4 });
+		m_final_frame_buffer.create(FrameBufferSpecifications{ m_viewport.width, m_viewport.height, FrameBufferType::COLOR_DEPTH_STENCIL, 1 });
+		
 		//render shadowmaps
 		const auto viewport = m_viewport;
+		
 		RendererApiGL::set_viewport(m_viewport.x, m_viewport.y, m_shadow_map_specs.width, m_shadow_map_specs.height);
-
 		//for every dir light render shadow map
 		for(size_t i = 0; i < m_dir_lights.size(); ++i)
 		{
@@ -73,25 +80,22 @@ namespace vengine
 			end_render_pass(m_dir_light_shadow_map_textures[i]);
 		}
 		
-		
-		
 		//render scene
-		RendererApiGL::set_viewport(m_viewport.x, m_viewport.y, viewport.width, viewport.height);
+		RendererApiGL::set_viewport(viewport.x, viewport.y, viewport.width, viewport.height);
 		
-		begin_render_pass(m_final_frame_buffer);
-		
-		render_skybox();
-		
+		begin_render_pass(m_intermediate_frame_buffer);
+
 		for (auto& mesh : m_render_queue)
 		{
 			render_mesh(mesh);
 		}
+		render_environment_map();
 
-		FrameBufferGL::blit_framebuffer(m_viewport.width, m_viewport.height, m_final_frame_buffer.get_id(), m_intermediate_frame_buffer.get_id());
-		end_render_pass(m_final_frame_buffer);
+		FrameBufferGL::blit_framebuffer(m_viewport.width, m_viewport.height, m_intermediate_frame_buffer.get_id(), m_final_frame_buffer.get_id());
+		end_render_pass(m_intermediate_frame_buffer);
 		
 		m_render_queue.clear();
-		destroy_dir_lights();
+		destroy_lights();
 	}
 
 
@@ -102,20 +106,13 @@ namespace vengine
 		m_viewport.width = width;
 		m_viewport.height = height;
 		RendererApiGL::set_viewport(m_viewport.x, m_viewport.y, m_viewport.width, m_viewport.height);
-
-		//TODO: move framebuffer creation
-		m_final_frame_buffer.create(FrameBufferSpecifications{ m_viewport.width, m_viewport.height, FrameBufferType::COLOR_DEPTH_STENCIL, 4 });
-		m_intermediate_frame_buffer.create(FrameBufferSpecifications{ m_viewport.width, m_viewport.height, FrameBufferType::COLOR_DEPTH_STENCIL, 1 });
 	}
 
-	void Renderer::set_viewport_size(unsigned int width, unsigned int height)
+	void Renderer::set_viewport(unsigned int width, unsigned int height)
 	{
 		m_viewport.width = width;
 		m_viewport.height = height;
 		RendererApiGL::set_viewport(m_viewport.x, m_viewport.y, m_viewport.width, m_viewport.height);
-
-		m_final_frame_buffer.create(FrameBufferSpecifications{ m_viewport.width, m_viewport.height, FrameBufferType::COLOR_DEPTH_STENCIL, 4 });
-		m_intermediate_frame_buffer.create(FrameBufferSpecifications{ m_viewport.width, m_viewport.height, FrameBufferType::COLOR_DEPTH_STENCIL, 1 });
 	}
 
 	void Renderer::add_dir_light(const DirLightComponent& dir_light, const glm::vec3& position)
@@ -130,38 +127,88 @@ namespace vengine
 		m_dir_lights.push_back(DirLight{ dir_light, position });
 	}
 
-	void Renderer::set_camera_params(const glm::mat4& view_projection, const glm::vec3& position)
+	void Renderer::add_point_light(const PointLightComponent& point_light, const glm::vec3& position)
 	{
-		m_camera_view_projection = view_projection;
-		m_camera_pos = position;
-		
-		m_pbr_render_material.set("u_view_projection", m_camera_view_projection);
-		m_pbr_render_material.set("u_view_pos", m_camera_pos);
-	}
-
-	void Renderer::set_skybox(const SkyboxGL& skybox)
-	{
-		m_skybox = skybox;
-	}
-
-	void Renderer::destroy_dir_lights()
-	{
-		for (size_t i = 0; i < m_dir_lights.size(); ++i)
+		if (m_point_lights.size() == MAX_NUMBER_OF_POINT_LIGHTS)
 		{
-			m_pbr_render_material.set("u_dirlights[" + std::to_string(i) + "].position", glm::vec3(0.0f));
-			m_pbr_render_material.set("u_dirlights[" + std::to_string(i) + "].color", glm::vec3(0.0f));
-			m_pbr_render_material.set("u_dirlights[" + std::to_string(i) + "].intensity", 0.0f);
-			m_pbr_render_material.set("u_dirlights[" + std::to_string(i) + "].light_space_matrix", glm::mat4(0.0f));
+			return;
 		}
-		m_pbr_render_material.set<int>("u_number_of_dir_lights", 0);
-		
-		m_direct_shadow_map_material.set("u_light_space_matrix", glm::mat4(0.0f));
+		m_pbr_render_material.set("u_point_lights[" + std::to_string(m_point_lights.size()) + "].position", position);
+		m_pbr_render_material.set("u_point_lights[" + std::to_string(m_point_lights.size()) + "].color", point_light.color);
+		m_pbr_render_material.set("u_point_lights[" + std::to_string(m_point_lights.size()) + "].intensity", point_light.intensity);
+		m_point_lights.push_back(PointLight{ point_light, position });
+	}
 
+	void Renderer::set_camera_params(const Camera& camera)
+	{
+		m_camera = camera;
+		
+		m_pbr_render_material.set("u_view_projection", m_camera.get_view_projection());
+		m_pbr_render_material.set("u_view_pos", m_camera.get_position());
+
+		m_skybox_material.set("u_view", m_camera.get_view());
+		m_skybox_material.set("u_projection", m_camera.get_projection());
+	}
+
+	void Renderer::destroy_lights()
+	{
 		m_dir_lights.clear();
+		m_point_lights.clear();
+	}
+
+	void Renderer::set_scene_environment_map(const TextureGL& env_texture)
+	{
+		const glm::mat4 capture_projection = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f);
+
+		glm::mat4 capture_views[] =
+		{
+		   glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0f,  0.0f,  0.0f), glm::vec3(0.0f, -1.0f,  0.0f)),
+		   glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(-1.0f,  0.0f,  0.0f), glm::vec3(0.0f, -1.0f,  0.0f)),
+		   glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f,  1.0f,  0.0f), glm::vec3(0.0f,  0.0f,  1.0f)),
+		   glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, -1.0f,  0.0f), glm::vec3(0.0f,  0.0f, -1.0f)),
+		   glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f,  0.0f,  1.0f), glm::vec3(0.0f, -1.0f,  0.0f)),
+		   glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f,  0.0f, -1.0f), glm::vec3(0.0f, -1.0f,  0.0f))
+		};
+		
+		// convert HDR equirectangular environment map to cubemap equivalent
+		m_hdr_to_cubemap_render_material.set<int>("u_equirectangular_map", 0);
+		env_texture.bind();
+		m_hdr_to_cubemap_render_material.set("u_projection", capture_projection);
+		
+		const auto viewport = m_viewport;
+		const auto& [width, height] = m_environment_map_frame_buffer.get_size();
+		RendererApiGL::set_viewport(m_viewport.x, m_viewport.y, width, height);
+		begin_render_pass(m_environment_map_frame_buffer);
+		for (unsigned int i = 0; i < 6; ++i)
+		{
+			m_hdr_to_cubemap_render_material.set("u_view", capture_views[i]);
+			m_environment_map_frame_buffer.attach_cubemap_face_as_texture2d(i);
+			m_hdr_to_cubemap_render_material.use();
+			render_cube();
+		}
+		end_render_pass(m_environment_map_frame_buffer);
+
+		//generate irradiance map
+		m_irradiance_material.set<int>("u_environment_map", 0);
+		m_environment_map_frame_buffer.bind_texture();
+		m_irradiance_material.set("u_projection", capture_projection);
+
+		const auto& [width2, height2] = m_irradiance_map_frame_buffer.get_size();
+		RendererApiGL::set_viewport(viewport.x, viewport.y, width2, height2);
+		begin_render_pass(m_irradiance_map_frame_buffer);
+		for (unsigned int i = 0; i < 6; ++i)
+		{
+			m_irradiance_material.set("u_view", capture_views[i]);
+			m_irradiance_map_frame_buffer.attach_cubemap_face_as_texture2d(i);
+			m_irradiance_material.use();
+			render_cube();
+		}
+		end_render_pass(m_irradiance_map_frame_buffer);
+		RendererApiGL::set_viewport(viewport.x, viewport.y, viewport.width, viewport.height);
 	}
 
 
-	void Renderer::begin_render_pass(const FrameBufferGL& frame_buffer)
+	void Renderer::begin_render_pass(const FrameBufferGL& frame_buffer) const
 	{
 		frame_buffer.bind();
 		RendererApiGL::begin_render_pass(m_render_pass_descriptor);
@@ -176,8 +223,8 @@ namespace vengine
 	//TODO: try to move textures to materials
 	void Renderer::render_mesh(Mesh& mesh) 
 	{
-
 		m_pbr_render_material.set<int>("u_number_of_dir_lights", m_dir_lights.size());
+		m_pbr_render_material.set<int>("u_number_of_point_lights", m_point_lights.size());
 
 		m_pbr_render_material.set("u_transform", mesh.transform);
 		m_pbr_render_material.set("u_material.has_albedo", mesh.has_albedo_texture || mesh.materials.albedo_texture);
@@ -224,10 +271,11 @@ namespace vengine
 			for (size_t i = 0; i < m_dir_lights.size(); ++i)
 			{
 				m_pbr_render_material.set<int>("u_dirlights[" + std::to_string(i) + "].shadow_map", texture_slot);
-				TextureGL shadow_map_texture{ m_dir_light_shadow_map_textures[i].get_depth_attachment() };
-				shadow_map_texture.bind(texture_slot++);
+				m_dir_light_shadow_map_textures[i].bind_texture(texture_slot++);
 			}
-			
+
+			m_pbr_render_material.set<int>("u_irradiance_map", texture_slot);
+			m_irradiance_map_frame_buffer.bind_texture(texture_slot++);
 			
 			m_pbr_render_material.use();
 			RendererApiGL::draw_elements(render_command);
@@ -242,14 +290,48 @@ namespace vengine
 		}
 	}
 
-	void Renderer::render_skybox()
+	void Renderer::render_environment_map() 
 	{
+		m_skybox_material.set<int>("u_environment_map", 0);
+		m_environment_map_frame_buffer.bind_texture();
+
 		m_skybox_material.use();
-		m_skybox.bind();
-		RendererApiGL::draw_elements(m_skybox.get_render_command());
+		render_cube();
 	}
 
-	glm::mat4 Renderer::calc_dir_light_space_matrix(const DirLight& dir_light) const
+	void Renderer::render_cube() const
+	{
+		RenderCommand render_command;
+		float vertices[8 * 3] =
+		{
+			-1, -1, -1,
+			1, -1, -1,
+			1, 1, -1,
+			-1, 1, -1,
+			-1, -1, 1,
+			1, -1, 1,
+			1, 1, 1,
+			-1, 1, 1
+		};
+
+		unsigned int indices[6 * 6] =
+		{
+			0, 1, 3, 3, 1, 2,
+			1, 5, 2, 2, 5, 6,
+			5, 4, 6, 6, 4, 7,
+			4, 0, 7, 7, 0, 3,
+			3, 2, 7, 7, 2, 6,
+			4, 5, 0, 0, 5, 1
+		};
+
+		render_command.set_vertex_buffer(vertices, sizeof(vertices));
+		render_command.set_index_buffer(indices, sizeof(indices), sizeof(indices) / sizeof(unsigned int));
+		render_command.set_buffer_layout(BufferLayout{ ShaderDataType::Float3 });
+
+		RendererApiGL::draw_elements(render_command);
+	}
+
+	[[nodiscard]] glm::mat4 Renderer::calc_dir_light_space_matrix(const DirLight& dir_light) const
 	{
 		const float near_plane = 1.0f, far_plane = 50.0f;
 		const glm::mat4 light_projection = glm::ortho(-20.0f, 20.0f, -20.0f, 20.0f, near_plane, far_plane);
