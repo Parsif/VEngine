@@ -1,4 +1,4 @@
-#version 430 core
+#version 450 core
 
 in vec3 vs_near_point;
 in vec3 vs_far_point;

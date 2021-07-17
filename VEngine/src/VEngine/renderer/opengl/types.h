@@ -6,7 +6,8 @@ namespace vengine
 	{
 		POINT,
 		LINE,
-		TRIANGLE
+		TRIANGLE,
+		TRIANGLE_STRIP
 	};
 
 	enum class IndexType

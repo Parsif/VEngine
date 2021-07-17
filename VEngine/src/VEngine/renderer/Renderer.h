@@ -45,8 +45,12 @@ namespace vengine
 		void add_point_light(const PointLightComponent& point_light, const glm::vec3& position);
 
 		void set_camera_params(const Camera& camera);
+		void set_bloom(bool is_bloom_enabled);
+		void set_bloom_threshold(float threshold);
+		void set_bloom_intensity(float intensity);
+		void set_exposure(float exposure);
 
-		[[nodiscard]] auto get_color_attachment() const { return m_final_frame_buffer.get_color_attachment(); }
+		[[nodiscard]] auto get_color_attachment() const { return m_final_frame_buffer.get_color_attachment0(); }
 		
 
 		[[nodiscard]] auto get_viewport() const { return m_viewport; }
@@ -56,10 +60,14 @@ namespace vengine
 	private:
 		void begin_render_pass(const FrameBufferGL& frame_buffer) const;
 		void end_render_pass(const FrameBufferGL& frame_buffer) const;
-		void render_mesh(Mesh& mesh) ;
+		void render_mesh(Mesh& mesh);
 		void render_shadow(Mesh& mesh) const;
+		void post_processing();
+
 		void render_environment_map();
 		void render_cube() const;
+		void render_quad() const;
+
 
 		[[nodiscard]] glm::mat4 calc_dir_light_space_matrix(const DirLight& dir_light) const;
 
@@ -88,10 +96,14 @@ namespace vengine
 		Material m_direct_shadow_map_material;
 		Material m_skybox_material;
 		Material m_irradiance_material;
+		Material m_blur_material;
+		Material m_postprocessing_material;
 
 		Camera m_camera;
-	};
 
+		bool m_using_environment_map;
+		bool m_using_bloom;
+	};
 	
 }
 

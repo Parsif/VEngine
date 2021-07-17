@@ -1,4 +1,5 @@
-#version 430 core
+#version 450 core
+
 layout(location = 0) in vec3 pos;
 
 out vec3 vs_near_point;

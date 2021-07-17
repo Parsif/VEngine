@@ -24,7 +24,7 @@ namespace vengine
 			//TODO: fix grid
 			//draw_grid();
 		}
-		//Try to move setting params from loop
+		//Try to move setting params out from loop
 		m_renderer->set_camera_params(m_active_camera);
 		for (auto&& [view_entity, dir_light_component, transform_component] : m_registry.view<DirLightComponent, TransformComponent>().each())
 		{
@@ -145,8 +145,23 @@ namespace vengine
 		m_renderer->set_scene_environment_map(texture);
 	}
 
-	void Scene::toggle_bloom(bool is_bloom)
+	void Scene::toggle_bloom(bool is_bloom_enabled) const
 	{
-		
+		m_renderer->set_bloom(is_bloom_enabled);
+	}
+
+	void Scene::set_bloom_threshold(float threshold) const
+	{
+		m_renderer->set_bloom_threshold(threshold);
+	}
+
+	void Scene::set_bloom_intensity(float intensity) const
+	{
+		m_renderer->set_bloom_intensity(intensity);
+	}
+
+	void Scene::set_exposure(float exposure) const
+	{
+		m_renderer->set_exposure(exposure);
 	}
 }

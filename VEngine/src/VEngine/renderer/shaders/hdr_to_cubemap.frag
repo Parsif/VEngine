@@ -1,4 +1,5 @@
-#version 430 core
+#version 450 core
+
 out vec4 frag_color;
 in vec3 vs_pos;
 

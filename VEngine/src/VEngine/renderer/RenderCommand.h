@@ -24,6 +24,8 @@ namespace vengine
 
 		void set_buffer_layout(const BufferLayout& buffer_layout);
 
+		void set_primitive_type(PrimitiveType primitive_type);
+
 		void set_textures2d(std::vector<TextureGL> textures2d);
 
 
@@ -39,7 +41,6 @@ namespace vengine
 
 		[[nodiscard]] auto& get_textures2d() const { return m_textures2d; }
 
-		
 		
 	private:
 		Ref<VertexBuffer> m_vertex_buffer;

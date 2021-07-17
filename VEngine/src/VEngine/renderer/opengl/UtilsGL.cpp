@@ -19,6 +19,10 @@ namespace vengine
 		case PrimitiveType::TRIANGLE:
 			ret = GL_TRIANGLES;
 			break;
+
+		case PrimitiveType::TRIANGLE_STRIP:
+			ret = GL_TRIANGLE_STRIP;
+			break;
 		default: break;
 		}
 		return ret;

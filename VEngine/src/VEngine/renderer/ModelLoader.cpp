@@ -139,7 +139,6 @@ namespace vengine
 			if (ai_material->GetTexture(ai_texture_type, 0, &texture_path) == AI_SUCCESS)
 			{
 				const auto fullpath = file_dir + '/' + texture_path.data;
-				LOG_INFO(fullpath);
 				if (s_loaded_textures.find(fullpath) != s_loaded_textures.end())
 				{
 					textures2d.push_back(s_loaded_textures[fullpath]);

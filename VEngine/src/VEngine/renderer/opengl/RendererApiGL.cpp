@@ -68,15 +68,20 @@ namespace vengine
 	}
 
 
-	void RendererApiGL::draw_elements(RenderCommand& triangle_command)
+	void RendererApiGL::draw_elements(RenderCommand& command)
 	{
-		prepare_drawing(triangle_command);
+		prepare_drawing(command);
 
-		glDrawElements(UtilsGL::to_gl_primitive_type(triangle_command.get_primitive_type()),
-			triangle_command.get_index_count(), UtilsGL::to_gl_index_type(triangle_command.get_index_type()), 
-			(GLvoid*)triangle_command.get_index_offset());
+		glDrawElements(UtilsGL::to_gl_primitive_type(command.get_primitive_type()),
+			command.get_index_count(), UtilsGL::to_gl_index_type(command.get_index_type()),
+			(GLvoid*)command.get_index_offset());
 	}
 
+	void RendererApiGL::draw_arrays(RenderCommand& command, unsigned int first, unsigned int count)
+	{
+		prepare_drawing(command);
+		glDrawArrays(UtilsGL::to_gl_primitive_type(command.get_primitive_type()), first, count);
+	}
 
 	void RendererApiGL::prepare_drawing(RenderCommand& command)
 	{
@@ -90,7 +95,11 @@ namespace vengine
 		{
 			vertex_array->bind_data();
 			command.get_vertex_buffer()->bind();
-			command.get_index_buffer()->bind();
+			const auto& index_buffer = command.get_index_buffer();
+			if(index_buffer)
+			{
+				index_buffer->bind();
+			}
 			const auto& buffer_layout = command.get_buffer_layout();
 			size_t i = 0;
 			for (auto&& attribute : buffer_layout.getElements())

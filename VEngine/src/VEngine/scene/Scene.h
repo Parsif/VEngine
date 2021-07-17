@@ -49,7 +49,12 @@ namespace vengine
 		void stop_game();
 		[[nodiscard]] bool is_gamemode_on() const { return m_is_gamemode_on; }
 		void set_environment_texture(const TextureGL& texture) const;
-		void toggle_bloom(bool is_bloom);
+		void toggle_bloom(bool is_bloom_enabled) const;
+		void set_bloom_threshold(float threshold) const;
+		void set_bloom_intensity(float intensity) const;
+		void set_exposure(float exposure) const;
+
+
 
 	private:
 		Camera m_editor_camera{45.0f, 0.1f, 500.f};

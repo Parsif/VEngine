@@ -1,10 +1,11 @@
-#version 430 core
+#version 450 core
 
 const float PI = 3.14159265359;
 const uint MAX_DIR_LIGHTS = 4;
 const uint MAX_POINT_LIGHTS = 4;
 
-out vec4 fr_color;
+layout (location = 0) out vec4 fr_color;
+layout (location = 1) out vec4 fr_bright_color;
 
 in VertexOutput
 {
@@ -50,12 +51,16 @@ uniform Material u_material;
 uniform DirLight u_dirlights[MAX_DIR_LIGHTS];
 uniform PointLight u_point_lights[MAX_POINT_LIGHTS];
 
-uniform int u_number_of_dir_lights;
-uniform int u_number_of_point_lights;
-
 uniform vec3 u_view_pos;
 
 uniform samplerCube u_irradiance_map;
+
+uniform int u_number_of_dir_lights;
+uniform int u_number_of_point_lights;
+
+uniform float u_bloom_threshold;
+uniform float u_bloom_intensity;
+
 
 float distribution_GGX(vec3 N, vec3 H, float roughness);
 float geometry_schlick_GGX(float NdotV, float roughness);
@@ -69,9 +74,6 @@ void main()
     vec3 albedo     = u_material.has_albedo ? texture(u_material.albedo_map, vs_output.tex_coord).rgb : vec3(0.5f);
     float metallic  = u_material.has_metallic ? texture(u_material.metallic_map, vs_output.tex_coord).r : 0.0f;
     float roughness = u_material.has_roughness ? texture(u_material.roughness_map, vs_output.tex_coord).r : 0.0f;
-
-    const float gamma = 2.2;
-    albedo = pow(albedo, vec3(gamma));
     
     vec3 normal = vs_output.normal;
     if(u_material.has_normal_map)
@@ -157,12 +159,19 @@ void main()
         ambient = ambient * ao;
     }
     L0 += ambient;
-    
-    //hdr
-    L0 = L0 / (L0 + vec3(1.0));
-    // apply gamma correction
-    L0 = pow(L0, vec3(1.0 / gamma));
+
     fr_color = vec4(L0, 1.0);
+
+     //for bloom
+    float brigthness = dot(fr_color.rgb, vec3(0.2126, 0.7152, 0.0722));
+    if(brigthness > u_bloom_threshold)
+    {
+        fr_bright_color = fr_color * u_bloom_intensity;
+    }
+    else
+    {
+        fr_bright_color = vec4(0.0f, 0.0f, 0.0f, 1.0f);
+    }
 }   
 
 float distribution_GGX(vec3 N, vec3 H, float roughness)

@@ -19,6 +19,11 @@ namespace vengine
 		m_buffer_layout = buffer_layout;
 	}
 
+	void RenderCommand::set_primitive_type(PrimitiveType primitive_type)
+	{
+		m_primitive_type = primitive_type;
+	}
+
 	void RenderCommand::set_textures2d(std::vector<TextureGL> textures2d)
 	{
 		m_textures2d = std::move(textures2d);

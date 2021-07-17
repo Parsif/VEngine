@@ -40,6 +40,12 @@ namespace vengine
 		
 		m_irradiance_material = MaterialLibrary::load("./VEngine/src/VEngine/renderer/shaders/irradiance.vert",
 			"./VEngine/src/VEngine/renderer/shaders/irradiance.frag", "Irradiance");
+		
+		m_blur_material = MaterialLibrary::load("./VEngine/src/VEngine/renderer/shaders/blur.vert",
+			"./VEngine/src/VEngine/renderer/shaders/blur.frag", "Blur");
+		
+		m_postprocessing_material = MaterialLibrary::load("./VEngine/src/VEngine/renderer/shaders/postprocessing.vert",
+			"./VEngine/src/VEngine/renderer/shaders/postprocessing.frag", "Postprocessing");
 	}
 
 	void Renderer::shutdown()
@@ -54,8 +60,18 @@ namespace vengine
 
 	void Renderer::render()
 	{
-		m_intermediate_frame_buffer.create(FrameBufferSpecifications{ m_viewport.width, m_viewport.height, FrameBufferType::COLOR_DEPTH_STENCIL, 4 });
-		m_final_frame_buffer.create(FrameBufferSpecifications{ m_viewport.width, m_viewport.height, FrameBufferType::COLOR_DEPTH_STENCIL, 1 });
+		if(m_using_bloom)
+		{
+			m_intermediate_frame_buffer.create(FrameBufferSpecifications{ m_viewport.width, m_viewport.height, FrameBufferType::MULTI_TARGET, 4 });
+			m_final_frame_buffer.create(FrameBufferSpecifications{ m_viewport.width, m_viewport.height, FrameBufferType::MULTI_TARGET, 1 });
+			FrameBufferGL::set_draw_buffers(m_intermediate_frame_buffer.get_id(), 2);
+		}
+		else
+		{
+			m_intermediate_frame_buffer.create(FrameBufferSpecifications{ m_viewport.width, m_viewport.height, FrameBufferType::COLOR_DEPTH_STENCIL, 4 });
+			m_final_frame_buffer.create(FrameBufferSpecifications{ m_viewport.width, m_viewport.height, FrameBufferType::COLOR_DEPTH_STENCIL, 1 });
+			FrameBufferGL::set_draw_buffers(m_intermediate_frame_buffer.get_id(), 1);
+		}
 		
 		//render shadowmaps
 		const auto viewport = m_viewport;
@@ -84,15 +100,25 @@ namespace vengine
 		RendererApiGL::set_viewport(viewport.x, viewport.y, viewport.width, viewport.height);
 		
 		begin_render_pass(m_intermediate_frame_buffer);
-
 		for (auto& mesh : m_render_queue)
 		{
 			render_mesh(mesh);
 		}
-		render_environment_map();
-
-		FrameBufferGL::blit_framebuffer(m_viewport.width, m_viewport.height, m_intermediate_frame_buffer.get_id(), m_final_frame_buffer.get_id());
 		end_render_pass(m_intermediate_frame_buffer);
+
+		FrameBufferGL::blit_framebuffer(m_viewport.width, m_viewport.height, m_intermediate_frame_buffer.get_id(),
+			m_final_frame_buffer.get_id(), 1);
+		if(m_using_environment_map)
+		{
+			m_intermediate_frame_buffer.bind();
+			render_environment_map();
+			m_intermediate_frame_buffer.unbind();
+		}
+	
+		FrameBufferGL::blit_framebuffer(m_viewport.width, m_viewport.height, m_intermediate_frame_buffer.get_id(),
+			m_final_frame_buffer.get_id(), 0);
+		
+		post_processing();
 		
 		m_render_queue.clear();
 		destroy_lights();
@@ -149,6 +175,27 @@ namespace vengine
 		m_skybox_material.set("u_view", m_camera.get_view());
 		m_skybox_material.set("u_projection", m_camera.get_projection());
 	}
+		
+	void Renderer::set_bloom(bool is_bloom_enabled)
+	{
+		m_using_bloom = is_bloom_enabled;
+		m_postprocessing_material.set("u_is_bloom_enabled", is_bloom_enabled);
+	}
+
+	void Renderer::set_bloom_threshold(float threshold)
+	{
+		m_pbr_render_material.set("u_bloom_threshold", threshold);
+	}
+
+	void Renderer::set_bloom_intensity(float intensity)
+	{
+		m_pbr_render_material.set("u_bloom_intensity", intensity);
+	}
+
+	void Renderer::set_exposure(float exposure)
+	{
+		m_postprocessing_material.set("u_exposure", exposure);
+	}
 
 	void Renderer::destroy_lights()
 	{
@@ -158,6 +205,12 @@ namespace vengine
 
 	void Renderer::set_scene_environment_map(const TextureGL& env_texture)
 	{
+		if(!env_texture)
+		{
+			m_using_environment_map = false;
+			return;
+		}
+		m_using_environment_map = true;
 		const glm::mat4 capture_projection = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f);
 
 		glm::mat4 capture_views[] =
@@ -206,7 +259,6 @@ namespace vengine
 		end_render_pass(m_irradiance_map_frame_buffer);
 		RendererApiGL::set_viewport(viewport.x, viewport.y, viewport.width, viewport.height);
 	}
-
 
 	void Renderer::begin_render_pass(const FrameBufferGL& frame_buffer) const
 	{
@@ -276,7 +328,6 @@ namespace vengine
 
 			m_pbr_render_material.set<int>("u_irradiance_map", texture_slot);
 			m_irradiance_map_frame_buffer.bind_texture(texture_slot++);
-			
 			m_pbr_render_material.use();
 			RendererApiGL::draw_elements(render_command);
 		}
@@ -290,6 +341,51 @@ namespace vengine
 		}
 	}
 
+	void Renderer::post_processing()
+	{
+		bool is_bloom_horizontal = true;
+		std::array<FrameBufferGL, 2> pingpong_fbos;
+		if(m_using_bloom)
+		{
+			for (auto& frame_buffer : pingpong_fbos)
+			{
+				frame_buffer.create(FrameBufferSpecifications{ m_viewport.width, m_viewport.height, FrameBufferType::COLOR_ONLY });
+			}
+			
+			const int BLUR_CYCLES = 10;
+			for (size_t i = 0; i < BLUR_CYCLES; ++i)
+			{
+				begin_render_pass(pingpong_fbos[is_bloom_horizontal]);
+				m_blur_material.set<int>("u_image", 0);
+				if(i == 0)
+				{
+					m_final_frame_buffer.bind_texture(0, 1);
+				}
+				else
+				{
+					pingpong_fbos[!is_bloom_horizontal].bind_texture();
+				}
+				m_blur_material.set("u_horizontal", is_bloom_horizontal);
+				m_blur_material.use();
+				render_quad();
+				end_render_pass(pingpong_fbos[is_bloom_horizontal]);
+
+				is_bloom_horizontal = !is_bloom_horizontal;
+			}
+		}
+		
+		begin_render_pass(m_intermediate_frame_buffer);
+		m_postprocessing_material.set<int>("u_scene", 0);
+		m_postprocessing_material.set<int>("u_bloom_blur", 1);
+		m_postprocessing_material.set("u_is_bloom_enabled", m_using_bloom);
+		m_final_frame_buffer.bind_texture(0, 0);
+		pingpong_fbos[!is_bloom_horizontal].bind_texture(1);
+		m_postprocessing_material.use();
+		render_quad();
+		end_render_pass(m_intermediate_frame_buffer);
+		FrameBufferGL::blit_framebuffer(m_viewport.width, m_viewport.height, m_intermediate_frame_buffer.get_id(), m_final_frame_buffer.get_id());
+	}
+	
 	void Renderer::render_environment_map() 
 	{
 		m_skybox_material.set<int>("u_environment_map", 0);
@@ -331,10 +427,28 @@ namespace vengine
 		RendererApiGL::draw_elements(render_command);
 	}
 
+	void Renderer::render_quad() const
+	{
+		RenderCommand render_command;
+		float vertices[4 * 5] =
+		{
+			 -1.0f,  1.0f, 0.0f, 0.0f, 1.0f,
+			-1.0f, -1.0f, 0.0f, 0.0f, 0.0f,
+			 1.0f,  1.0f, 0.0f, 1.0f, 1.0f,
+			 1.0f, -1.0f, 0.0f, 1.0f, 0.0f,
+		};
+
+		render_command.set_vertex_buffer(vertices, sizeof(vertices));
+		render_command.set_buffer_layout(BufferLayout{ ShaderDataType::Float3, ShaderDataType::Float2 });
+		render_command.set_primitive_type(PrimitiveType::TRIANGLE_STRIP);
+		
+		RendererApiGL::draw_arrays(render_command, 0, 4);
+	}
+
 	[[nodiscard]] glm::mat4 Renderer::calc_dir_light_space_matrix(const DirLight& dir_light) const
 	{
 		const float near_plane = 1.0f, far_plane = 50.0f;
-		const glm::mat4 light_projection = glm::ortho(-20.0f, 20.0f, -20.0f, 20.0f, near_plane, far_plane);
+		const glm::mat4 light_projection = glm::ortho(-30.0f, 30.0f, -30.0f, 30.0f, near_plane, far_plane);
 
 		glm::mat4 light_view = glm::lookAt(dir_light.position,
 			glm::vec3(0.0f, 0.0f, 0.0f),

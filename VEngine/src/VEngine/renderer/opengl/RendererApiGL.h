@@ -9,15 +9,17 @@ namespace vengine
 	class RendererApiGL
 	{
 	public:
-		void static init();
-		void static shutdown();
+		static void init();
+		static void shutdown();
 
-		void static begin_render_pass(const RenderPassDescriptor& descriptor);
-		void static end_render_pass();
+		static void begin_render_pass(const RenderPassDescriptor& descriptor);
+		static void end_render_pass();
 
-		void static set_viewport(int x, int y, unsigned int width, unsigned int height);
+		static void set_viewport(int x, int y, unsigned int width, unsigned int height);
 
-		void static draw_elements(RenderCommand& triangle_command);
+		static void draw_elements(RenderCommand& command);
+		static void draw_arrays(RenderCommand& command, unsigned int first, unsigned int count);
+
 	private:
 		void static prepare_drawing(RenderCommand& command);
 
