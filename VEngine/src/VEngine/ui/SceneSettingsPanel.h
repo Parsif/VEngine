@@ -10,7 +10,6 @@ namespace vengine
 	public:
 		void init(Ref<Window> window, Ref<Scene> scene);
 		void draw();
-		
 	
 	private:
 		Ref<Window> m_window;

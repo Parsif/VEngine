@@ -62,6 +62,7 @@ namespace vengine
 		void end_render_pass(const FrameBufferGL& frame_buffer) const;
 		void render_mesh(Mesh& mesh);
 		void render_shadow(Mesh& mesh) const;
+		void render_bloom();
 		void post_processing();
 
 		void render_environment_map();
@@ -82,6 +83,9 @@ namespace vengine
 		FrameBufferGL m_final_frame_buffer;
 		FrameBufferGL m_environment_map_frame_buffer;
 		FrameBufferGL m_irradiance_map_frame_buffer;
+		
+		FrameBufferGL m_blur_frame_buffer;
+		
 
 		const FrameBufferSpecifications m_shadow_map_specs;
 
