@@ -67,7 +67,6 @@ namespace vengine
         {
             if (spec.samples > 1)
             {
-
                 glCreateTextures(GL_TEXTURE_2D_MULTISAMPLE, 1, &m_color_attachment0);
                 glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, m_color_attachment0);
                 glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, m_specs.samples, GL_RGBA16F, m_specs.width, m_specs.height, GL_TRUE);
@@ -93,8 +92,8 @@ namespace vengine
             glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT,
                 m_specs.width, m_specs.height, 0, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
           
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
 
@@ -178,7 +177,7 @@ namespace vengine
     	
         if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
         {
-            LOG_ERROR("Framebuffer error, status code: " + glCheckFramebufferStatus(GL_FRAMEBUFFER));
+            LOG_ERROR("Framebuffer error, status code: " + glCheckFramebufferStatus(GL_FRAMEBUFFER))
         }
 
         unbind();
@@ -204,14 +203,15 @@ namespace vengine
         case FrameBufferType::COLOR_ONLY:
             glBindTexture(GL_TEXTURE_2D, m_color_attachment0);
             break;
-      
+        	
         case FrameBufferType::DEPTH_ONLY:
             glBindTexture(GL_TEXTURE_2D, m_depth_attachment);
             break;
+        	
         case FrameBufferType::ENVIRONMENT_MAP:
             glBindTexture(GL_TEXTURE_CUBE_MAP, m_cubemap_attachment);
             break;
-
+        	
         case FrameBufferType::MULTI_TARGET:
             if(attachment_number == 0)
             {

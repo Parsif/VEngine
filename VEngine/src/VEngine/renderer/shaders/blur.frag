@@ -9,24 +9,25 @@ uniform bool u_horizontal;
 
 void main()
 {
-	float weights[5] = float[](0.227027, 0.1945946, 0.1216216, 0.054054, 0.016216); 
+	float offset[3] = float[](0.0, 1.3846153846, 3.2307692308);
+	float weights[3] = float[](0.2270270270, 0.3162162162, 0.0702702703); 
 
 	vec2 tex_offset = 1.0 / textureSize(u_image, 0);
 	vec3 result = texture(u_image, vs_tex_coords).rgb * weights[0];
 	if(u_horizontal)
 	{
-		for(int i = 1; i < 5; i++)
+		for(int i = 1; i < 3; i++)
 		{
-			result += texture(u_image, vs_tex_coords + vec2(tex_offset.x * i, 0.0)).rgb * weights[i];
-			result += texture(u_image, vs_tex_coords - vec2(tex_offset.x * i, 0.0)).rgb * weights[i];
+			result += texture(u_image, vs_tex_coords + vec2(tex_offset.x * offset[i], 0.0)).rgb * weights[i];
+			result += texture(u_image, vs_tex_coords - vec2(tex_offset.x * offset[i], 0.0)).rgb * weights[i];
 		}
 	}
 	else 
 	{
-		for(int i = 1; i < 5; i++)
+		for(int i = 1; i < 3; i++)
         {
-            result += texture(u_image, vs_tex_coords + vec2(0.0, tex_offset.y * i)).rgb * weights[i];
-            result += texture(u_image, vs_tex_coords - vec2(0.0, tex_offset.y * i)).rgb * weights[i];
+            result += texture(u_image, vs_tex_coords + vec2(0.0, tex_offset.y * offset[i])).rgb * weights[i];
+            result += texture(u_image, vs_tex_coords - vec2(0.0, tex_offset.y * offset[i])).rgb * weights[i];
         }
 	}
 

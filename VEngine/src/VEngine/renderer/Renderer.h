@@ -52,7 +52,6 @@ namespace vengine
 
 		[[nodiscard]] auto get_color_attachment() const { return m_final_frame_buffer.get_color_attachment0(); }
 		
-
 		[[nodiscard]] auto get_viewport() const { return m_viewport; }
 		void destroy_lights();
 		void set_scene_environment_map(const TextureGL& env_texture);
@@ -69,6 +68,7 @@ namespace vengine
 		void render_cube() const;
 		void render_quad() const;
 
+		void create_output_framebuffers();
 
 		[[nodiscard]] glm::mat4 calc_dir_light_space_matrix(const DirLight& dir_light) const;
 
@@ -85,8 +85,9 @@ namespace vengine
 		FrameBufferGL m_irradiance_map_frame_buffer;
 		
 		FrameBufferGL m_blur_frame_buffer;
-		
 
+		std::array<FrameBufferGL, 2> m_pingpong_fbos;	
+		
 		const FrameBufferSpecifications m_shadow_map_specs;
 
 		const static unsigned int MAX_NUMBER_OF_DIR_LIGHTS = 4, MAX_NUMBER_OF_POINT_LIGHTS = 4;
@@ -105,8 +106,8 @@ namespace vengine
 
 		Camera m_camera;
 
-		bool m_using_environment_map;
-		bool m_using_bloom;
+		bool m_using_environment_map = false;
+		bool m_using_bloom = false;
 	};
 	
 }

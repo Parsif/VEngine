@@ -66,6 +66,7 @@ float distribution_GGX(vec3 N, vec3 H, float roughness);
 float geometry_schlick_GGX(float NdotV, float roughness);
 float geometry_smith(vec3 N, vec3 V, vec3 L, float roughness);
 vec3  fresnel_schlick(float cosTheta, vec3 F0);
+vec3 fresnel_schlick_roughness(float cosTheta, vec3 F0, float roughness);
 
 float calc_shadow(vec3 normal, vec3 light_dir, sampler2D shadow_map, vec4 frag_pos_light_space);
 
@@ -148,7 +149,7 @@ void main()
 
 
     //abmient
-    vec3 kS = fresnel_schlick(max(dot(normal, view_direction), 0.0), F0);
+    vec3 kS = fresnel_schlick_roughness(max(dot(normal, view_direction), 0.0), F0, roughness);
     vec3 kD = 1.0 - kS;
     vec3 irradiance = texture(u_irradiance_map, normal).rgb;
     vec3 diffuse    = irradiance * albedo;
@@ -214,6 +215,11 @@ vec3 fresnel_schlick(float cosTheta, vec3 F0)
     return F0 + (1.0 - F0) * pow(max(1.0 - cosTheta, 0.0), 5.0);
 }  
 
+vec3 fresnel_schlick_roughness(float cosTheta, vec3 F0, float roughness)
+{
+    return F0 + (max(vec3(1.0 - roughness), F0) - F0) * pow(max(1.0 - cosTheta, 0.0), 5.0);
+}  
+
 float calc_shadow(vec3 normal, vec3 light_dir, sampler2D shadow_map, vec4 frag_pos_light_space)
 {
     vec3 proj_coords = frag_pos_light_space.xyz / frag_pos_light_space.w;
@@ -231,9 +237,12 @@ float calc_shadow(vec3 normal, vec3 light_dir, sampler2D shadow_map, vec4 frag_p
         for(int y = -1; y <= 1; ++y)
         {
             float pcf_depth = texture(shadow_map, proj_coords.xy + vec2(x, y) * TEXEL_SIZE).r;
-            shadow += current_depth - bias > closest_depth ? 1.0 : 0;
+            shadow += current_depth - bias > pcf_depth ? 1.0 : 0;
         }
     }
+
+    if(proj_coords.z > 1)
+        shadow = 1.0f;
 
     return shadow / 9.0;
 }

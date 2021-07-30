@@ -60,20 +60,8 @@ namespace vengine
 
 	void Renderer::render()
 	{
-		if(m_using_bloom)
-		{
-			m_intermediate_frame_buffer.create(FrameBufferSpecifications{ m_viewport.width, m_viewport.height, FrameBufferType::MULTI_TARGET, 4 });
-			m_final_frame_buffer.create(FrameBufferSpecifications{ m_viewport.width, m_viewport.height, FrameBufferType::MULTI_TARGET, 1 });
-			FrameBufferGL::set_draw_buffers(m_intermediate_frame_buffer.get_id(), 2);
-		}
-		else
-		{
-			m_intermediate_frame_buffer.create(FrameBufferSpecifications{ m_viewport.width, m_viewport.height, FrameBufferType::COLOR_DEPTH_STENCIL, 4 });
-			m_final_frame_buffer.create(FrameBufferSpecifications{ m_viewport.width, m_viewport.height, FrameBufferType::COLOR_DEPTH_STENCIL, 1 });
-			FrameBufferGL::set_draw_buffers(m_intermediate_frame_buffer.get_id(), 1);
-		}
-		
 		//render shadowmaps
+		create_output_framebuffers();
 		const auto viewport = m_viewport;
 		
 		RendererApiGL::set_viewport(m_viewport.x, m_viewport.y, m_shadow_map_specs.width, m_shadow_map_specs.height);
@@ -139,6 +127,12 @@ namespace vengine
 		m_viewport.width = width;
 		m_viewport.height = height;
 		RendererApiGL::set_viewport(m_viewport.x, m_viewport.y, m_viewport.width, m_viewport.height);
+		
+		m_blur_frame_buffer.create(FrameBufferSpecifications{ m_viewport.width, m_viewport.height, FrameBufferType::COLOR_ONLY });
+		for (auto& frame_buffer : m_pingpong_fbos)
+		{
+			frame_buffer.create(FrameBufferSpecifications{ m_viewport.width, m_viewport.height, FrameBufferType::COLOR_ONLY });
+		}
 	}
 
 	void Renderer::set_viewport(unsigned int width, unsigned int height)
@@ -146,6 +140,12 @@ namespace vengine
 		m_viewport.width = width;
 		m_viewport.height = height;
 		RendererApiGL::set_viewport(m_viewport.x, m_viewport.y, m_viewport.width, m_viewport.height);
+		
+		m_blur_frame_buffer.create(FrameBufferSpecifications{ m_viewport.width, m_viewport.height, FrameBufferType::COLOR_ONLY });
+		for (auto& frame_buffer : m_pingpong_fbos)
+		{
+			frame_buffer.create(FrameBufferSpecifications{ m_viewport.width, m_viewport.height, FrameBufferType::COLOR_ONLY });
+		}
 	}
 
 	void Renderer::add_dir_light(const DirLightComponent& dir_light, const glm::vec3& position)
@@ -187,6 +187,7 @@ namespace vengine
 	{
 		m_using_bloom = is_bloom_enabled;
 		m_postprocessing_material.set("u_is_bloom_enabled", is_bloom_enabled);
+		create_output_framebuffers();
 	}
 
 	void Renderer::set_bloom_threshold(float threshold)
@@ -212,12 +213,8 @@ namespace vengine
 
 	void Renderer::set_scene_environment_map(const TextureGL& env_texture)
 	{
-		if(!env_texture)
-		{
-			m_using_environment_map = false;
-			return;
-		}
-		m_using_environment_map = true;
+		m_using_environment_map = (bool)env_texture;
+		
 		const glm::mat4 capture_projection = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f);
 
 		glm::mat4 capture_views[] =
@@ -279,7 +276,7 @@ namespace vengine
 		frame_buffer.unbind();
 	}
 
-	//TODO: try to move textures to materials
+	
 	void Renderer::render_mesh(Mesh& mesh) 
 	{
 		m_pbr_render_material.set<int>("u_number_of_dir_lights", m_dir_lights.size());
@@ -292,24 +289,25 @@ namespace vengine
 		m_pbr_render_material.set("u_material.has_ao", mesh.has_ao_texture || mesh.materials.ao_texture);
 		m_pbr_render_material.set("u_material.has_normal_map", mesh.has_normal_texture || mesh.materials.normal_texture);
 
-		unsigned int texture_slot = 0;
-		m_pbr_render_material.set<int>("u_irradiance_map", texture_slot);
-		m_irradiance_map_frame_buffer.bind_texture(texture_slot++);
-		
-		for (size_t i = 0; i < m_dir_lights.size(); ++i)
-		{
-			m_pbr_render_material.set<int>("u_dirlights[" + std::to_string(i) + "].shadow_map", texture_slot);
-			m_dir_light_shadow_map_textures[i].bind_texture(texture_slot++);
-		}
-		
+	
 		for (auto&& render_command : mesh.commands)
 		{
+			unsigned int texture_slot = 0;
+			m_pbr_render_material.set<int>("u_irradiance_map", texture_slot);
+			m_irradiance_map_frame_buffer.bind_texture(texture_slot++);
+
+			for (size_t i = 0; i < m_dir_lights.size(); ++i)
+			{
+				m_pbr_render_material.set<int>("u_dirlights[" + std::to_string(i) + "].shadow_map", texture_slot);
+				m_dir_light_shadow_map_textures[i].bind_texture(texture_slot++);
+			}
+
 			if (mesh.materials.albedo_texture)
 			{
 				m_pbr_render_material.set<int>("u_material." + mesh.materials.albedo_texture.get_string_type(), texture_slot);
 				mesh.materials.albedo_texture.bind(texture_slot++);
 			}
-			if (mesh.materials.metallic_texture)
+			if (mesh.materials.metallic_texture)	
 			{
 				m_pbr_render_material.set<int>("u_material." + mesh.materials.metallic_texture.get_string_type(), texture_slot);
 				mesh.materials.metallic_texture.bind(texture_slot++);
@@ -338,7 +336,6 @@ namespace vengine
 			
 			m_pbr_render_material.use();
 			RendererApiGL::draw_elements(render_command);
-			texture_slot = 0;
 		}
 	}
 
@@ -353,18 +350,11 @@ namespace vengine
 	void Renderer::render_bloom()
 	{
 		bool is_bloom_horizontal = true;
-		std::array<FrameBufferGL, 2> pingpong_fbos;
-		
-		for (auto& frame_buffer : pingpong_fbos)
-		{
-			frame_buffer.create(FrameBufferSpecifications{ m_viewport.width, m_viewport.height, FrameBufferType::COLOR_ONLY });
-		}
-		m_blur_frame_buffer.create(FrameBufferSpecifications{ m_viewport.width, m_viewport.height, FrameBufferType::COLOR_ONLY });
 		
 		const int BLUR_CYCLES = 10;
 		for (size_t i = 0; i < BLUR_CYCLES; ++i)
 		{
-			begin_render_pass(pingpong_fbos[is_bloom_horizontal]);
+			begin_render_pass(m_pingpong_fbos[is_bloom_horizontal]);
 			m_blur_material.set<int>("u_image", 0);
 			if(i == 0)
 			{
@@ -372,28 +362,28 @@ namespace vengine
 			}
 			else
 			{
-				pingpong_fbos[!is_bloom_horizontal].bind_texture();
+				m_pingpong_fbos[!is_bloom_horizontal].bind_texture();
 			}
 			m_blur_material.set("u_horizontal", is_bloom_horizontal);
 			m_blur_material.use();
 			render_quad();
-			end_render_pass(pingpong_fbos[is_bloom_horizontal]);
+			end_render_pass(m_pingpong_fbos[is_bloom_horizontal]);
 
 			is_bloom_horizontal = !is_bloom_horizontal;
 		}
 		
-		FrameBufferGL::blit_framebuffer(m_viewport.width, m_viewport.height, pingpong_fbos[!is_bloom_horizontal].get_id(), m_blur_frame_buffer.get_id());
+		FrameBufferGL::blit_framebuffer(m_viewport.width, m_viewport.height, m_pingpong_fbos[!is_bloom_horizontal].get_id(), m_blur_frame_buffer.get_id());
 	}
 
 	void Renderer::post_processing()
 	{
 		begin_render_pass(m_intermediate_frame_buffer);
 		m_postprocessing_material.set<int>("u_scene", 0);
-		m_postprocessing_material.set<int>("u_bloom_blur", 1);
-		m_postprocessing_material.set("u_is_bloom_enabled", m_using_bloom);
 		m_final_frame_buffer.bind_texture(0, 0);
+		m_postprocessing_material.set("u_is_bloom_enabled", m_using_bloom);
 		if(m_using_bloom)
 		{
+			m_postprocessing_material.set<int>("u_bloom_blur", 1);
 			m_blur_frame_buffer.bind_texture(1);
 		}
 		m_postprocessing_material.use();
@@ -457,6 +447,22 @@ namespace vengine
 		render_command.set_primitive_type(PrimitiveType::TRIANGLE_STRIP);
 		
 		RendererApiGL::draw_arrays(render_command, 0, 4);
+	}
+
+	void Renderer::create_output_framebuffers()
+	{
+		if (m_using_bloom)
+		{
+			m_intermediate_frame_buffer.create(FrameBufferSpecifications{ m_viewport.width, m_viewport.height, FrameBufferType::MULTI_TARGET, 4 });
+			m_final_frame_buffer.create(FrameBufferSpecifications{ m_viewport.width, m_viewport.height, FrameBufferType::MULTI_TARGET, 1 });
+			FrameBufferGL::set_draw_buffers(m_intermediate_frame_buffer.get_id(), 2);
+		}
+		else
+		{
+			m_intermediate_frame_buffer.create(FrameBufferSpecifications{ m_viewport.width, m_viewport.height, FrameBufferType::COLOR_DEPTH_STENCIL, 4 });
+			m_final_frame_buffer.create(FrameBufferSpecifications{ m_viewport.width, m_viewport.height, FrameBufferType::COLOR_DEPTH_STENCIL, 1 });
+			FrameBufferGL::set_draw_buffers(m_intermediate_frame_buffer.get_id(), 1);
+		}
 	}
 
 	[[nodiscard]] glm::mat4 Renderer::calc_dir_light_space_matrix(const DirLight& dir_light) const
