@@ -36,6 +36,11 @@ namespace vengine
 			m_renderer->add_point_light(point_light_component, transform_component.translation);
 		}
 
+		for (auto&& [view_entity, sphere_area_light_component, transform_component] : m_registry.view<SphereAreaLightComponent, TransformComponent>().each())
+		{
+			m_renderer->add_sphere_area_light(sphere_area_light_component, transform_component.translation);
+		}
+
 		for (auto&& [view_entity, model_component, transform_component, materials_component] 
 			: m_registry.view<ModelComponent, TransformComponent, MaterialsComponent>().each())
 		{
@@ -118,6 +123,23 @@ namespace vengine
 		m_registry.emplace<TransformComponent>(entity); 
 		m_registry.emplace<PointLightComponent>(entity);
 	}
+
+	void Scene::create_sphere_area_light()
+	{
+		const entt::entity entity = m_registry.create();
+		m_registry.emplace<TagComponent>(entity, "Sphere area light");
+		m_registry.emplace<TransformComponent>(entity);
+		m_registry.emplace<SphereAreaLightComponent>(entity);
+	}
+	
+	void Scene::create_tube_area_light()
+	{
+		const entt::entity entity = m_registry.create();
+		m_registry.emplace<TagComponent>(entity, "Sphere area light");
+		m_registry.emplace<TransformComponent>(entity);
+		m_registry.emplace<SphereAreaLightComponent>(entity);
+	}
+	
 
 	void Scene::start_game()
 	{

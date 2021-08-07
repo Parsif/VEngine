@@ -24,7 +24,7 @@ namespace vengine
         m_specs = spec;
 
         glGenFramebuffers(1, &m_frame_buffer);
-        glBindFramebuffer(GL_FRAMEBUFFER, m_frame_buffer);
+        bind();
     	if(spec.frame_buffer_type == FrameBufferType::COLOR_DEPTH_STENCIL)
     	{
     		if(spec.samples > 1)
@@ -101,6 +101,27 @@ namespace vengine
             glDrawBuffer(GL_NONE);
             glReadBuffer(GL_NONE);
     	}
+    	
+        else if (spec.frame_buffer_type == FrameBufferType::CUBE_MAP_DEPTH_ONLY)
+        {
+            glCreateTextures(GL_TEXTURE_CUBE_MAP, 1, &m_depth_attachment);
+            glBindTexture(GL_TEXTURE_CUBE_MAP, m_depth_attachment);
+            for (size_t i = 0; i < 6; ++i)
+            {
+                glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_DEPTH_COMPONENT,
+                    m_specs.width, m_specs.height, 0, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
+            }
+                
+            glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+            glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+            glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+            glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+            glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_BORDER);
+
+            glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, m_depth_attachment, 0);
+            glDrawBuffer(GL_NONE);
+            glReadBuffer(GL_NONE);
+        }
 
         else if(spec.frame_buffer_type == FrameBufferType::ENVIRONMENT_MAP)
         {
@@ -174,19 +195,18 @@ namespace vengine
                 glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, m_depth_stencil_attachment, 0);
             }
         }
-    	
+
         if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
         {
             LOG_ERROR("Framebuffer error, status code: " + glCheckFramebufferStatus(GL_FRAMEBUFFER))
         }
-
+    	
         unbind();
     }
 
     void FrameBufferGL::bind() const
     {
         glBindFramebuffer(GL_FRAMEBUFFER, m_frame_buffer);
-        glViewport(0, 0, m_specs.width, m_specs.height);
     }
 
     void FrameBufferGL::unbind() const
@@ -206,6 +226,10 @@ namespace vengine
         	
         case FrameBufferType::DEPTH_ONLY:
             glBindTexture(GL_TEXTURE_2D, m_depth_attachment);
+            break;
+
+        case FrameBufferType::CUBE_MAP_DEPTH_ONLY:
+            glBindTexture(GL_TEXTURE_CUBE_MAP, m_depth_attachment);
             break;
         	
         case FrameBufferType::ENVIRONMENT_MAP:

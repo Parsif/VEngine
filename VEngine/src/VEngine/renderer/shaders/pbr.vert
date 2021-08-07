@@ -5,14 +5,14 @@ layout(location = 1) in vec2 tex_coord;
 layout(location = 2) in vec3 normal;
 layout(location = 3) in vec3 tangent;
 
-const uint MAX_DIR_LIGHTS = 4;
+const uint MAX_LIGHTS = 4;
 
 out VertexOutput
 {
 	vec2 tex_coord;
 	vec3 normal;
 	vec3 frag_pos;
-    vec4 frag_pos_light_space[MAX_DIR_LIGHTS];
+    vec4 frag_pos_light_space[MAX_LIGHTS];
 	mat3 TBN;
 } vs_output;
 
@@ -30,7 +30,7 @@ uniform int u_dir_light_count;
 
 uniform mat4 u_transform;
 uniform mat4 u_view_projection;
-uniform DirLight u_dirlights[MAX_DIR_LIGHTS];
+uniform DirLight u_dirlights[MAX_LIGHTS];
 uniform int u_number_of_dir_lights;
 
 void main()

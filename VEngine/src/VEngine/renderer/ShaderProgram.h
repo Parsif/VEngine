@@ -15,7 +15,7 @@ namespace vengine
 
 	enum class ShaderType
 	{
-		VERTEX, FRAGMENT
+		VERTEX, FRAGMENT, GEOMETRY
 	};
 	
 	class Shader
@@ -54,6 +54,8 @@ namespace vengine
 	public:
 		ShaderProgram() = default;
 		ShaderProgram(const std::string& vertex_shader_path, const std::string& fragment_shader_path);
+		ShaderProgram(const std::string& vertex_shader_path, const std::string& fragment_shader_path, const std::string& geometry_shader_path);
+
 		
 	private:
 		void set_all_uniform_locations();

@@ -159,6 +159,7 @@ namespace vengine
 
 					component.color = point_light_component["Color"].as<glm::vec3>();
 					component.intensity = point_light_component["Intensity"].as<float>();
+					component.light_radius = point_light_component["LightRadius"].as<float>();
 
 					scene->add_component<PointLightComponent>(entity, component);
 				}
@@ -262,6 +263,7 @@ namespace vengine
 
 			out << YAML::Key << "Color" << YAML::Value << point_light_component.color;
 			out << YAML::Key << "Intensity" << YAML::Value << point_light_component.intensity;
+			out << YAML::Key << "LightRadius" << YAML::Value << point_light_component.light_radius;
 
 			out << YAML::EndMap; // PointLightComponent
 		}

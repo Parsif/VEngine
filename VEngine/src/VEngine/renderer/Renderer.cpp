@@ -17,14 +17,20 @@ namespace vengine
 		m_render_pass_descriptor.depth_test_enabled = true;
 		m_render_pass_descriptor.need_clear_color = true;
 		m_render_pass_descriptor.need_clear_depth = true;
-		m_render_pass_descriptor.need_culling = true;
 
 		for (auto& shadow_map : m_dir_light_shadow_map_textures)
 		{
 			shadow_map.create(FrameBufferSpecifications{ 1024, 1024, FrameBufferType::DEPTH_ONLY });
 		}
+		
+		for (auto& shadow_map : m_point_light_shadow_map_textures)
+		{
+			shadow_map.create(FrameBufferSpecifications{ 1024, 1024, FrameBufferType::CUBE_MAP_DEPTH_ONLY });
+		}
+		
 		m_environment_map_frame_buffer.create(FrameBufferSpecifications{ 1024, 1024, FrameBufferType::ENVIRONMENT_MAP });
 		m_irradiance_map_frame_buffer.create(FrameBufferSpecifications{ 32, 32, FrameBufferType::ENVIRONMENT_MAP });
+		m_water_reflection_frame_buffer.create(FrameBufferSpecifications{ 480, 480, FrameBufferType::COLOR_ONLY });
 
 		m_pbr_render_material = MaterialLibrary::load("./VEngine/src/VEngine/renderer/shaders/pbr.vert", 
 													"./VEngine/src/VEngine/renderer/shaders/pbr.frag", "PBR");
@@ -36,7 +42,11 @@ namespace vengine
 			"./VEngine/src/VEngine/renderer/shaders/skybox.frag", "Skybox");
 			
 		m_direct_shadow_map_material = MaterialLibrary::load("./VEngine/src/VEngine/renderer/shaders/shadowmap.vert",
-			"./VEngine/src/VEngine/renderer/shaders/shadowmap.frag", "Shadowmap");
+			"./VEngine/src/VEngine/renderer/shaders/shadowmap.frag", "Direct shadowmap");
+
+		m_omnidirect_shadow_map_material = MaterialLibrary::load("./VEngine/src/VEngine/renderer/shaders/omnidirect_shadowmap.vert",
+			"./VEngine/src/VEngine/renderer/shaders/omnidirect_shadowmap.frag", 
+			"./VEngine/src/VEngine/renderer/shaders/omnidirect_shadowmap.geom", "Omnidirect shadowmap");
 		
 		m_irradiance_material = MaterialLibrary::load("./VEngine/src/VEngine/renderer/shaders/irradiance.vert",
 			"./VEngine/src/VEngine/renderer/shaders/irradiance.frag", "Irradiance");
@@ -60,39 +70,9 @@ namespace vengine
 
 	void Renderer::render()
 	{
-		//render shadowmaps
 		create_output_framebuffers();
-		const auto viewport = m_viewport;
-		
-		RendererApiGL::set_viewport(m_viewport.x, m_viewport.y, m_shadow_map_specs.width, m_shadow_map_specs.height);
-		//for every dir light render shadow map
-		for(size_t i = 0; i < m_dir_lights.size(); ++i)
-		{
-			begin_render_pass(m_dir_light_shadow_map_textures[i]);
-			for (auto& drawable : m_render_queue)
-			{
-				if (drawable.is_casting_shadow)
-				{
-					m_direct_shadow_map_material.set("u_transform", drawable.transform);
-					const glm::mat4 light_space_matrix = calc_dir_light_space_matrix(m_dir_lights[i]);
-					m_direct_shadow_map_material.set("u_light_space_matrix", light_space_matrix);
-					m_pbr_render_material.set("u_dirlights[" + std::to_string(i) + "].light_space_matrix", light_space_matrix);
-					m_direct_shadow_map_material.use();
-					render_shadow(drawable);
-				}
-			}
-			end_render_pass(m_dir_light_shadow_map_textures[i]);
-		}
-		
-		//render scene
-		RendererApiGL::set_viewport(viewport.x, viewport.y, viewport.width, viewport.height);
-		
-		begin_render_pass(m_intermediate_frame_buffer);
-		for (auto& mesh : m_render_queue)
-		{
-			render_mesh(mesh);
-		}
-		end_render_pass(m_intermediate_frame_buffer);
+		render_shadows();
+		render_scene();
 		
 		if(m_using_bloom)
 		{
@@ -102,12 +82,8 @@ namespace vengine
 			render_bloom();
 		}
 		
-		if(m_using_environment_map)
-		{
-			m_intermediate_frame_buffer.bind();
-			render_environment_map();
-			m_intermediate_frame_buffer.unbind();
-		}
+		render_environment_map();
+		
 		//blitting scene
 		FrameBufferGL::blit_framebuffer(m_viewport.width, m_viewport.height, m_intermediate_frame_buffer.get_id(),
 			m_final_frame_buffer.get_id(), 0);
@@ -150,26 +126,43 @@ namespace vengine
 
 	void Renderer::add_dir_light(const DirLightComponent& dir_light, const glm::vec3& position)
 	{
-		if(m_dir_lights.size() == MAX_NUMBER_OF_DIR_LIGHTS)
+		if(m_dir_lights.size() == MAX_LIGHTS)
 		{
 			return;
 		}
 		m_pbr_render_material.set("u_dirlights[" + std::to_string(m_dir_lights.size()) + "].position", position);
 		m_pbr_render_material.set("u_dirlights[" + std::to_string(m_dir_lights.size()) + "].color", dir_light.color);
 		m_pbr_render_material.set("u_dirlights[" + std::to_string(m_dir_lights.size()) + "].intensity", dir_light.intensity);
-		m_dir_lights.push_back(DirLight{ dir_light, position });
+		m_dir_lights.push_back(Light<DirLightComponent>{ dir_light, position });
 	}
 
 	void Renderer::add_point_light(const PointLightComponent& point_light, const glm::vec3& position)
 	{
-		if (m_point_lights.size() == MAX_NUMBER_OF_POINT_LIGHTS)
+		if (m_point_lights.size() == MAX_LIGHTS)
 		{
 			return;
 		}
 		m_pbr_render_material.set("u_point_lights[" + std::to_string(m_point_lights.size()) + "].position", position);
 		m_pbr_render_material.set("u_point_lights[" + std::to_string(m_point_lights.size()) + "].color", point_light.color);
 		m_pbr_render_material.set("u_point_lights[" + std::to_string(m_point_lights.size()) + "].intensity", point_light.intensity);
-		m_point_lights.push_back(PointLight{ point_light, position });
+		m_pbr_render_material.set("u_point_lights[" + std::to_string(m_point_lights.size()) + "].light_radius", point_light.light_radius);
+		m_point_lights.push_back(Light<PointLightComponent>{ point_light, position });
+	}
+
+	void Renderer::add_sphere_area_light(const SphereAreaLightComponent& sphere_area_light,
+		const glm::vec3& position)
+	{
+		if (m_sphere_area_lights.size() == MAX_LIGHTS)
+		{
+			return;
+		}
+		m_pbr_render_material.set("u_sphere_area_lights[" + std::to_string(m_point_lights.size()) + "].position", position);
+		m_pbr_render_material.set("u_sphere_area_lights[" + std::to_string(m_point_lights.size()) + "].color", sphere_area_light.color);
+		m_pbr_render_material.set("u_sphere_area_lights[" + std::to_string(m_point_lights.size()) + "].intensity", sphere_area_light.intensity);
+		m_pbr_render_material.set("u_sphere_area_lights[" + std::to_string(m_point_lights.size()) + "].light_radius", sphere_area_light.light_radius);
+		m_pbr_render_material.set("u_sphere_area_lights[" + std::to_string(m_point_lights.size()) + "].source_radius", sphere_area_light.source_radius);
+
+		m_sphere_area_lights.push_back(Light<SphereAreaLightComponent>{ sphere_area_light, position });
 	}
 
 	void Renderer::set_camera_params(const Camera& camera)
@@ -207,8 +200,19 @@ namespace vengine
 
 	void Renderer::destroy_lights()
 	{
+		for (size_t i = 0; i < m_dir_lights.size(); ++i)
+		{
+			m_pbr_render_material.set<int>("u_dirlights[" + std::to_string(i) + "].shadow_map", 0);
+		}
+
+		for (size_t i = 0; i < m_point_lights.size(); ++i)
+		{
+			m_pbr_render_material.set<int>("u_point_lights[" + std::to_string(i) + "].shadow_map", 0);
+		}
+		
 		m_dir_lights.clear();
 		m_point_lights.clear();
+		m_sphere_area_lights.clear();
 	}
 
 	void Renderer::set_scene_environment_map(const TextureGL& env_texture)
@@ -233,8 +237,7 @@ namespace vengine
 		m_hdr_to_cubemap_render_material.set("u_projection", capture_projection);
 		
 		const auto viewport = m_viewport;
-		const auto& [width, height] = m_environment_map_frame_buffer.get_size();
-		RendererApiGL::set_viewport(m_viewport.x, m_viewport.y, width, height);
+		RendererApiGL::set_viewport(m_viewport.x, m_viewport.y, m_environment_map_frame_buffer.get_width(), m_environment_map_frame_buffer.get_height());
 		begin_render_pass(m_environment_map_frame_buffer);
 		for (unsigned int i = 0; i < 6; ++i)
 		{
@@ -250,8 +253,7 @@ namespace vengine
 		m_environment_map_frame_buffer.bind_texture();
 		m_irradiance_material.set("u_projection", capture_projection);
 
-		const auto& [width2, height2] = m_irradiance_map_frame_buffer.get_size();
-		RendererApiGL::set_viewport(viewport.x, viewport.y, width2, height2);
+		RendererApiGL::set_viewport(viewport.x, viewport.y, m_irradiance_map_frame_buffer.get_width(), m_environment_map_frame_buffer.get_height());
 		begin_render_pass(m_irradiance_map_frame_buffer);
 		for (unsigned int i = 0; i < 6; ++i)
 		{
@@ -276,11 +278,23 @@ namespace vengine
 		frame_buffer.unbind();
 	}
 
-	
+	void Renderer::render_scene()
+	{
+		RendererApiGL::set_viewport(m_viewport.x, m_viewport.y, m_intermediate_frame_buffer.get_width(), m_intermediate_frame_buffer.get_height());
+
+		begin_render_pass(m_intermediate_frame_buffer);
+		for (auto& mesh : m_render_queue)
+		{
+			render_mesh(mesh);
+		}
+		end_render_pass(m_intermediate_frame_buffer);
+	}
+
 	void Renderer::render_mesh(Mesh& mesh) 
 	{
 		m_pbr_render_material.set<int>("u_number_of_dir_lights", m_dir_lights.size());
 		m_pbr_render_material.set<int>("u_number_of_point_lights", m_point_lights.size());
+		m_pbr_render_material.set<int>("u_number_of_sphere_area_lights", m_sphere_area_lights.size());
 
 		m_pbr_render_material.set("u_transform", mesh.transform);
 		m_pbr_render_material.set("u_material.has_albedo", mesh.has_albedo_texture || mesh.materials.albedo_texture);
@@ -289,19 +303,10 @@ namespace vengine
 		m_pbr_render_material.set("u_material.has_ao", mesh.has_ao_texture || mesh.materials.ao_texture);
 		m_pbr_render_material.set("u_material.has_normal_map", mesh.has_normal_texture || mesh.materials.normal_texture);
 
-	
 		for (auto&& render_command : mesh.commands)
 		{
 			unsigned int texture_slot = 0;
-			m_pbr_render_material.set<int>("u_irradiance_map", texture_slot);
-			m_irradiance_map_frame_buffer.bind_texture(texture_slot++);
-
-			for (size_t i = 0; i < m_dir_lights.size(); ++i)
-			{
-				m_pbr_render_material.set<int>("u_dirlights[" + std::to_string(i) + "].shadow_map", texture_slot);
-				m_dir_light_shadow_map_textures[i].bind_texture(texture_slot++);
-			}
-
+	
 			if (mesh.materials.albedo_texture)
 			{
 				m_pbr_render_material.set<int>("u_material." + mesh.materials.albedo_texture.get_string_type(), texture_slot);
@@ -333,9 +338,64 @@ namespace vengine
 				m_pbr_render_material.set<int>("u_material." + texture_2d.get_string_type(), texture_slot);
 				texture_2d.bind(texture_slot++);
 			}
+
+			m_pbr_render_material.set<int>("u_irradiance_map", texture_slot);
+			m_irradiance_map_frame_buffer.bind_texture(texture_slot++);
+			
+			for (size_t i = 0; i < m_dir_lights.size(); ++i)
+			{
+				m_pbr_render_material.set<int>("u_dirlights[" + std::to_string(i) + "].shadow_map", texture_slot);
+				m_dir_light_shadow_map_textures[i].bind_texture(texture_slot++);
+			}
+
+			for (size_t i = 0; i < m_point_lights.size(); ++i)
+			{
+				m_pbr_render_material.set<int>("u_point_lights[" + std::to_string(i) + "].shadow_map", texture_slot);
+				m_point_light_shadow_map_textures[i].bind_texture(texture_slot++);
+			}
 			
 			m_pbr_render_material.use();
 			RendererApiGL::draw_elements(render_command);
+		}
+	}
+
+	void Renderer::render_shadows()
+	{
+		RendererApiGL::set_viewport(m_viewport.x, m_viewport.y, m_dir_light_shadow_map_textures[0].get_width(), m_dir_light_shadow_map_textures[0].get_height());
+		//for every dir light render shadow map
+		for (size_t i = 0; i < m_dir_lights.size(); ++i)
+		{
+			begin_render_pass(m_dir_light_shadow_map_textures[i]);
+			for (auto& drawable : m_render_queue)
+			{
+				if (drawable.is_casting_shadow)
+				{
+					m_direct_shadow_map_material.set("u_transform", drawable.transform);
+					set_dir_light_space_matrix(m_dir_lights[i], i);
+					m_direct_shadow_map_material.use();
+					render_shadow(drawable);
+				}
+			}
+			end_render_pass(m_dir_light_shadow_map_textures[i]);
+		}
+
+		RendererApiGL::set_viewport(m_viewport.x, m_viewport.y, m_point_light_shadow_map_textures[0].get_width(), m_point_light_shadow_map_textures[0].get_height());
+		//for every dir light render shadow map
+		for (size_t i = 0; i < m_point_lights.size(); ++i)
+		{
+			begin_render_pass(m_point_light_shadow_map_textures[i]);
+			for (auto& drawable : m_render_queue)
+			{
+				if (drawable.is_casting_shadow)
+				{
+					m_omnidirect_shadow_map_material.set("u_transform", drawable.transform);
+					m_omnidirect_shadow_map_material.set("u_light_pos", m_point_lights[i].position);
+				    set_point_light_space_matrices(m_point_lights[i], i);
+					m_omnidirect_shadow_map_material.use();
+					render_shadow(drawable);
+				}
+			}
+			end_render_pass(m_point_light_shadow_map_textures[i]);
 		}
 	}
 
@@ -393,10 +453,15 @@ namespace vengine
 
 	void Renderer::render_environment_map() 
 	{
-		m_skybox_material.set<int>("u_environment_map", 0);
-		m_environment_map_frame_buffer.bind_texture();
-		m_skybox_material.use();
-		render_cube();
+		if(m_using_environment_map)
+		{
+			m_intermediate_frame_buffer.bind();
+			m_skybox_material.set<int>("u_environment_map", 0);
+			m_environment_map_frame_buffer.bind_texture();
+			m_skybox_material.use();
+			render_cube();
+			m_intermediate_frame_buffer.unbind();
+		}
 	}
 
 	void Renderer::render_cube() const
@@ -465,15 +530,45 @@ namespace vengine
 		}
 	}
 
-	[[nodiscard]] glm::mat4 Renderer::calc_dir_light_space_matrix(const DirLight& dir_light) const
+	void Renderer::set_dir_light_space_matrix(const Light<DirLightComponent>& dir_light, int light_index)
 	{
 		const float near_plane = 1.0f, far_plane = 50.0f;
-		const glm::mat4 light_projection = glm::ortho(-30.0f, 30.0f, -30.0f, 30.0f, near_plane, far_plane);
+		const glm::mat4 light_projection = glm::ortho(-20.0f, 20.0f, -20.0f, 20.0f, near_plane, far_plane);
 
-		glm::mat4 light_view = glm::lookAt(dir_light.position,
+		glm::mat4 light_space_matrix = light_projection * glm::lookAt(dir_light.position,
 			glm::vec3(0.0f, 0.0f, 0.0f),
 			glm::vec3(0.0f, 1.0f, 0.0f));
+		
+		m_direct_shadow_map_material.set("u_light_space_matrix", light_space_matrix);
+		m_pbr_render_material.set("u_dirlights[" + std::to_string(light_index) + "].light_space_matrix", light_space_matrix);
+	}
 
-		return light_projection * light_view;
+	void Renderer::set_point_light_space_matrices(const Light<PointLightComponent>& point_light, int light_index)
+	{
+		const float NEAR_PLANE = 1.0f;
+		const float FAR_PLANE = 25.0f;
+		const float aspect_ratio = (float)m_point_light_shadow_map_textures[0].get_width() / (float)m_point_light_shadow_map_textures[0].get_height();
+		const glm::mat4 projection = glm::perspective(glm::radians(90.0f), aspect_ratio, NEAR_PLANE, FAR_PLANE);
+		std::vector<glm::mat4> view_projections;
+		view_projections.push_back(projection *
+			glm::lookAt(point_light.position, point_light.position + glm::vec3(1.0, 0.0, 0.0), glm::vec3(0.0, -1.0, 0.0)));
+		view_projections.push_back(projection *
+			glm::lookAt(point_light.position, point_light.position + glm::vec3(-1.0, 0.0, 0.0), glm::vec3(0.0, -1.0, 0.0)));
+		view_projections.push_back(projection *
+			glm::lookAt(point_light.position, point_light.position + glm::vec3(0.0, 1.0, 0.0), glm::vec3(0.0, 0.0, 1.0)));
+		view_projections.push_back(projection *
+			glm::lookAt(point_light.position, point_light.position + glm::vec3(0.0, -1.0, 0.0), glm::vec3(0.0, 0.0, -1.0)));
+		view_projections.push_back(projection *
+			glm::lookAt(point_light.position, point_light.position + glm::vec3(0.0, 0.0, 1.0), glm::vec3(0.0, -1.0, 0.0)));
+		view_projections.push_back(projection *
+			glm::lookAt(point_light.position, point_light.position + glm::vec3(0.0, 0.0, -1.0), glm::vec3(0.0, -1.0, 0.0)));
+
+		for (size_t i = 0; i < view_projections.size(); ++i)
+		{
+			m_omnidirect_shadow_map_material.set("uniforms[" + std::to_string(i) + "].light_space_transforms", view_projections[i]);
+		}
+		
+		m_pbr_render_material.set<float>("u_far_plane", FAR_PLANE);
+		m_omnidirect_shadow_map_material.set<float>("u_far_plane", FAR_PLANE);
 	}
 }

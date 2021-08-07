@@ -43,6 +43,8 @@ namespace vengine
 
 		void create_dir_light();
 		void create_point_light();
+		void create_sphere_area_light();
+		void create_tube_area_light();
 
 
 		void start_game();

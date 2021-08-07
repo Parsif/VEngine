@@ -55,6 +55,7 @@ namespace vengine
 		{
 		case ShaderType::VERTEX: return GL_VERTEX_SHADER;
 		case ShaderType::FRAGMENT: return GL_FRAGMENT_SHADER;
+		case ShaderType::GEOMETRY: return GL_GEOMETRY_SHADER;
 		}
 	}
 	
@@ -83,6 +84,35 @@ namespace vengine
         
         vertex_shader.delete_shader();
         fragment_shader.delete_shader();
+		set_all_uniform_locations();
+	}
+
+	ShaderProgram::ShaderProgram(const std::string& vertex_shader_path, const std::string& fragment_shader_path,
+		const std::string& geometry_shader_path)
+	{
+		Shader vertex_shader(ShaderType::VERTEX, vertex_shader_path);
+		Shader fragment_shader(ShaderType::FRAGMENT, fragment_shader_path);
+		Shader geometry_shader(ShaderType::GEOMETRY, geometry_shader_path);
+
+		m_render_id = glCreateProgram();
+		glAttachShader(m_render_id, vertex_shader.get_render_id());
+		glAttachShader(m_render_id, fragment_shader.get_render_id());
+		glAttachShader(m_render_id, geometry_shader.get_render_id());
+		glLinkProgram(m_render_id);
+
+		int success;
+		glGetProgramiv(m_render_id, GL_LINK_STATUS, &success);
+		if (!success)
+		{
+			char info_log[512];
+			glGetProgramInfoLog(m_render_id, sizeof(info_log), nullptr, info_log);
+			LOG_ERROR(info_log);
+		}
+
+		vertex_shader.delete_shader();
+		fragment_shader.delete_shader();
+		geometry_shader.delete_shader();
+
 		set_all_uniform_locations();
 	}
 

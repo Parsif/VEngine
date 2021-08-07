@@ -67,8 +67,26 @@ namespace vengine
     {
         glm::vec3 color{ 1.0f };
         float intensity{ 1.0f };
+        float light_radius{1.0f};
     };
 
+    struct SphereAreaLightComponent
+    {
+        glm::vec3 color{ 1.0f };
+        float intensity{ 1.0f };
+        float light_radius{ 1.0f };
+        float source_radius{ 1.0f };
+    };
+
+    struct TubeAreaLightComponent
+    {
+        glm::vec3 color{ 1.0f };
+        float intensity{ 1.0f };
+        float light_radius{ 1.0f };
+        float source_radius{ 1.0f };
+    };
+
+	
 	struct MaterialsComponent
 	{
         TextureGL albedo_texture;

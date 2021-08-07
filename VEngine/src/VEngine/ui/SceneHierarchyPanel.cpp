@@ -40,6 +40,11 @@ namespace vengine
                     m_scene->create_point_light();
                 }
 
+                if (ImGui::MenuItem("Create sphere area light"))
+                {
+                    m_scene->create_sphere_area_light();
+                }
+
                 ImGui::EndMenu();
         	}
           
@@ -144,20 +149,20 @@ namespace vengine
         {
             constexpr float DRAG_SPEED = 0.05f;
 
-            auto& dir_light_component = m_scene->m_registry.get<DirLightComponent>(entity);
+            auto& light_component = m_scene->m_registry.get<DirLightComponent>(entity);
 
             if (ImGui::TreeNodeEx((void*)typeid(DirLightComponent).hash_code(), ImGuiTreeNodeFlags_DefaultOpen, "Directional light"))
             {
-                if (draw_vec3_component("Color", dir_light_component.color))
+                if (draw_vec3_component("Color", light_component.color))
                 {
-                    m_scene->m_registry.replace<DirLightComponent>(entity, dir_light_component);
+                    m_scene->m_registry.replace<DirLightComponent>(entity, light_component);
                 }
 
                 ImGui::Text("Intensity");
                 ImGui::SameLine();
-                if(ImGui::DragFloat("##Intensity", &dir_light_component.intensity, DRAG_SPEED))
+                if(ImGui::DragFloat("##Intensity", &light_component.intensity, DRAG_SPEED))
                 {
-                    m_scene->m_registry.replace<DirLightComponent>(entity, dir_light_component);
+                    m_scene->m_registry.replace<DirLightComponent>(entity, light_component);
                 }
 
                 ImGui::TreePop();
@@ -167,21 +172,67 @@ namespace vengine
         if (m_scene->m_registry.has<PointLightComponent>(entity))
         {
             constexpr float DRAG_SPEED = 0.05f;
-
-            auto& point_light_component = m_scene->m_registry.get<PointLightComponent>(entity);
+        	
+            auto& light_component = m_scene->m_registry.get<PointLightComponent>(entity);
 
             if (ImGui::TreeNodeEx((void*)typeid(PointLightComponent).hash_code(), ImGuiTreeNodeFlags_DefaultOpen, "Point light"))
             {
-                if (draw_vec3_component("Color", point_light_component.color))
+                if (draw_vec3_component("Color", light_component.color))
                 {
-                    m_scene->m_registry.replace<PointLightComponent>(entity, point_light_component);
+                    m_scene->m_registry.replace<PointLightComponent>(entity, light_component);
                 }
 
                 ImGui::Text("Intensity");
                 ImGui::SameLine();
-                if (ImGui::DragFloat("##Intensity", &point_light_component.intensity, DRAG_SPEED))
+                if (ImGui::DragFloat("##Intensity", &light_component.intensity, DRAG_SPEED))
                 {
-                    m_scene->m_registry.replace<PointLightComponent>(entity, point_light_component);
+                    m_scene->m_registry.replace<PointLightComponent>(entity, light_component);
+                }
+
+
+                ImGui::Text("Light radius");
+                ImGui::SameLine();
+                if (ImGui::DragFloat("##Light radius", &light_component.light_radius, DRAG_SPEED))
+                {
+                    m_scene->m_registry.replace<PointLightComponent>(entity, light_component);
+                }
+
+                ImGui::TreePop();
+            }
+        }
+
+        if (m_scene->m_registry.has<SphereAreaLightComponent>(entity))
+        {
+            constexpr float DRAG_SPEED = 0.05f;
+
+            auto& light_component = m_scene->m_registry.get<SphereAreaLightComponent>(entity);
+
+            if (ImGui::TreeNodeEx((void*)typeid(SphereAreaLightComponent).hash_code(), ImGuiTreeNodeFlags_DefaultOpen, "Sphere area light"))
+            {
+                if (draw_vec3_component("Color", light_component.color))
+                {
+                    m_scene->m_registry.replace<SphereAreaLightComponent>(entity, light_component);
+                }
+
+                ImGui::Text("Intensity");
+                ImGui::SameLine();
+                if (ImGui::DragFloat("##Intensity", &light_component.intensity, DRAG_SPEED))
+                {
+                    m_scene->m_registry.replace<SphereAreaLightComponent>(entity, light_component);
+                }
+            	
+                ImGui::Text("Light radius");
+                ImGui::SameLine();
+                if (ImGui::DragFloat("##Light radius", &light_component.light_radius, DRAG_SPEED))
+                {
+                    m_scene->m_registry.replace<SphereAreaLightComponent>(entity, light_component);
+                }
+
+                ImGui::Text("Source radius");
+                ImGui::SameLine();
+                if (ImGui::DragFloat("##Source radius", &light_component.source_radius, DRAG_SPEED))
+                {
+                    m_scene->m_registry.replace<SphereAreaLightComponent>(entity, light_component);
                 }
 
                 ImGui::TreePop();

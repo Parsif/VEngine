@@ -4,7 +4,7 @@ namespace vengine
 {
     enum class FrameBufferType
     {
-        COLOR_DEPTH_STENCIL, COLOR_ONLY, DEPTH_ONLY, ENVIRONMENT_MAP, MULTI_TARGET
+        COLOR_DEPTH_STENCIL, COLOR_ONLY, DEPTH_ONLY, CUBE_MAP_DEPTH_ONLY, ENVIRONMENT_MAP, MULTI_TARGET
     };
 	
     struct FrameBufferSpecifications
@@ -31,7 +31,9 @@ namespace vengine
         [[nodiscard]] auto get_depth_attachment() const { return m_depth_attachment; }
         [[nodiscard]] auto get_cubemap_attachment() const { return m_cubemap_attachment; }
 
-        [[nodiscard]] auto get_size() const { return std::pair(m_specs.width, m_specs.height); }
+        [[nodiscard]] auto get_width() const { return m_specs.width; }
+        [[nodiscard]] auto get_height() const { return m_specs.height; }
+
         void bind_texture(unsigned int slot = 0, unsigned int attachment_number = 0) const;
         void attach_cubemap_face_as_texture2d(unsigned int face_count = 0) const;
 
