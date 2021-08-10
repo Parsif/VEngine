@@ -45,6 +45,11 @@ namespace vengine
                     m_scene->create_sphere_area_light();
                 }
 
+                if (ImGui::MenuItem("Create tube area light"))
+                {
+                    m_scene->create_tube_area_light();
+                }
+
                 ImGui::EndMenu();
         	}
           
@@ -239,6 +244,44 @@ namespace vengine
             }
         }
 
+        if (m_scene->m_registry.has<TubeAreaLightComponent>(entity))
+        {
+            constexpr float DRAG_SPEED = 0.05f;
+
+            auto& light_component = m_scene->m_registry.get<TubeAreaLightComponent>(entity);
+
+            if (ImGui::TreeNodeEx((void*)typeid(TubeAreaLightComponent).hash_code(), ImGuiTreeNodeFlags_DefaultOpen, "Tube area light"))
+            {
+                if (draw_vec3_component("Color", light_component.color))
+                {
+                    m_scene->m_registry.replace<TubeAreaLightComponent>(entity, light_component);
+                }
+
+                ImGui::Text("Intensity");
+                ImGui::SameLine();
+                if (ImGui::DragFloat("##Intensity", &light_component.intensity, DRAG_SPEED))
+                {
+                    m_scene->m_registry.replace<TubeAreaLightComponent>(entity, light_component);
+                }
+
+                ImGui::Text("Light radius");
+                ImGui::SameLine();
+                if (ImGui::DragFloat("##Light radius", &light_component.light_radius, DRAG_SPEED))
+                {
+                    m_scene->m_registry.replace<TubeAreaLightComponent>(entity, light_component);
+                }
+
+                ImGui::Text("Source radius");
+                ImGui::SameLine();
+                if (ImGui::DragFloat("##Source radius", &light_component.source_radius, DRAG_SPEED))
+                {
+                    m_scene->m_registry.replace<TubeAreaLightComponent>(entity, light_component);
+                }
+
+                ImGui::TreePop();
+            }
+        }
+		
 		if(m_scene->m_registry.has<MaterialsComponent>(entity))
 		{
             if (ImGui::TreeNodeEx((void*)typeid(MaterialsComponent).hash_code(), ImGuiTreeNodeFlags_DefaultOpen, "Materials"))

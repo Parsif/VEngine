@@ -1,10 +1,11 @@
 #pragma once
+#include <GL/glew.h>
 
 namespace vengine
 {
     enum class FrameBufferType
     {
-        COLOR_DEPTH_STENCIL, COLOR_ONLY, DEPTH_ONLY, CUBE_MAP_DEPTH_ONLY, ENVIRONMENT_MAP, MULTI_TARGET
+        COLOR_DEPTH_STENCIL, COLOR_ONLY, DEPTH_ONLY, CUBE_MAP_DEPTH_ONLY, CUBE_MAP, MULTI_TARGET, TWO_CHANNELS_ONLY
     };
 	
     struct FrameBufferSpecifications
@@ -12,6 +13,7 @@ namespace vengine
         uint32_t width, height;
         FrameBufferType frame_buffer_type;
         uint32_t samples = 1;
+        bool generate_mipmap = false;
     };
 
     class FrameBufferGL
@@ -30,7 +32,8 @@ namespace vengine
         [[nodiscard]] auto get_color_attachment1() const { return m_color_attachment1; }
         [[nodiscard]] auto get_depth_attachment() const { return m_depth_attachment; }
         [[nodiscard]] auto get_cubemap_attachment() const { return m_cubemap_attachment; }
-
+        [[nodiscard]] auto get_rbo() const { return m_render_buffer; };
+    	
         [[nodiscard]] auto get_width() const { return m_specs.width; }
         [[nodiscard]] auto get_height() const { return m_specs.height; }
 

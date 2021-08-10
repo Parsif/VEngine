@@ -39,7 +39,8 @@ namespace vengine
 		void add_dir_light(const DirLightComponent& dir_light, const glm::vec3& position);
 		void add_point_light(const PointLightComponent& point_light, const glm::vec3& position);
 		void add_sphere_area_light(const SphereAreaLightComponent& sphere_area_light_component, const glm::vec3& position);
-
+		void add_tube_area_light(const TubeAreaLightComponent& sphere_area_light_component, const glm::vec3& position);
+		
 		void set_camera_params(const Camera& camera);
 		void set_bloom(bool is_bloom_enabled);
 		void set_bloom_threshold(float threshold);
@@ -51,6 +52,8 @@ namespace vengine
 		[[nodiscard]] auto get_viewport() const { return m_viewport; }
 		void destroy_lights();
 		void set_scene_environment_map(const TextureGL& env_texture);
+
+		[[nodiscard]] static unsigned int get_max_lights() { return MAX_LIGHTS; }
 
 	private:
 		void begin_render_pass(const FrameBufferGL& frame_buffer) const;
@@ -82,11 +85,12 @@ namespace vengine
 		FrameBufferGL m_final_frame_buffer;
 		FrameBufferGL m_environment_map_frame_buffer;
 		FrameBufferGL m_irradiance_map_frame_buffer;
+		FrameBufferGL m_prefilter_map_frame_buffer;
+		FrameBufferGL m_convolute_brdf_map_frame_buffer;
+
+
 		FrameBufferGL m_blur_frame_buffer;
 		std::array<FrameBufferGL, 2> m_pingpong_fbos;
-
-		FrameBufferGL m_water_reflection_frame_buffer;
-		
 
 		const static unsigned int MAX_LIGHTS = 4;
 		std::array<FrameBufferGL, MAX_LIGHTS> m_dir_light_shadow_map_textures{};
@@ -97,6 +101,7 @@ namespace vengine
 		std::vector<Light<DirLightComponent>> m_dir_lights;
 		std::vector<Light<PointLightComponent>> m_point_lights;
 		std::vector<Light<SphereAreaLightComponent>> m_sphere_area_lights;
+		std::vector<Light<TubeAreaLightComponent>> m_tube_area_lights;
 
 		Material m_pbr_render_material;
 		Material m_hdr_to_cubemap_render_material;
@@ -104,6 +109,8 @@ namespace vengine
 		Material m_omnidirect_shadow_map_material;
 		Material m_skybox_material;
 		Material m_irradiance_material;
+		Material m_prefilter_material;
+		Material m_convolute_brdf_material;
 		Material m_blur_material;
 		Material m_postprocessing_material;
 

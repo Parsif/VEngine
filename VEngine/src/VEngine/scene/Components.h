@@ -84,6 +84,7 @@ namespace vengine
         float intensity{ 1.0f };
         float light_radius{ 1.0f };
         float source_radius{ 1.0f };
+        float length{ 1.0f };
     };
 
 	

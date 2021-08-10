@@ -31,7 +31,6 @@ namespace vengine
 		void create_camera();
 		void create_model(const std::string& model_path);
 
-		void draw_grid();
 
 		void destroy_entity(entt::entity entity);
 

@@ -19,6 +19,7 @@ namespace vengine
 		glDebugMessageCallback(MessageCallback, 0);
 #endif
 		glEnable(GL_MULTISAMPLE);
+		glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
 	}
 
 	void RendererApiGL::shutdown()

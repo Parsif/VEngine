@@ -79,12 +79,13 @@ uniform PointLight u_point_lights[MAX_LIGHTS];
 uniform SphereAreaLight u_sphere_area_lights[MAX_LIGHTS];
 uniform TubeAreaLight u_tube_area_lights[MAX_LIGHTS];
 
-
 uniform vec3 u_view_pos;
 
 uniform float u_far_plane; 
 
 uniform samplerCube u_irradiance_map;
+uniform samplerCube u_prefilter_map;
+uniform sampler2D u_convoluted_brdf;
 
 uniform int u_number_of_dir_lights;
 uniform int u_number_of_point_lights;
@@ -103,8 +104,7 @@ vec3  fresnel_schlick(float cosTheta, vec3 F0);
 vec3 fresnel_schlick_roughness(float cosTheta, vec3 F0, float roughness);
 
 float calc_shadow(vec3 normal, vec3 surface_to_light, sampler2D shadow_map, vec4 frag_pos_light_space);
-float calc_omni_shadow(vec3 normal, vec3 surface_to_light, samplerCube shadow_map);
-
+float calc_omni_shadow(vec3 normal, vec3 surface_to_oposite_light, samplerCube shadow_map);
 
 void main()
 {
@@ -125,7 +125,7 @@ void main()
 
     vec3 view_direction = normalize(u_view_pos - vs_output.frag_pos);
 
-    vec3 L0 = vec3(0.0);
+    vec3 total_radiance = vec3(0.0);
 
     //dirlights
     for(int i = 0; i < u_number_of_dir_lights; i++)
@@ -152,7 +152,7 @@ void main()
         vec3 color = (kD * albedo / PI + specular) * radiance * NdotL; 
         //shadows
         color *= (1 - calc_shadow(normal, surface_to_light, u_dirlights[i].shadow_map, vs_output.frag_pos_light_space[i]));
-        L0 += color;
+        total_radiance += color;
     }
 
     //point lights
@@ -182,17 +182,18 @@ void main()
         vec3 color = (kD * albedo / PI + specular) * radiance * NdotL; 
 
         color *= (1 - calc_omni_shadow(normal, vs_output.frag_pos -  u_point_lights[i].position, u_point_lights[i].shadow_map));
-        L0 += color;
+        total_radiance += color;
     }
 
     for(int i = 0; i < u_number_of_sphere_area_lights; i++)
     {
         vec3 r = reflect(-view_direction, normal);
         vec3 surface_to_light = u_sphere_area_lights[i].position - vs_output.frag_pos;
-        vec3 centerToRay = (dot(surface_to_light, r) * r) - surface_to_light;
-        vec3 closestPoint = surface_to_light + centerToRay * clamp(u_sphere_area_lights[i].source_radius / length(centerToRay), 0, 1);
-        surface_to_light = normalize(closestPoint);
-        float distance_to_light = length(closestPoint);
+        vec3 center_to_ray = (dot(surface_to_light, r) * r) - surface_to_light;
+        vec3 closest_point = surface_to_light + center_to_ray * clamp(u_sphere_area_lights[i].source_radius / length(center_to_ray), 0, 1);
+        surface_to_light = normalize(closest_point - vs_output.frag_pos);
+        float distance_to_light = length(closest_point - vs_output.frag_pos);
+        
 
         vec3 half_way_direction = normalize(view_direction + surface_to_light);
         float attenuation = pow(clamp(1 - pow(distance_to_light / u_sphere_area_lights[i].light_radius, 4), 0, 1), 2) / (distance_to_light * distance_to_light + 1);
@@ -214,7 +215,7 @@ void main()
         // add to outgoing radiance Lo
         float NdotL = max(dot(normal, surface_to_light), 0.0);                
         vec3 color = (kD * albedo / PI + specular) * radiance * NdotL; 
-        L0 += color;
+        total_radiance += color;
     }
 
     for(int i = 0; i < u_number_of_tube_area_lights; i++)
@@ -236,12 +237,12 @@ void main()
         vec3 closestPoint = L0 + Ldist * clamp(t, 0, 1);
         vec3 centerToRay = dot(closestPoint, r) * r - closestPoint;
         closestPoint = closestPoint + centerToRay * clamp(u_tube_area_lights[i].source_radius / length(centerToRay), 0, 1);
-        vec3 surface_to_light = normalize(closestPoint);
-        float distance_to_light = length(closestPoint);
+        vec3 surface_to_light = normalize(closestPoint - vs_output.frag_pos);
+        float distance_to_light = length(surface_to_light);
 
         vec3 half_way_direction = normalize(view_direction + surface_to_light);
         float attenuation = pow(clamp(1 - pow(distance_to_light / u_tube_area_lights[i].light_radius, 4), 0, 1), 2) / (distance_to_light * distance_to_light + 1);
-        vec3 radiance = u_sphere_area_lights[i].color * u_sphere_area_lights[i].intensity * attenuation;
+        vec3 radiance = u_tube_area_lights[i].color * u_tube_area_lights[i].intensity;
    
         // Cook-Torrance BRDF
         float NDF = distribution_GGX(normal, half_way_direction, roughness);        
@@ -259,24 +260,34 @@ void main()
         // add to outgoing radiance Lo
         float NdotL = max(dot(normal, surface_to_light), 0.0);                
         vec3 color = (kD * albedo / PI + specular) * radiance * NdotL; 
-        L0 += color;
+        total_radiance += color;
     }
 
 
     //abmient
+    vec3 R = reflect(-view_direction, normal);   
+
+    const float MAX_REFLECTION_LOD = 4.0;
+    vec3 prefiltered_color = textureLod(u_prefilter_map, R,  roughness * MAX_REFLECTION_LOD).rgb;  
+    
+    vec3 F        = fresnel_schlick_roughness(max(dot(normal, view_direction), 0.0), F0, roughness);
+    vec2 envBRDF  = texture(u_convoluted_brdf, vec2(max(dot(normal, view_direction), 0.0), roughness)).rg;
+    vec3 specular = prefiltered_color * (F * envBRDF.x + envBRDF.y);
+
     vec3 kS = fresnel_schlick_roughness(max(dot(normal, view_direction), 0.0), F0, roughness);
     vec3 kD = 1.0 - kS;
     vec3 irradiance = texture(u_irradiance_map, normal).rgb;
     vec3 diffuse    = irradiance * albedo;
-    vec3 ambient    = kD * diffuse; 
+    vec3 ambient    = kD * diffuse + specular; 
+
     if(u_material.has_ao)
     {
         float ao = texture(u_material.ao_map, vs_output.tex_coord).r;
         ambient = ambient * ao;
     }
-    L0 += ambient;
+    total_radiance += ambient;
 
-    fr_color = vec4(L0, 1.0);
+    fr_color = vec4(total_radiance, 1.0);
 
      //for bloom
     float brigthness = dot(fr_color.rgb, vec3(0.2126, 0.7152, 0.0722));
@@ -370,7 +381,7 @@ float calc_shadow(vec3 normal, vec3 surface_to_light, sampler2D shadow_map, vec4
 }
 
 
-float calc_omni_shadow(vec3 normal, vec3 surface_to_light, samplerCube shadow_map)
+float calc_omni_shadow(vec3 normal, vec3 surface_to_oposite_light, samplerCube shadow_map)
 {
     const vec3 sample_offset_directions[20] = vec3[]
     (
@@ -381,14 +392,14 @@ float calc_omni_shadow(vec3 normal, vec3 surface_to_light, samplerCube shadow_ma
        vec3(0,  1,  1), vec3( 0, -1,  1), vec3( 0, -1, -1), vec3( 0,  1, -1)
     );
 
-    float current_depth = length(surface_to_light);
+    float current_depth = length(surface_to_oposite_light);
     float shadow = 0.0;
-    const float bias = max(0.05 * (1.0 - dot(normal, surface_to_light)), 0.005); 
+    const float bias = max(0.05 * (1.0 - dot(normal, surface_to_oposite_light)), 0.005); 
     float view_distance = length(u_view_pos - vs_output.frag_pos);
     float disk_radius = (1.0 + (view_distance / u_far_plane)) / 25.0;  
     for(int i = 0; i < sample_offset_directions.length(); ++i)
     {
-        float closest_depth = texture(shadow_map, surface_to_light + sample_offset_directions[i] * disk_radius).r;
+        float closest_depth = texture(shadow_map, surface_to_oposite_light + sample_offset_directions[i] * disk_radius).r;
         closest_depth *= u_far_plane;   // undo mapping [0;1]
         if(current_depth - bias > closest_depth)
             shadow += 1.0;

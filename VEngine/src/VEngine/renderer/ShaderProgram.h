@@ -66,7 +66,6 @@ namespace vengine
 
 		void set_all_uniforms() const;
 			
-		//TODO: add error checking and handling
 		template<class T>
 		void set_uniform_value(const std::string& uniform_name, T& value)
 		{

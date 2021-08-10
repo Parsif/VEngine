@@ -78,6 +78,8 @@ namespace vengine
                 glCreateTextures(GL_TEXTURE_2D, 1, &m_color_attachment0);
                 glBindTexture(GL_TEXTURE_2D, m_color_attachment0);
                 glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, m_specs.width, m_specs.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
                 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
                 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
                 glBindTexture(GL_TEXTURE_2D, 0);
@@ -123,7 +125,7 @@ namespace vengine
             glReadBuffer(GL_NONE);
         }
 
-        else if(spec.frame_buffer_type == FrameBufferType::ENVIRONMENT_MAP)
+        else if(spec.frame_buffer_type == FrameBufferType::CUBE_MAP)
         {
             glGenRenderbuffers(1, &m_render_buffer);
 
@@ -135,7 +137,6 @@ namespace vengine
             glBindTexture(GL_TEXTURE_CUBE_MAP, m_cubemap_attachment);
             for (unsigned int i = 0; i < 6; ++i)
             {
-                // note that we store each face with 16 bit floating point values
                 glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB16F,
                     m_specs.width, m_specs.height, 0, GL_RGB, GL_FLOAT, nullptr);
             }
@@ -144,6 +145,11 @@ namespace vengine
             glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
             glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
             glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        	if(spec.generate_mipmap)
+        	{
+                glGenerateMipmap(GL_TEXTURE_CUBE_MAP);
+                glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+        	}
         }
 
         else if (spec.frame_buffer_type == FrameBufferType::MULTI_TARGET)
@@ -196,6 +202,23 @@ namespace vengine
             }
         }
 
+        else if (spec.frame_buffer_type == FrameBufferType::TWO_CHANNELS_ONLY)
+        {
+	        glCreateTextures(GL_TEXTURE_2D, 1, &m_color_attachment0);
+	        glBindTexture(GL_TEXTURE_2D, m_color_attachment0);
+	        glTexImage2D(GL_TEXTURE_2D, 0, GL_RG16F, m_specs.width, m_specs.height, 0, GL_RG, GL_FLOAT, nullptr);
+	        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	        glBindTexture(GL_TEXTURE_2D, 0);
+	        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_color_attachment0, 0);
+        	
+            glGenRenderbuffers(1, &m_render_buffer);
+            glBindRenderbuffer(GL_RENDERBUFFER, m_render_buffer);
+            glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, m_specs.width, m_specs.height);
+            glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, m_render_buffer);
+        }
         if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
         {
             LOG_ERROR("Framebuffer error, status code: " + glCheckFramebufferStatus(GL_FRAMEBUFFER))
@@ -221,6 +244,7 @@ namespace vengine
         {
         case FrameBufferType::COLOR_DEPTH_STENCIL:
         case FrameBufferType::COLOR_ONLY:
+        case FrameBufferType::TWO_CHANNELS_ONLY:
             glBindTexture(GL_TEXTURE_2D, m_color_attachment0);
             break;
         	
@@ -232,7 +256,7 @@ namespace vengine
             glBindTexture(GL_TEXTURE_CUBE_MAP, m_depth_attachment);
             break;
         	
-        case FrameBufferType::ENVIRONMENT_MAP:
+        case FrameBufferType::CUBE_MAP:
             glBindTexture(GL_TEXTURE_CUBE_MAP, m_cubemap_attachment);
             break;
         	
