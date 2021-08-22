@@ -90,7 +90,9 @@ namespace vengine
 
 
 		FrameBufferGL m_blur_frame_buffer;
-		std::array<FrameBufferGL, 2> m_pingpong_fbos;
+		TextureGL m_blur_texture;
+		std::array<TextureGL, 5> m_light_mipmap_textures; 
+
 
 		const static unsigned int MAX_LIGHTS = 4;
 		std::array<FrameBufferGL, MAX_LIGHTS> m_dir_light_shadow_map_textures{};
@@ -113,6 +115,10 @@ namespace vengine
 		Material m_convolute_brdf_material;
 		Material m_blur_material;
 		Material m_postprocessing_material;
+		Material m_simple_material;
+
+		ComputeShader m_downsample_compute_shader;
+		ComputeShader m_lightmap_compute_shader;
 
 		Camera m_camera;
 

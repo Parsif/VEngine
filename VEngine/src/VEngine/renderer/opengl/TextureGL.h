@@ -13,6 +13,7 @@ namespace vengine
 		TextureGL(unsigned int id);
 
 		void bind(GLenum slot = 0) const;
+		void create(uint32_t width, uint32_t height);
 
 		[[nodiscard]] const std::string& get_string_type() const { return m_string_type; }
 		[[nodiscard]] auto get_id() const { return m_id; }

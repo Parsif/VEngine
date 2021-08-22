@@ -15,7 +15,7 @@ namespace vengine
 
 	enum class ShaderType
 	{
-		VERTEX, FRAGMENT, GEOMETRY
+		VERTEX, FRAGMENT, GEOMETRY, COMPUTE
 	};
 	
 	class Shader
@@ -34,6 +34,7 @@ namespace vengine
 		ShaderType m_type;
 
 		friend class ShaderProgram;
+		friend class ComputeShader;
 	};
 	
 	
@@ -113,7 +114,19 @@ namespace vengine
 		friend Material;
 	};
 
-	
+
+	class ComputeShader
+	{
+	public:
+		ComputeShader() = default;
+		ComputeShader(const std::string& shader_path);
+		void use(uint32_t num_group_x, uint32_t num_group_y) const;
+		void set_image(const std::string& uniform_name, int image_id) const;
+		
+	private:
+		unsigned int m_render_id;
+		unsigned int m_shader_id;
+	};
 
 }
 

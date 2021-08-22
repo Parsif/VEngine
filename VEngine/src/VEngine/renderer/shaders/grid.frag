@@ -6,6 +6,7 @@ in mat4 vs_view_projection;
 
 out vec4 fr_color;
 
+
 vec4 grid(vec3 frag_pos_3d, float scale)
 {
     vec2 coord = frag_pos_3d.xz * scale; // use the scale variable to set the distance between the lines

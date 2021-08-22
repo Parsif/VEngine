@@ -83,6 +83,7 @@ uniform vec3 u_view_pos;
 
 uniform float u_far_plane; 
 
+uniform bool u_using_environment_map;
 uniform samplerCube u_irradiance_map;
 uniform samplerCube u_prefilter_map;
 uniform sampler2D u_convoluted_brdf;
@@ -92,8 +93,6 @@ uniform int u_number_of_point_lights;
 uniform int u_number_of_sphere_area_lights;
 uniform int u_number_of_tube_area_lights;
 
-uniform float u_bloom_threshold;
-uniform float u_bloom_intensity;
 
 float random(vec4 seed4);
 
@@ -265,20 +264,29 @@ void main()
 
 
     //abmient
-    vec3 R = reflect(-view_direction, normal);   
+    vec3 ambient;
+    if(u_using_environment_map)
+    {
+        vec3 R = reflect(-view_direction, normal);   
 
-    const float MAX_REFLECTION_LOD = 4.0;
-    vec3 prefiltered_color = textureLod(u_prefilter_map, R,  roughness * MAX_REFLECTION_LOD).rgb;  
-    
-    vec3 F        = fresnel_schlick_roughness(max(dot(normal, view_direction), 0.0), F0, roughness);
-    vec2 envBRDF  = texture(u_convoluted_brdf, vec2(max(dot(normal, view_direction), 0.0), roughness)).rg;
-    vec3 specular = prefiltered_color * (F * envBRDF.x + envBRDF.y);
+        const float MAX_REFLECTION_LOD = 4.0;
+        vec3 prefiltered_color = textureLod(u_prefilter_map, R,  roughness * MAX_REFLECTION_LOD).rgb;  
+        
+        vec3 F        = fresnel_schlick_roughness(max(dot(normal, view_direction), 0.0), F0, roughness);
+        vec2 envBRDF  = texture(u_convoluted_brdf, vec2(max(dot(normal, view_direction), 0.0), roughness)).rg;
+        vec3 specular = prefiltered_color * (F * envBRDF.x + envBRDF.y);
 
-    vec3 kS = fresnel_schlick_roughness(max(dot(normal, view_direction), 0.0), F0, roughness);
-    vec3 kD = 1.0 - kS;
-    vec3 irradiance = texture(u_irradiance_map, normal).rgb;
-    vec3 diffuse    = irradiance * albedo;
-    vec3 ambient    = kD * diffuse + specular; 
+        vec3 kS = fresnel_schlick_roughness(max(dot(normal, view_direction), 0.0), F0, roughness);
+        vec3 kD = 1.0 - kS;
+        vec3 irradiance = texture(u_irradiance_map, normal).rgb;
+        vec3 diffuse    = irradiance * albedo;
+        ambient  = kD * diffuse + specular; 
+    }
+    else
+    {
+        ambient = vec3(0.03) * albedo;
+    }
+  
 
     if(u_material.has_ao)
     {
@@ -289,16 +297,7 @@ void main()
 
     fr_color = vec4(total_radiance, 1.0);
 
-     //for bloom
-    float brigthness = dot(fr_color.rgb, vec3(0.2126, 0.7152, 0.0722));
-    if(brigthness > u_bloom_threshold)
-    {
-        fr_bright_color = fr_color * u_bloom_intensity;
-    }
-    else
-    {
-        fr_bright_color = vec4(0.0f, 0.0f, 0.0f, 1.0f);
-    }
+
 }   
 
 

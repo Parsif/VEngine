@@ -1,0 +1,26 @@
+#version 450 core
+
+layout(local_size_x = 32, local_size_y = 32, local_size_z = 1) in;
+
+layout(rgba16f, binding = 0) uniform readonly image2D u_scene;
+layout(rgba16f, binding = 0) uniform writeonly image2D u_lightmap;
+
+uniform float u_bloom_threshold = 0.5f;
+uniform float u_bloom_intensity = 1.0f;
+
+void main()
+{
+   	ivec2 mip_coords = ivec2(gl_GlobalInvocationID.xy);
+
+    vec4 color = imageLoad(u_scene, mip_coords);
+    float brigthness = dot(color.rgb, vec3(0.2126, 0.7152, 0.0722));
+    if(brigthness > u_bloom_threshold)
+    {
+        color = color * u_bloom_intensity;
+    }
+    else
+    {
+        color = vec4(0.0f, 0.0f, 0.0f, 1.0f);
+    }
+    imageStore(u_lightmap, mip_coords, color);
+}
