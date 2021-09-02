@@ -56,7 +56,6 @@ namespace vengine
 		}
 		
 		glClear(mask);
-
 	}
 
 	void RendererApiGL::end_render_pass()

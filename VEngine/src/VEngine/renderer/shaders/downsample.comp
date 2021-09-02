@@ -7,7 +7,7 @@ layout(rgba16f, binding = 1) uniform writeonly image2D u_output;
 
 void main()
 {
-    memoryBarrierShared();
+    //memoryBarrierShared();
    	ivec2 mipCoords = ivec2(gl_GlobalInvocationID.xy);
     ivec2 sourceCoords = mipCoords * 2;
 

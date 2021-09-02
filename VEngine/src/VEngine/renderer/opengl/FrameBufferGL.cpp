@@ -50,18 +50,16 @@ namespace vengine
                 glCreateTextures(GL_TEXTURE_2D, 1, &m_color_attachment0);
                 glBindTexture(GL_TEXTURE_2D, m_color_attachment0);
                 glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, m_specs.width, m_specs.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
-              
-                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
                 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
                 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
                 glBindTexture(GL_TEXTURE_2D, 0);
                 glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_color_attachment0, 0);
 
                 glCreateTextures(GL_TEXTURE_2D, 1, &m_depth_stencil_attachment);
                 glBindTexture(GL_TEXTURE_2D, m_depth_stencil_attachment);
                 glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH24_STENCIL8, m_specs.width, m_specs.height, 0, GL_DEPTH_STENCIL, GL_UNSIGNED_INT_24_8, nullptr);
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
                 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
                 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
                 glBindTexture(GL_TEXTURE_2D, 0);
@@ -88,7 +86,6 @@ namespace vengine
                 glCreateTextures(GL_TEXTURE_2D, 1, &m_color_attachment0);
                 glBindTexture(GL_TEXTURE_2D, m_color_attachment0);
                 glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, m_specs.width, m_specs.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
-
                 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
                 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
                 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -180,6 +177,53 @@ namespace vengine
             glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, m_specs.width, m_specs.height);
             glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, m_render_buffer);
         }
+        else if (spec.frame_buffer_type == FrameBufferType::G_BUFFER)
+        {
+            //position buffer
+            glCreateTextures(GL_TEXTURE_2D, 1, &m_color_attachment0);
+            glBindTexture(GL_TEXTURE_2D, m_color_attachment0);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, m_specs.width, m_specs.height, 0, GL_RGBA, GL_FLOAT, nullptr);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+            glBindTexture(GL_TEXTURE_2D, 0);
+            glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_color_attachment0, 0);
+
+            //albedo buffer
+            glCreateTextures(GL_TEXTURE_2D, 1, &m_color_attachment1);
+            glBindTexture(GL_TEXTURE_2D, m_color_attachment1);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, m_specs.width, m_specs.height, 0, GL_RGBA, GL_FLOAT, nullptr);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+            glBindTexture(GL_TEXTURE_2D, 0);
+            glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, m_color_attachment1, 0);
+
+            //normal buffer
+            glCreateTextures(GL_TEXTURE_2D, 1, &m_color_attachment2);
+            glBindTexture(GL_TEXTURE_2D, m_color_attachment2);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, m_specs.width, m_specs.height, 0, GL_RGBA, GL_FLOAT, nullptr);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+            glBindTexture(GL_TEXTURE_2D, 0);
+            glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, m_color_attachment2, 0);
+
+            //metallic_roughness_ao buffer
+            glCreateTextures(GL_TEXTURE_2D, 1, &m_color_attachment3);
+            glBindTexture(GL_TEXTURE_2D, m_color_attachment3);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, m_specs.width, m_specs.height, 0, GL_RGBA, GL_FLOAT, nullptr);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+            glBindTexture(GL_TEXTURE_2D, 0);
+            glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT3, GL_TEXTURE_2D, m_color_attachment3, 0);
+
+            glCreateTextures(GL_TEXTURE_2D, 1, &m_depth_stencil_attachment);
+            glBindTexture(GL_TEXTURE_2D, m_depth_stencil_attachment);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH24_STENCIL8, m_specs.width, m_specs.height, 0, GL_DEPTH_STENCIL, GL_UNSIGNED_INT_24_8, nullptr);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+            glBindTexture(GL_TEXTURE_2D, 0);
+            glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, m_depth_stencil_attachment, 0);
+        }
+
         if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
         {
             LOG_ERROR("Framebuffer error, status code: " + glCheckFramebufferStatus(GL_FRAMEBUFFER))
@@ -198,7 +242,7 @@ namespace vengine
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
     }
 
-    void FrameBufferGL::bind_texture(unsigned int slot) const
+    void FrameBufferGL::bind_texture(unsigned int slot, unsigned int color_attachment) const
     {
         glActiveTexture(GL_TEXTURE0 + slot);
         switch (m_specs.frame_buffer_type)
@@ -219,6 +263,12 @@ namespace vengine
         	
         case FrameBufferType::CUBE_MAP:
             glBindTexture(GL_TEXTURE_CUBE_MAP, m_cubemap_attachment);
+            break;
+        case FrameBufferType::G_BUFFER:
+            if(color_attachment == 0) glBindTexture(GL_TEXTURE_2D, m_color_attachment0);
+            else if (color_attachment == 1) glBindTexture(GL_TEXTURE_2D, m_color_attachment1);
+            else if (color_attachment == 2) glBindTexture(GL_TEXTURE_2D, m_color_attachment2);
+            else if (color_attachment == 3) glBindTexture(GL_TEXTURE_2D, m_color_attachment3);
             break;
         }
     }

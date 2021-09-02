@@ -28,7 +28,7 @@ namespace vengine
 		};
 		
 	public:
-		void init();
+		void init(unsigned int width, unsigned int height);
 		void shutdown();
 
 		void add_drawable(const Mesh& drawable);
@@ -56,10 +56,12 @@ namespace vengine
 		[[nodiscard]] static unsigned int get_max_lights() { return MAX_LIGHTS; }
 
 	private:
+		void create_resources();
 		void begin_render_pass(const FrameBufferGL& frame_buffer) const;
 		void end_render_pass(const FrameBufferGL& frame_buffer) const;
 		void render_scene();
-		void render_mesh(Mesh& mesh);
+		void gbuffer_pass();
+		void lightning_pass();
 		void render_shadows();
 		void render_shadow(Mesh& mesh) const;
 		void render_bloom();
@@ -68,8 +70,6 @@ namespace vengine
 		void render_environment_map();
 		void render_cube() const;
 		void render_quad() const;
-
-		void create_output_framebuffers();
 
 		void set_dir_light_space_matrix(const Light<DirLightComponent>& dir_light, int light_index);
 		void set_point_light_space_matrices(const Light<PointLightComponent>& point_light, int light_index);
@@ -88,11 +88,12 @@ namespace vengine
 		FrameBufferGL m_prefilter_map_frame_buffer;
 		FrameBufferGL m_convolute_brdf_map_frame_buffer;
 
+		FrameBufferGL m_gbuffer;
 
 		FrameBufferGL m_blur_frame_buffer;
 		TextureGL m_blur_texture;
 		std::array<TextureGL, 5> m_light_mipmap_textures; 
-
+		std::array<FrameBufferGL, 5> m_light_mipmap_fbos;
 
 		const static unsigned int MAX_LIGHTS = 4;
 		std::array<FrameBufferGL, MAX_LIGHTS> m_dir_light_shadow_map_textures{};
@@ -116,6 +117,7 @@ namespace vengine
 		Material m_blur_material;
 		Material m_postprocessing_material;
 		Material m_simple_material;
+		Material m_geometry_pass_material;
 
 		ComputeShader m_downsample_compute_shader;
 		ComputeShader m_lightmap_compute_shader;

@@ -1,39 +1,19 @@
 #version 450 core
 
-const float PI = 3.14159265359;
-const vec2 poisson_disk[4] = vec2[](
-      vec2(-0.94201624, -0.39906216),
-      vec2(0.94558609, -0.76890725),
-      vec2(-0.094184101, -0.92938870),
-      vec2(0.34495938, 0.29387760)
-);
-const uint MAX_LIGHTS = 4;
-
 layout (location = 0) out vec4 fr_color;
 layout (location = 1) out vec4 fr_bright_color;
 
 in VertexOutput
 {
 	vec2 tex_coord;
-	vec3 normal;
-	vec3 frag_pos;
-    vec4 frag_pos_light_space[MAX_LIGHTS];
-    mat3 TBN;
 } vs_output;
 
-struct Material
+struct GBuffer
 {
+    sampler2D position_map;
     sampler2D albedo_map;
-    sampler2D metallic_map;
-    sampler2D roughness_map;
-    sampler2D ao_map;
+    sampler2D metallic_roughness_ao_map;
     sampler2D normal_map;
-
-    bool has_albedo;
-    bool has_metallic;
-    bool has_roughness;
-    bool has_ao;
-    bool has_normal_map;
 };
 
 struct DirLight
@@ -73,14 +53,24 @@ struct TubeAreaLight
     float source_radius;
 };
 
-uniform Material u_material;
+const float PI = 3.14159265359;
+const vec2 poisson_disk[4] = vec2[](
+      vec2(-0.94201624, -0.39906216),
+      vec2(0.94558609, -0.76890725),
+      vec2(-0.094184101, -0.92938870),
+      vec2(0.34495938, 0.29387760)
+);
+const uint MAX_LIGHTS = 4;
+vec4 frag_pos_light_space[MAX_LIGHTS];
+vec3 frag_pos;
+
+uniform GBuffer u_gbuffer;
 uniform DirLight u_dirlights[MAX_LIGHTS];
 uniform PointLight u_point_lights[MAX_LIGHTS];
 uniform SphereAreaLight u_sphere_area_lights[MAX_LIGHTS];
 uniform TubeAreaLight u_tube_area_lights[MAX_LIGHTS];
 
 uniform vec3 u_view_pos;
-
 uniform float u_far_plane; 
 
 uniform bool u_using_environment_map;
@@ -93,6 +83,8 @@ uniform int u_number_of_point_lights;
 uniform int u_number_of_sphere_area_lights;
 uniform int u_number_of_tube_area_lights;
 
+
+uniform sampler2D u_depth_buffer;
 
 float random(vec4 seed4);
 
@@ -107,22 +99,24 @@ float calc_omni_shadow(vec3 normal, vec3 surface_to_oposite_light, samplerCube s
 
 void main()
 {
-    vec3 albedo     = u_material.has_albedo ? texture(u_material.albedo_map, vs_output.tex_coord).rgb : vec3(0.5f);
-    float metallic  = u_material.has_metallic ? texture(u_material.metallic_map, vs_output.tex_coord).r : 0.0f;
-    float roughness = u_material.has_roughness ? texture(u_material.roughness_map, vs_output.tex_coord).r : 0.0f;
+    gl_FragDepth = texture(u_depth_buffer, vs_output.tex_coord).r;
+    frag_pos = texture(u_gbuffer.position_map, vs_output.tex_coord).rgb;
+
+	for(int i = 0; i < u_number_of_dir_lights; i++)
+	{
+		frag_pos_light_space[i] = u_dirlights[i].light_space_matrix * vec4(frag_pos, 1.0f);
+	}
+
+    vec3 albedo     = texture(u_gbuffer.albedo_map, vs_output.tex_coord).rgb;
+    float metallic  = texture(u_gbuffer.metallic_roughness_ao_map, vs_output.tex_coord).r;
+    float roughness =  texture(u_gbuffer.metallic_roughness_ao_map, vs_output.tex_coord).g;
     
-    vec3 normal = vs_output.normal;
-    if(u_material.has_normal_map)
-    {
-        normal = texture(u_material.normal_map, vs_output.tex_coord).rgb;
-        normal = normal * 2.0 - 1.0;
-        normal = normalize(vs_output.TBN * normal);
-    }
-    
+    vec3 normal = texture(u_gbuffer.normal_map, vs_output.tex_coord).rgb;
+
     vec3 F0 = vec3(0.04); 
     F0 = mix(F0, albedo, metallic);
 
-    vec3 view_direction = normalize(u_view_pos - vs_output.frag_pos);
+    vec3 view_direction = normalize(u_view_pos - frag_pos);
 
     vec3 total_radiance = vec3(0.0);
 
@@ -150,16 +144,16 @@ void main()
         float NdotL = max(dot(normal, surface_to_light), 0.0);                
         vec3 color = (kD * albedo / PI + specular) * radiance * NdotL; 
         //shadows
-        color *= (1 - calc_shadow(normal, surface_to_light, u_dirlights[i].shadow_map, vs_output.frag_pos_light_space[i]));
+        color *= (1 - calc_shadow(normal, surface_to_light, u_dirlights[i].shadow_map, frag_pos_light_space[i]));
         total_radiance += color;
     }
 
     //point lights
     for(int i = 0; i < u_number_of_point_lights; i++)
     {
-        vec3 surface_to_light = normalize(u_point_lights[i].position - vs_output.frag_pos);
+        vec3 surface_to_light = normalize(u_point_lights[i].position -frag_pos);
         vec3 half_way_direction = normalize(view_direction + surface_to_light);
-        float distance_to_light = length(u_point_lights[i].position - vs_output.frag_pos);
+        float distance_to_light = length(u_point_lights[i].position - frag_pos);
         float attenuation = pow(clamp(1 - pow(distance_to_light / u_point_lights[i].light_radius, 4), 0, 1), 2) / (distance_to_light * distance_to_light + 1);
         vec3 radiance = u_point_lights[i].color * u_point_lights[i].intensity * attenuation;
 
@@ -180,18 +174,18 @@ void main()
         float NdotL = max(dot(normal, surface_to_light), 0.0);                
         vec3 color = (kD * albedo / PI + specular) * radiance * NdotL; 
 
-        color *= (1 - calc_omni_shadow(normal, vs_output.frag_pos -  u_point_lights[i].position, u_point_lights[i].shadow_map));
+        color *= (1 - calc_omni_shadow(normal, frag_pos -  u_point_lights[i].position, u_point_lights[i].shadow_map));
         total_radiance += color;
     }
 
     for(int i = 0; i < u_number_of_sphere_area_lights; i++)
     {
         vec3 r = reflect(-view_direction, normal);
-        vec3 surface_to_light = u_sphere_area_lights[i].position - vs_output.frag_pos;
+        vec3 surface_to_light = u_sphere_area_lights[i].position - frag_pos;
         vec3 center_to_ray = (dot(surface_to_light, r) * r) - surface_to_light;
         vec3 closest_point = surface_to_light + center_to_ray * clamp(u_sphere_area_lights[i].source_radius / length(center_to_ray), 0, 1);
-        surface_to_light = normalize(closest_point - vs_output.frag_pos);
-        float distance_to_light = length(closest_point - vs_output.frag_pos);
+        surface_to_light = normalize(closest_point - frag_pos);
+        float distance_to_light = length(closest_point - frag_pos);
         
 
         vec3 half_way_direction = normalize(view_direction + surface_to_light);
@@ -220,8 +214,8 @@ void main()
     for(int i = 0; i < u_number_of_tube_area_lights; i++)
     {
         vec3 r = reflect(-view_direction, normal);
-        vec3 L0 = u_tube_area_lights[i].position1 - vs_output.frag_pos;
-        vec3 L1 = u_tube_area_lights[i].position2 - vs_output.frag_pos;
+        vec3 L0 = u_tube_area_lights[i].position1 - frag_pos;
+        vec3 L1 = u_tube_area_lights[i].position2 - frag_pos;
 
         float distL0 = length( L0 );
         float distL1 = length( L1 );
@@ -236,7 +230,7 @@ void main()
         vec3 closestPoint = L0 + Ldist * clamp(t, 0, 1);
         vec3 centerToRay = dot(closestPoint, r) * r - closestPoint;
         closestPoint = closestPoint + centerToRay * clamp(u_tube_area_lights[i].source_radius / length(centerToRay), 0, 1);
-        vec3 surface_to_light = normalize(closestPoint - vs_output.frag_pos);
+        vec3 surface_to_light = normalize(closestPoint - frag_pos);
         float distance_to_light = length(surface_to_light);
 
         vec3 half_way_direction = normalize(view_direction + surface_to_light);
@@ -262,7 +256,6 @@ void main()
         total_radiance += color;
     }
 
-
     //abmient
     vec3 ambient;
     if(u_using_environment_map)
@@ -287,17 +280,12 @@ void main()
         ambient = vec3(0.03) * albedo;
     }
   
-
-    if(u_material.has_ao)
-    {
-        float ao = texture(u_material.ao_map, vs_output.tex_coord).r;
-        ambient = ambient * ao;
-    }
+    float ao = texture(u_gbuffer.metallic_roughness_ao_map  , vs_output.tex_coord).b;
+    ambient = ambient * ao;
+  
     total_radiance += ambient;
 
     fr_color = vec4(total_radiance, 1.0);
-
-
 }   
 
 
@@ -394,7 +382,7 @@ float calc_omni_shadow(vec3 normal, vec3 surface_to_oposite_light, samplerCube s
     float current_depth = length(surface_to_oposite_light);
     float shadow = 0.0;
     const float bias = max(0.05 * (1.0 - dot(normal, surface_to_oposite_light)), 0.005); 
-    float view_distance = length(u_view_pos - vs_output.frag_pos);
+    float view_distance = length(u_view_pos - frag_pos);
     float disk_radius = (1.0 + (view_distance / u_far_plane)) / 25.0;  
     for(int i = 0; i < sample_offset_directions.length(); ++i)
     {

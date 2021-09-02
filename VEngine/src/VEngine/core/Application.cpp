@@ -15,8 +15,7 @@ namespace vengine
 		RendererApiGL::init();
 
 		m_renderer = std::make_shared<Renderer>();
-		m_renderer->init();
-		m_renderer->set_viewport(0, 0, m_window->get_width(), m_window->get_height());
+		m_renderer->init(m_window->get_width(), m_window->get_height());
 
 		m_scene = std::make_shared<Scene>();
 		m_scene->init(m_renderer);

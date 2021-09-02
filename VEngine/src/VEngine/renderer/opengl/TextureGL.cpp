@@ -93,7 +93,7 @@ namespace vengine
 	{
 		glCreateTextures(GL_TEXTURE_2D, 1, &m_id);
 		glBindTexture(GL_TEXTURE_2D, m_id);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+		glTextureStorage2D(m_id, 1, GL_RGBA16F, width, height);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);

@@ -12,11 +12,18 @@
 
 namespace vengine
 {
-	void Renderer::init()
+	void Renderer::init(unsigned int width, unsigned int height)
 	{
 		m_render_pass_descriptor.depth_test_enabled = true;
 		m_render_pass_descriptor.need_clear_color = true;
 		m_render_pass_descriptor.need_clear_depth = true;
+		m_render_pass_descriptor.need_culling = true;
+
+		m_viewport.x = 0;
+		m_viewport.y = 0;
+		m_viewport.width = width;
+		m_viewport.height = height;
+		create_resources();
 
 		for (auto& shadow_map : m_dir_light_shadow_map_textures)
 		{
@@ -69,6 +76,9 @@ namespace vengine
 
 		m_simple_material = MaterialLibrary::load("./VEngine/src/VEngine/renderer/shaders/simple.vert",
 			"./VEngine/src/VEngine/renderer/shaders/simple.frag", "Simple");
+
+		m_geometry_pass_material = MaterialLibrary::load("./VEngine/src/VEngine/renderer/shaders/geometry_pass.vert",
+			"./VEngine/src/VEngine/renderer/shaders/geometry_pass.frag", "Simple");
 	}
 
 	void Renderer::shutdown()
@@ -83,27 +93,21 @@ namespace vengine
 
 	void Renderer::render()
 	{
-		create_output_framebuffers();
+		m_final_frame_buffer.create(FrameBufferSpecifications{ m_viewport.width, m_viewport.height, FrameBufferType::COLOR_DEPTH_STENCIL });
+
 		render_shadows();
 		render_scene();
-		//blitting scene
-		FrameBufferGL::blit_framebuffer(m_viewport.width, m_viewport.height, m_intermediate_frame_buffer.get_id(),
-			m_final_frame_buffer.get_id());
-
-		if(m_using_bloom)
+		if (m_using_bloom)
 		{
 			render_bloom();
 		}
 
-		if(m_using_environment_map)
+		if (m_using_environment_map)
 		{
 			render_environment_map();
 		}
-		
-	
 		post_processing();
-		FrameBufferGL::blit_framebuffer(m_viewport.width, m_viewport.height, m_intermediate_frame_buffer.get_id(), m_final_frame_buffer.get_id());
-		
+
 		m_render_queue.clear();
 		destroy_lights();
 	}
@@ -115,14 +119,8 @@ namespace vengine
 		m_viewport.width = width;
 		m_viewport.height = height;
 		RendererApiGL::set_viewport(m_viewport.x, m_viewport.y, m_viewport.width, m_viewport.height);
-		
-		uint32_t downsample_factor = 2;
-		for (auto& texture : m_light_mipmap_textures)
-		{
-			texture.create(m_viewport.width / downsample_factor, m_viewport.height / downsample_factor);
-			downsample_factor *= 2;
-		}
-		m_blur_texture.create(m_viewport.width, m_viewport.height);
+	
+		create_resources();
 	}
 
 	void Renderer::set_viewport(unsigned int width, unsigned int height)
@@ -130,16 +128,7 @@ namespace vengine
 		m_viewport.width = width;
 		m_viewport.height = height;
 		RendererApiGL::set_viewport(m_viewport.x, m_viewport.y, m_viewport.width, m_viewport.height);
-		
-		m_blur_texture.create(m_viewport.width, m_viewport.height);
-
-		uint32_t downsample_factor = 2;
-		for (auto& texture : m_light_mipmap_textures)
-		{
-			texture.create(m_viewport.width / downsample_factor, m_viewport.height / downsample_factor);
-			downsample_factor *= 2;
-		}
-		m_blur_texture.create(m_viewport.width, m_viewport.height);
+		create_resources();
 	}
 
 	void Renderer::add_dir_light(const DirLightComponent& dir_light, const glm::vec3& position)
@@ -190,8 +179,9 @@ namespace vengine
 	{
 		m_camera = camera;
 		
-		m_pbr_render_material.set("u_view_projection", m_camera.get_view_projection());
 		m_pbr_render_material.set("u_view_pos", m_camera.get_position());
+
+		m_geometry_pass_material.set("u_view_projection", m_camera.get_view_projection());
 
 		m_skybox_material.set("u_view", m_camera.get_view());
 		m_skybox_material.set("u_projection", m_camera.get_projection());
@@ -333,6 +323,26 @@ namespace vengine
 		RendererApiGL::set_viewport(viewport.x, viewport.y, viewport.width, viewport.height);
 	}
 
+	void Renderer::create_resources()
+	{
+		unsigned int downsample_factor = 2;
+		for (auto& texture : m_light_mipmap_textures)
+		{
+			texture.create(m_viewport.width / downsample_factor, m_viewport.height / downsample_factor);
+			downsample_factor *= 2;
+		}
+
+		downsample_factor = 2;
+		for (auto& fbo : m_light_mipmap_fbos)
+		{
+			fbo.create(FrameBufferSpecifications{ m_viewport.width / downsample_factor, m_viewport.height / downsample_factor, FrameBufferType::COLOR_ONLY });
+			downsample_factor *= 2;
+		}
+		m_blur_texture.create(m_viewport.width, m_viewport.height);
+		m_gbuffer.create(FrameBufferSpecifications{ m_viewport.width, m_viewport.height, FrameBufferType::G_BUFFER });
+		m_intermediate_frame_buffer.create(FrameBufferSpecifications{ m_viewport.width, m_viewport.height, FrameBufferType::COLOR_DEPTH_STENCIL });
+	}
+
 	void Renderer::begin_render_pass(const FrameBufferGL& frame_buffer) const
 	{
 		frame_buffer.bind();
@@ -347,29 +357,78 @@ namespace vengine
 
 	void Renderer::render_scene()
 	{
-		RendererApiGL::set_viewport(m_viewport.x, m_viewport.y, m_intermediate_frame_buffer.get_width(), m_intermediate_frame_buffer.get_height());
+		RendererApiGL::set_viewport(m_viewport.x, m_viewport.y, m_final_frame_buffer.get_width(), m_final_frame_buffer.get_height());
 
-		begin_render_pass(m_intermediate_frame_buffer);
-		for (auto& mesh : m_render_queue)
-		{
-			render_mesh(mesh);
-		}
-		end_render_pass(m_intermediate_frame_buffer);
+		unsigned int attachments[4] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2, GL_COLOR_ATTACHMENT3 };
+		glNamedFramebufferDrawBuffers(m_gbuffer.get_id(), 4, attachments);
+		begin_render_pass(m_gbuffer);
+		gbuffer_pass();
+		end_render_pass(m_gbuffer);
+
+		begin_render_pass(m_final_frame_buffer);
+		lightning_pass();
+		end_render_pass(m_final_frame_buffer);
+	
 	}
 
-	void Renderer::render_mesh(Mesh& mesh) 
+	void Renderer::gbuffer_pass()
+	{
+		for (auto& mesh : m_render_queue)
+		{
+			m_geometry_pass_material.set("u_transform", mesh.transform);
+			m_geometry_pass_material.set("u_material.has_albedo", mesh.has_albedo_texture || mesh.materials.albedo_texture);
+			m_geometry_pass_material.set("u_material.has_metallic", mesh.has_metallic_texture || mesh.materials.metallic_texture);
+			m_geometry_pass_material.set("u_material.has_roughness", mesh.has_roughness_texture || mesh.materials.roughness_texture);
+			m_geometry_pass_material.set("u_material.has_ao", mesh.has_ao_texture || mesh.materials.ao_texture);
+			m_geometry_pass_material.set("u_material.has_normal_map", mesh.has_normal_texture || mesh.materials.normal_texture);
+
+			for (auto&& render_command : mesh.commands)
+			{
+				int texture_slot = 1;
+				if (mesh.materials.albedo_texture)
+				{
+					m_geometry_pass_material.set<int>("u_material." + mesh.materials.albedo_texture.get_string_type(), texture_slot);
+					mesh.materials.albedo_texture.bind(texture_slot++);
+				}
+				if (mesh.materials.metallic_texture)
+				{
+					m_geometry_pass_material.set<int>("u_material." + mesh.materials.metallic_texture.get_string_type(), texture_slot);
+					mesh.materials.metallic_texture.bind(texture_slot++);
+				}
+				if (mesh.materials.roughness_texture)
+				{
+					m_geometry_pass_material.set<int>("u_material." + mesh.materials.roughness_texture.get_string_type(), texture_slot);
+					mesh.materials.roughness_texture.bind(texture_slot++);
+				}
+				if (mesh.materials.ao_texture)
+				{
+					m_geometry_pass_material.set<int>("u_material." + mesh.materials.ao_texture.get_string_type(), texture_slot);
+					mesh.materials.ao_texture.bind(texture_slot++);
+				}
+				if (mesh.materials.normal_texture)
+				{
+					m_geometry_pass_material.set<int>("u_material." + mesh.materials.normal_texture.get_string_type(), texture_slot);
+					mesh.materials.normal_texture.bind(texture_slot++);
+				}
+
+				for (const auto& texture_2d : render_command.get_textures2d())
+				{
+					m_geometry_pass_material.set<int>("u_material." + texture_2d.get_string_type(), texture_slot);
+					texture_2d.bind(texture_slot++);
+				}
+
+				m_geometry_pass_material.use();
+				RendererApiGL::draw_elements(render_command);
+			}
+		}
+	}
+
+	void Renderer::lightning_pass() 
 	{
 		m_pbr_render_material.set<int>("u_number_of_dir_lights", m_dir_lights.size());
 		m_pbr_render_material.set<int>("u_number_of_point_lights", m_point_lights.size());
 		m_pbr_render_material.set<int>("u_number_of_sphere_area_lights", m_sphere_area_lights.size());
 		m_pbr_render_material.set<int>("u_number_of_tube_area_lights", m_tube_area_lights.size());
-
-		m_pbr_render_material.set("u_transform", mesh.transform);
-		m_pbr_render_material.set("u_material.has_albedo", mesh.has_albedo_texture || mesh.materials.albedo_texture);
-		m_pbr_render_material.set("u_material.has_metallic", mesh.has_metallic_texture || mesh.materials.metallic_texture);
-		m_pbr_render_material.set("u_material.has_roughness", mesh.has_roughness_texture || mesh.materials.roughness_texture);
-		m_pbr_render_material.set("u_material.has_ao", mesh.has_ao_texture || mesh.materials.ao_texture);
-		m_pbr_render_material.set("u_material.has_normal_map", mesh.has_normal_texture || mesh.materials.normal_texture);
 
 		int texture_slot = 1;
 
@@ -397,45 +456,21 @@ namespace vengine
 			m_point_light_shadow_map_textures[i].bind_texture(texture_slot++);
 		}
 		
-		for (auto&& render_command : mesh.commands)
-		{
-			if (mesh.materials.albedo_texture)
-			{
-				m_pbr_render_material.set<int>("u_material." + mesh.materials.albedo_texture.get_string_type(), texture_slot);
-				mesh.materials.albedo_texture.bind(texture_slot++);
-			}
-			if (mesh.materials.metallic_texture)	
-			{
-				m_pbr_render_material.set<int>("u_material." + mesh.materials.metallic_texture.get_string_type(), texture_slot);
-				mesh.materials.metallic_texture.bind(texture_slot++);
-			}
-			if (mesh.materials.roughness_texture)
-			{
-				m_pbr_render_material.set<int>("u_material." + mesh.materials.roughness_texture.get_string_type(), texture_slot);
-				mesh.materials.roughness_texture.bind(texture_slot++);
-			}
-			if (mesh.materials.ao_texture)
-			{
-				m_pbr_render_material.set<int>("u_material." + mesh.materials.ao_texture.get_string_type(), texture_slot);
-				mesh.materials.ao_texture.bind(texture_slot++);
-			}
-			if (mesh.materials.normal_texture)
-			{
-				m_pbr_render_material.set<int>("u_material." + mesh.materials.normal_texture.get_string_type(), texture_slot);
-				mesh.materials.normal_texture.bind(texture_slot++);
-			}
-			
-			for (const auto& texture_2d : render_command.get_textures2d())
-			{
-				m_pbr_render_material.set<int>("u_material." + texture_2d.get_string_type(), texture_slot);
-				texture_2d.bind(texture_slot++);
-			}
+		m_pbr_render_material.set<int>("u_gbuffer.position_map", texture_slot);
+		m_gbuffer.bind_texture(texture_slot++, 0);
+		m_pbr_render_material.set<int>("u_gbuffer.albedo_map", texture_slot);
+		m_gbuffer.bind_texture(texture_slot++, 1);
+		m_pbr_render_material.set<int>("u_gbuffer.normal_map", texture_slot);
+		m_gbuffer.bind_texture(texture_slot++, 2);
+		m_pbr_render_material.set<int>("u_gbuffer.metallic_roughness_ao_map", texture_slot);
+		m_gbuffer.bind_texture(texture_slot++, 3);
 
-			texture_slot = m_point_lights.size() + m_dir_lights.size() + 3;
+		m_pbr_render_material.set<int>("u_depth_buffer", texture_slot);
+		glActiveTexture(GL_TEXTURE0 + texture_slot++);
+		glBindTexture(GL_TEXTURE_2D, m_gbuffer.get_depth_stencil_attachment());
 			
-			m_pbr_render_material.use();
-			RendererApiGL::draw_elements(render_command);
-		}
+		m_pbr_render_material.use();
+		render_quad();
 	}
 
 	void Renderer::render_shadows()
@@ -488,54 +523,53 @@ namespace vengine
 
 	void Renderer::render_bloom()
 	{
-		/*begin_render_pass(m_mipmap_fbos[0]);
-
-		m_simple_material.set("u_image", 0);
-		m_final_frame_buffer.bind_texture(0);
-		m_simple_material.use();
-		render_quad();
-
-		end_render_pass(m_mipmap_fbos[0]);
-
-		for (size_t i = 1; i < m_mipmap_fbos.size(); ++i)
-		{
-			begin_render_pass(m_mipmap_fbos[i]);
-
-			m_simple_material.set("u_image", 0);
-			m_mipmap_fbos[i - 1].bind_texture(0);
-			m_simple_material.use();
-			render_quad();
-
-			end_render_pass(m_mipmap_fbos[i]);
-		}
-
-		FrameBufferGL::blit_framebuffer(m_viewport.width, m_viewport.height, m_mipmap_fbos[0].get_id(), m_blur_frame_buffer.get_id());*/
-	
-
 		glBindImageTexture(0, m_final_frame_buffer.get_color_attachment0(), 0, GL_FALSE, 0, GL_READ_ONLY, GL_RGBA16F);
 		glBindImageTexture(1, m_blur_texture.get_id(), 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA16F);
 		m_lightmap_compute_shader.use(64, 64);
-		glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+		glMemoryBarrier(GL_ALL_BARRIER_BITS);
 
+		//begin_render_pass(m_light_mipmap_fbos[0]);
+
+		//m_simple_material.set("u_image", 0);
+		//m_blur_texture.get_id();
+		//m_simple_material.use();
+		//render_quad();
+
+		//end_render_pass(m_light_mipmap_fbos[0]);
+
+		//for (size_t i = 1; i < m_light_mipmap_fbos.size(); ++i)
+		//{
+		//	begin_render_pass(m_light_mipmap_fbos[i]);
+
+		//	m_simple_material.set("u_image", 0);
+		//	m_light_mipmap_fbos[i - 1].bind_texture(0);
+		//	m_simple_material.use();
+		//	render_quad();
+
+		//	end_render_pass(m_light_mipmap_fbos[i]);
+		//}
+
+		//FrameBufferGL::blit_framebuffer(m_viewport.width, m_viewport.height, m_light_mipmap_fbos[0].get_id(), m_blur_frame_buffer.get_id());
+	
 		glBindImageTexture(0, m_blur_texture.get_id(), 0, GL_FALSE, 0, GL_READ_ONLY, GL_RGBA16F);
 		glBindImageTexture(1, m_light_mipmap_textures[0].get_id(), 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA16F);
 		m_downsample_compute_shader.use(64, 64);
-		glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+		glMemoryBarrier(GL_ALL_BARRIER_BITS);
 
 		glBindImageTexture(0, m_blur_texture.get_id(), 0, GL_FALSE, 0, GL_READ_ONLY, GL_RGBA16F);
 		glBindImageTexture(1, m_light_mipmap_textures[1].get_id(), 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA16F);
 		m_downsample_compute_shader.use(64, 64);
-		glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+		glMemoryBarrier(GL_ALL_BARRIER_BITS);
 
 		glBindImageTexture(0, m_blur_texture.get_id(), 0, GL_FALSE, 0, GL_READ_ONLY, GL_RGBA16F);
 		glBindImageTexture(1, m_light_mipmap_textures[2].get_id(), 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA16F);
 		m_downsample_compute_shader.use(64, 64);
-		glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+		glMemoryBarrier(GL_ALL_BARRIER_BITS);
 
 		glBindImageTexture(0, m_blur_texture.get_id(), 0, GL_FALSE, 0, GL_READ_ONLY, GL_RGBA16F);
 		glBindImageTexture(1, m_light_mipmap_textures[3].get_id(), 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA16F);
 		m_downsample_compute_shader.use(64, 64);
-		glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+		glMemoryBarrier(GL_ALL_BARRIER_BITS);
 
 	}
 
@@ -547,25 +581,23 @@ namespace vengine
 		m_postprocessing_material.set("u_is_bloom_enabled", m_using_bloom);
 		if(m_using_bloom)
 		{
-		/*	m_postprocessing_material.set<int>("u_bloom_blur", 1);
-			m_blur_texture.bind(1);*/
+			m_postprocessing_material.set<int>("u_bloom_blur", 1);
+			m_blur_texture.bind(1);
 		}
 		m_postprocessing_material.use();
 		render_quad();
 		end_render_pass(m_intermediate_frame_buffer);
+		FrameBufferGL::blit_framebuffer(m_viewport.width, m_viewport.height, m_intermediate_frame_buffer.get_id(), m_final_frame_buffer.get_id());
 	}
 
 	void Renderer::render_environment_map() 
 	{
-		if(m_using_environment_map)
-		{
-			m_intermediate_frame_buffer.bind();
-			m_skybox_material.set<int>("u_environment_map", 0);
-			m_environment_map_frame_buffer.bind_texture();
-			m_skybox_material.use();
-			render_cube();
-			m_intermediate_frame_buffer.unbind();
-		}
+		m_final_frame_buffer.bind();
+		m_skybox_material.set<int>("u_environment_map", 0);
+		m_environment_map_frame_buffer.bind_texture();
+		m_skybox_material.use();
+		render_cube();
+		m_final_frame_buffer.unbind();
 	}
 
 	void Renderer::render_cube() const
@@ -618,12 +650,6 @@ namespace vengine
 		RendererApiGL::draw_arrays(render_command, 0, 4);
 	}
 
-	void Renderer::create_output_framebuffers()
-	{
-		m_intermediate_frame_buffer.create(FrameBufferSpecifications{ m_viewport.width, m_viewport.height, FrameBufferType::COLOR_DEPTH_STENCIL, 4 });
-		m_final_frame_buffer.create(FrameBufferSpecifications{ m_viewport.width, m_viewport.height, FrameBufferType::COLOR_DEPTH_STENCIL, 1 });
-	}
-
 	void Renderer::set_dir_light_space_matrix(const Light<DirLightComponent>& dir_light, int light_index)
 	{
 		const float near_plane = 1.0f, far_plane = 50.0f;
@@ -665,4 +691,6 @@ namespace vengine
 		m_pbr_render_material.set<float>("u_far_plane", FAR_PLANE);
 		m_omnidirect_shadow_map_material.set<float>("u_far_plane", FAR_PLANE);
 	}
+
+	
 }

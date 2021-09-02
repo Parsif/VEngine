@@ -7,7 +7,7 @@ namespace vengine
 {
 	struct RenderPassDescriptor
 	{
-		glm::vec4 clear_color{0.0f, 0.0f, 0.0f, 1.0f}; //must be black in order to blend bloom texture with the scene texture
+		glm::vec4 clear_color{0.0f, 0.0f, 0.0f, 1.0f}; 
 		bool depth_test_enabled = false;
 		bool stencil_test_enabled = false;
 		bool need_clear_color = false;
