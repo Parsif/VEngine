@@ -11,15 +11,25 @@ out VertexOutput
 	vec3 normal;
 	vec3 frag_pos;
 	mat3 TBN;
+	vec4 current_pos;
+	vec4 previous_pos;
 } vs_output;
 
 uniform mat4 u_transform;
 uniform mat4 u_view_projection;
 
+uniform mat4 u_prev_frame_transform;
+uniform mat4 u_previous_frame_view_projection;
+
 void main()
 {
 	vs_output.frag_pos = (u_transform * vec4(position, 1.0) ).xyz;
-	gl_Position = u_view_projection * vec4(vs_output.frag_pos, 1.0f);
+	vs_output.current_pos = u_view_projection * vec4(vs_output.frag_pos, 1.0f);
+	gl_Position = vs_output.current_pos;
+	vs_output.previous_pos = u_prev_frame_transform *  vec4(position, 1.0);
+	vs_output.previous_pos = u_previous_frame_view_projection *  vs_output.previous_pos;
+
+
 	vs_output.tex_coord = tex_coord;
 	vs_output.normal = normal;
 

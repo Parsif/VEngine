@@ -13,16 +13,20 @@ namespace vengine
 		TextureGL(unsigned int id);
 
 		void bind(GLenum slot = 0) const;
+		void unbind() const;
 		void create(uint32_t width, uint32_t height);
 
 		[[nodiscard]] const std::string& get_string_type() const { return m_string_type; }
 		[[nodiscard]] auto get_id() const { return m_id; }
 		[[nodiscard]] const std::string& get_filepath() const { return m_filepath; }
+		[[nodiscard]] auto get_width() const { return m_width; }
+		[[nodiscard]] auto get_height() const { return m_height; }
+
 
 		explicit operator bool() const { return m_is_texture_loaded; }
 		
 	private:
-		unsigned int m_id{};
+		uint32_t m_id{};
 		int m_width{ 0 }, m_height{ 0 }, m_channels{};
 
 		std::string m_filepath;

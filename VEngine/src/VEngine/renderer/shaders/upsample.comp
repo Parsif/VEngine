@@ -1,0 +1,22 @@
+#version 450 core
+
+layout(local_size_x = 32, local_size_y = 32, local_size_z = 1) in;
+
+layout(rgba16f, binding = 0) uniform readonly image2D u_input;
+layout(rgba16f, binding = 1) coherent uniform writeonly image2D u_output;
+
+void main()
+{
+   	ivec2 mipCoords = ivec2(gl_GlobalInvocationID.xy);
+    ivec2 sourceCoords = mipCoords * 2;
+
+    ivec2 clampMin = ivec2(0);
+    ivec2 clampMax = ivec2(imageSize(u_input)) - 1;
+    ivec2 offsets = ivec2(0, 1);
+
+    vec4 result = imageLoad(u_input, mipCoords);
+    imageStore(u_output, clamp(sourceCoords + offsets.xx, clampMin, clampMax), result);
+    imageStore(u_output, clamp(sourceCoords + offsets.xy, clampMin, clampMax), result);
+    imageStore(u_output, clamp(sourceCoords + offsets.yx, clampMin, clampMax), result);
+    imageStore(u_output, clamp(sourceCoords + offsets.yy, clampMin, clampMax), result);
+}

@@ -1,0 +1,36 @@
+#version 450 core
+
+layout(local_size_x = 32, local_size_y = 32, local_size_z = 1) in;
+
+layout(rgba16f, binding = 0) coherent uniform image2D u_image;
+
+uniform bool u_horizontal;
+
+void main()
+{
+	ivec2 tex_coords = ivec2(gl_GlobalInvocationID.xy);
+	float offset[3] = float[](0.0, 1.3846153846, 3.2307692308);
+	float weights[3] = float[](0.270270270, 0.3162162162, 0.0702702703); 
+
+	vec2 tex_offset = 1.0 / imageSize(u_image);
+	vec3 result = imageLoad(u_image, tex_coords).rgb * weights[0];
+
+	if(u_horizontal)
+	{
+		for(int i = 1; i < weights.length(); i++)
+		{
+			result += imageLoad(u_image, tex_coords + ivec2(tex_offset.x * offset[i], 0.0)).rgb * weights[i];
+			result += imageLoad(u_image, tex_coords - ivec2(tex_offset.x * offset[i], 0.0)).rgb * weights[i];
+		}
+	}
+	else 
+	{
+		for(int i = 1; i < weights.length(); i++)
+        {
+            result += imageLoad(u_image, tex_coords + ivec2(0.0, tex_offset.y * offset[i])).rgb * weights[i];
+            result += imageLoad(u_image, tex_coords - ivec2(0.0, tex_offset.y * offset[i])).rgb * weights[i];
+        }
+	}
+
+    imageStore(u_image, tex_coords, vec4(result, 1.0));
+}

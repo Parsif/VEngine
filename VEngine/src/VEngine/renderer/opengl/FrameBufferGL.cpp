@@ -143,7 +143,7 @@ namespace vengine
 
             glCreateTextures(GL_TEXTURE_CUBE_MAP, 1, &m_cubemap_attachment);
             glBindTexture(GL_TEXTURE_CUBE_MAP, m_cubemap_attachment);
-            for (unsigned int i = 0; i < 6; ++i)
+            for (uint32_t i = 0; i < 6; ++i)
             {
                 glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB16F,
                     m_specs.width, m_specs.height, 0, GL_RGB, GL_FLOAT, nullptr);
@@ -222,6 +222,13 @@ namespace vengine
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
             glBindTexture(GL_TEXTURE_2D, 0);
             glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, m_depth_stencil_attachment, 0);
+
+            //velocity buffer
+            glCreateTextures(GL_TEXTURE_2D, 1, &m_color_attachment4);
+            glBindTexture(GL_TEXTURE_2D, m_color_attachment4);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RG16F, m_specs.width, m_specs.height, 0, GL_RG, GL_FLOAT, nullptr);
+            glBindTexture(GL_TEXTURE_2D, 0);    
+            glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT4, GL_TEXTURE_2D, m_color_attachment4, 0);
         }
 
         if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
@@ -242,7 +249,7 @@ namespace vengine
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
     }
 
-    void FrameBufferGL::bind_texture(unsigned int slot, unsigned int color_attachment) const
+    void FrameBufferGL::bind_texture(uint32_t slot, uint32_t color_attachment) const
     {
         glActiveTexture(GL_TEXTURE0 + slot);
         switch (m_specs.frame_buffer_type)
@@ -269,17 +276,18 @@ namespace vengine
             else if (color_attachment == 1) glBindTexture(GL_TEXTURE_2D, m_color_attachment1);
             else if (color_attachment == 2) glBindTexture(GL_TEXTURE_2D, m_color_attachment2);
             else if (color_attachment == 3) glBindTexture(GL_TEXTURE_2D, m_color_attachment3);
+            else if (color_attachment == 4) glBindTexture(GL_TEXTURE_2D, m_color_attachment4);
             break;
         }
     }
 
-    void FrameBufferGL::attach_cubemap_face_as_texture2d(unsigned int face_count) const
+    void FrameBufferGL::attach_cubemap_face_as_texture2d(uint32_t face_count) const
     {
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
             GL_TEXTURE_CUBE_MAP_POSITIVE_X + face_count, m_cubemap_attachment, 0);
     }
 
-    void FrameBufferGL::blit_framebuffer(unsigned int width, unsigned int height, unsigned int input_fbo, unsigned int output_fbo)
+    void FrameBufferGL::blit_framebuffer(uint32_t width, uint32_t height, uint32_t input_fbo, uint32_t output_fbo)
     {
         glBindFramebuffer(GL_READ_FRAMEBUFFER, input_fbo);
         glNamedFramebufferReadBuffer(input_fbo, GL_COLOR_ATTACHMENT0);

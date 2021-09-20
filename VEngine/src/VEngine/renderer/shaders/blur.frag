@@ -16,7 +16,7 @@ void main()
 	vec3 result = texture(u_image, vs_tex_coords).rgb * weights[0];
 	if(u_horizontal)
 	{
-		for(int i = 1; i < 3; i++)
+		for(int i = 1; i < weights.length(); i++)
 		{
 			result += texture(u_image, vs_tex_coords + vec2(tex_offset.x * offset[i], 0.0)).rgb * weights[i];
 			result += texture(u_image, vs_tex_coords - vec2(tex_offset.x * offset[i], 0.0)).rgb * weights[i];
@@ -24,7 +24,7 @@ void main()
 	}
 	else 
 	{
-		for(int i = 1; i < 3; i++)
+		for(int i = 1; i < weights.length(); i++)
         {
             result += texture(u_image, vs_tex_coords + vec2(0.0, tex_offset.y * offset[i])).rgb * weights[i];
             result += texture(u_image, vs_tex_coords - vec2(0.0, tex_offset.y * offset[i])).rgb * weights[i];

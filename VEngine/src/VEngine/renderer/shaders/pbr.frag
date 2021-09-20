@@ -97,6 +97,7 @@ vec3 fresnel_schlick_roughness(float cosTheta, vec3 F0, float roughness);
 float calc_shadow(vec3 normal, vec3 surface_to_light, sampler2D shadow_map, vec4 frag_pos_light_space);
 float calc_omni_shadow(vec3 normal, vec3 surface_to_oposite_light, samplerCube shadow_map);
 
+
 void main()
 {
     gl_FragDepth = texture(u_depth_buffer, vs_output.tex_coord).r;

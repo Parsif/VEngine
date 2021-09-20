@@ -89,6 +89,11 @@ namespace vengine
 		glBindTexture(GL_TEXTURE_2D, m_id);
 	}
 
+	void TextureGL::unbind() const
+	{
+		glBindTexture(GL_TEXTURE_2D, 0);
+	}
+
 	void TextureGL::create(uint32_t width, uint32_t height)
 	{
 		glCreateTextures(GL_TEXTURE_2D, 1, &m_id);

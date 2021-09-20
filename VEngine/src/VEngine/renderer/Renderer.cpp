@@ -12,7 +12,7 @@
 
 namespace vengine
 {
-	void Renderer::init(unsigned int width, unsigned int height)
+	void Renderer::init(uint32_t width, uint32_t height)
 	{
 		m_render_pass_descriptor.depth_test_enabled = true;
 		m_render_pass_descriptor.need_clear_color = true;
@@ -65,20 +65,26 @@ namespace vengine
 		m_convolute_brdf_material = MaterialLibrary::load("./VEngine/src/VEngine/renderer/shaders/convolute_brdf.vert",
 			"./VEngine/src/VEngine/renderer/shaders/convolute_brdf.frag", "Convolute BRDF");
 		
-		m_blur_material = MaterialLibrary::load("./VEngine/src/VEngine/renderer/shaders/blur.vert",
-			"./VEngine/src/VEngine/renderer/shaders/blur.frag", "Blur");
-		
 		m_postprocessing_material = MaterialLibrary::load("./VEngine/src/VEngine/renderer/shaders/postprocessing.vert",
 			"./VEngine/src/VEngine/renderer/shaders/postprocessing.frag", "Postprocessing");
 
-		m_lightmap_compute_shader = ComputeShader{ "./VEngine/src/VEngine/renderer/shaders/lightmap.comp" };
-		m_downsample_compute_shader = ComputeShader{ "./VEngine/src/VEngine/renderer/shaders/downsample.comp" };
-
-		m_simple_material = MaterialLibrary::load("./VEngine/src/VEngine/renderer/shaders/simple.vert",
-			"./VEngine/src/VEngine/renderer/shaders/simple.frag", "Simple");
+		m_lightmap_material = MaterialLibrary::load("./VEngine/src/VEngine/renderer/shaders/lightmap.comp", "Lightmap");
+		m_downsample_material = MaterialLibrary::load("./VEngine/src/VEngine/renderer/shaders/downsample.comp", "Downsample");
 
 		m_geometry_pass_material = MaterialLibrary::load("./VEngine/src/VEngine/renderer/shaders/geometry_pass.vert",
-			"./VEngine/src/VEngine/renderer/shaders/geometry_pass.frag", "Simple");
+			"./VEngine/src/VEngine/renderer/shaders/geometry_pass.frag", "GeometryPass");
+
+		m_blur_compute_material = MaterialLibrary::load("./VEngine/src/VEngine/renderer/shaders/blur.comp", "ComputeBlur");
+
+		m_blend_compute_material = MaterialLibrary::load("./VEngine/src/VEngine/renderer/shaders/blend.comp", "ComputeBlend");
+
+		m_upsample_compute_material = MaterialLibrary::load("./VEngine/src/VEngine/renderer/shaders/upsample.comp", "ComputeUpsample");
+
+		m_volumetric_light_material = MaterialLibrary::load("./VEngine/src/VEngine/renderer/shaders/volumetric_light.vert",
+			"./VEngine/src/VEngine/renderer/shaders/volumetric_light.frag", "VolumetricLight");
+
+		m_taa_resolve_material = MaterialLibrary::load("./VEngine/src/VEngine/renderer/shaders/taa_resolve.vert", 
+			"./VEngine/src/VEngine/renderer/shaders/taa_resolve.frag", "TAA_Resolve");
 	}
 
 	void Renderer::shutdown()
@@ -94,6 +100,7 @@ namespace vengine
 	void Renderer::render()
 	{
 		m_final_frame_buffer.create(FrameBufferSpecifications{ m_viewport.width, m_viewport.height, FrameBufferType::COLOR_DEPTH_STENCIL });
+
 
 		render_shadows();
 		render_scene();
@@ -112,7 +119,7 @@ namespace vengine
 		destroy_lights();
 	}
 
-	void Renderer::set_viewport(int x, int y, unsigned int width, unsigned int height)
+	void Renderer::set_viewport(int x, int y, uint32_t width, uint32_t height)
 	{
 		m_viewport.x = x;
 		m_viewport.y = y;
@@ -123,7 +130,7 @@ namespace vengine
 		create_resources();
 	}
 
-	void Renderer::set_viewport(unsigned int width, unsigned int height)
+	void Renderer::set_viewport(uint32_t width, uint32_t height)
 	{
 		m_viewport.width = width;
 		m_viewport.height = height;
@@ -136,6 +143,10 @@ namespace vengine
 		m_pbr_render_material.set("u_dirlights[" + std::to_string(m_dir_lights.size()) + "].position", position);
 		m_pbr_render_material.set("u_dirlights[" + std::to_string(m_dir_lights.size()) + "].color", dir_light.color);
 		m_pbr_render_material.set("u_dirlights[" + std::to_string(m_dir_lights.size()) + "].intensity", dir_light.intensity);
+
+		m_volumetric_light_material.set("u_dirlights[" + std::to_string(m_dir_lights.size()) + "].position", position);
+		m_volumetric_light_material.set("u_dirlights[" + std::to_string(m_dir_lights.size()) + "].color", dir_light.color);
+
 		m_dir_lights.push_back(Light<DirLightComponent>{ dir_light, position });
 	}
 
@@ -175,13 +186,15 @@ namespace vengine
 		m_tube_area_lights.push_back(Light<TubeAreaLightComponent>{ tube_area_light, position });
 	}
 
-	void Renderer::set_camera_params(const Camera& camera)
+	void Renderer::set_camera_params(const Camera& camera, glm::mat4 prev_frame_view_projection)
 	{
 		m_camera = camera;
 		
 		m_pbr_render_material.set("u_view_pos", m_camera.get_position());
+		m_volumetric_light_material.set("u_view_pos", m_camera.get_position());
 
 		m_geometry_pass_material.set("u_view_projection", m_camera.get_view_projection());
+		m_geometry_pass_material.set("u_previous_frame_view_projection", prev_frame_view_projection);
 
 		m_skybox_material.set("u_view", m_camera.get_view());
 		m_skybox_material.set("u_projection", m_camera.get_projection());
@@ -195,12 +208,12 @@ namespace vengine
 
 	void Renderer::set_bloom_threshold(float threshold)
 	{
-		m_pbr_render_material.set("u_bloom_threshold", threshold);
+		m_lightmap_material.set("u_bloom_threshold", threshold);
 	}
 
 	void Renderer::set_bloom_intensity(float intensity)
 	{
-		m_pbr_render_material.set("u_bloom_intensity", intensity);
+		m_lightmap_material.set("u_bloom_intensity", intensity);
 	}
 
 	void Renderer::set_exposure(float exposure)
@@ -256,7 +269,7 @@ namespace vengine
 		const auto viewport = m_viewport;
 		RendererApiGL::set_viewport(m_viewport.x, m_viewport.y, m_environment_map_frame_buffer.get_width(), m_environment_map_frame_buffer.get_height());
 		begin_render_pass(m_environment_map_frame_buffer);
-		for (unsigned int i = 0; i < 6; ++i)
+		for (uint32_t i = 0; i < 6; ++i)
 		{
 			m_hdr_to_cubemap_render_material.set("u_view", capture_views[i]);
 			m_environment_map_frame_buffer.attach_cubemap_face_as_texture2d(i);
@@ -273,7 +286,7 @@ namespace vengine
 
 		RendererApiGL::set_viewport(viewport.x, viewport.y, m_irradiance_map_frame_buffer.get_width(), m_environment_map_frame_buffer.get_height());
 		begin_render_pass(m_irradiance_map_frame_buffer);
-		for (unsigned int i = 0; i < 6; ++i)
+		for (uint32_t i = 0; i < 6; ++i)
 		{
 			m_irradiance_material.set("u_view", capture_views[i]);
 			m_irradiance_map_frame_buffer.attach_cubemap_face_as_texture2d(i);
@@ -289,12 +302,12 @@ namespace vengine
 		m_environment_map_frame_buffer.bind_texture();
 
 		begin_render_pass(m_prefilter_map_frame_buffer);
-		unsigned int maxMipLevels = 5;
-		for (unsigned int mip = 0; mip < maxMipLevels; ++mip)
+		uint32_t maxMipLevels = 5;
+		for (uint32_t mip = 0; mip < maxMipLevels; ++mip)
 		{
 			// reisze framebuffer according to mip-level size.
-			unsigned int mipWidth = 128 * std::pow(0.5, mip);
-			unsigned int mipHeight = 128 * std::pow(0.5, mip);
+			uint32_t mipWidth = 128 * std::pow(0.5, mip);
+			uint32_t mipHeight = 128 * std::pow(0.5, mip);
 			glBindRenderbuffer(GL_RENDERBUFFER, m_prefilter_map_frame_buffer.get_rbo());
 			glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, mipWidth, mipHeight);
 			RendererApiGL::set_viewport(viewport.x, viewport.y, mipWidth, mipHeight);
@@ -302,7 +315,7 @@ namespace vengine
 			float roughness = (float)mip / (float)(maxMipLevels - 1);
 
 			m_prefilter_material.set<float>("u_roughness", roughness);
-			for (unsigned int i = 0; i < 6; ++i)
+			for (uint32_t i = 0; i < 6; ++i)
 			{
 				m_prefilter_material.set("u_view", capture_views[i]);
 				m_prefilter_map_frame_buffer.attach_cubemap_face_as_texture2d(i);
@@ -325,22 +338,16 @@ namespace vengine
 
 	void Renderer::create_resources()
 	{
-		unsigned int downsample_factor = 2;
+		uint32_t downsample_factor = 1;
 		for (auto& texture : m_light_mipmap_textures)
 		{
 			texture.create(m_viewport.width / downsample_factor, m_viewport.height / downsample_factor);
 			downsample_factor *= 2;
 		}
 
-		downsample_factor = 2;
-		for (auto& fbo : m_light_mipmap_fbos)
-		{
-			fbo.create(FrameBufferSpecifications{ m_viewport.width / downsample_factor, m_viewport.height / downsample_factor, FrameBufferType::COLOR_ONLY });
-			downsample_factor *= 2;
-		}
-		m_blur_texture.create(m_viewport.width, m_viewport.height);
 		m_gbuffer.create(FrameBufferSpecifications{ m_viewport.width, m_viewport.height, FrameBufferType::G_BUFFER });
 		m_intermediate_frame_buffer.create(FrameBufferSpecifications{ m_viewport.width, m_viewport.height, FrameBufferType::COLOR_DEPTH_STENCIL });
+		m_previous_frame_buffer.create(FrameBufferSpecifications{ m_viewport.width, m_viewport.height, FrameBufferType::COLOR_DEPTH_STENCIL });
 	}
 
 	void Renderer::begin_render_pass(const FrameBufferGL& frame_buffer) const
@@ -359,8 +366,8 @@ namespace vengine
 	{
 		RendererApiGL::set_viewport(m_viewport.x, m_viewport.y, m_final_frame_buffer.get_width(), m_final_frame_buffer.get_height());
 
-		unsigned int attachments[4] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2, GL_COLOR_ATTACHMENT3 };
-		glNamedFramebufferDrawBuffers(m_gbuffer.get_id(), 4, attachments);
+		uint32_t attachments[5] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2, GL_COLOR_ATTACHMENT3, GL_COLOR_ATTACHMENT4 };
+		glNamedFramebufferDrawBuffers(m_gbuffer.get_id(), sizeof(attachments) / sizeof(uint32_t), attachments);
 		begin_render_pass(m_gbuffer);
 		gbuffer_pass();
 		end_render_pass(m_gbuffer);
@@ -368,7 +375,6 @@ namespace vengine
 		begin_render_pass(m_final_frame_buffer);
 		lightning_pass();
 		end_render_pass(m_final_frame_buffer);
-	
 	}
 
 	void Renderer::gbuffer_pass()
@@ -376,6 +382,7 @@ namespace vengine
 		for (auto& mesh : m_render_queue)
 		{
 			m_geometry_pass_material.set("u_transform", mesh.transform);
+			m_geometry_pass_material.set("u_prev_frame_transform", mesh.prev_frame_transform);
 			m_geometry_pass_material.set("u_material.has_albedo", mesh.has_albedo_texture || mesh.materials.albedo_texture);
 			m_geometry_pass_material.set("u_material.has_metallic", mesh.has_metallic_texture || mesh.materials.metallic_texture);
 			m_geometry_pass_material.set("u_material.has_roughness", mesh.has_roughness_texture || mesh.materials.roughness_texture);
@@ -523,71 +530,101 @@ namespace vengine
 
 	void Renderer::render_bloom()
 	{
-		glBindImageTexture(0, m_final_frame_buffer.get_color_attachment0(), 0, GL_FALSE, 0, GL_READ_ONLY, GL_RGBA16F);
-		glBindImageTexture(1, m_blur_texture.get_id(), 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA16F);
-		m_lightmap_compute_shader.use(64, 64);
-		glMemoryBarrier(GL_ALL_BARRIER_BITS);
-
-		//begin_render_pass(m_light_mipmap_fbos[0]);
-
-		//m_simple_material.set("u_image", 0);
-		//m_blur_texture.get_id();
-		//m_simple_material.use();
-		//render_quad();
-
-		//end_render_pass(m_light_mipmap_fbos[0]);
-
-		//for (size_t i = 1; i < m_light_mipmap_fbos.size(); ++i)
-		//{
-		//	begin_render_pass(m_light_mipmap_fbos[i]);
-
-		//	m_simple_material.set("u_image", 0);
-		//	m_light_mipmap_fbos[i - 1].bind_texture(0);
-		//	m_simple_material.use();
-		//	render_quad();
-
-		//	end_render_pass(m_light_mipmap_fbos[i]);
-		//}
-
-		//FrameBufferGL::blit_framebuffer(m_viewport.width, m_viewport.height, m_light_mipmap_fbos[0].get_id(), m_blur_frame_buffer.get_id());
-	
-		glBindImageTexture(0, m_blur_texture.get_id(), 0, GL_FALSE, 0, GL_READ_ONLY, GL_RGBA16F);
+		glBindImageTexture(0, m_final_frame_buffer.get_color_attachment0(), 0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA16F);
 		glBindImageTexture(1, m_light_mipmap_textures[0].get_id(), 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA16F);
-		m_downsample_compute_shader.use(64, 64);
-		glMemoryBarrier(GL_ALL_BARRIER_BITS);
+		m_lightmap_material.use();
+		RendererApiGL::dispatch_compute(64, 64, 1);
+		glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+		
+		for (size_t i = 1; i < m_light_mipmap_textures.size(); ++i)
+		{
+			glBindImageTexture(0, m_light_mipmap_textures[i - 1].get_id(), 0, GL_FALSE, 0, GL_READ_ONLY, GL_RGBA16F);
+			glBindImageTexture(1, m_light_mipmap_textures[i].get_id(), 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA16F);
+			m_downsample_material.use();
+			RendererApiGL::dispatch_compute(64, 64, 1);
+			glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+		}
 
-		glBindImageTexture(0, m_blur_texture.get_id(), 0, GL_FALSE, 0, GL_READ_ONLY, GL_RGBA16F);
-		glBindImageTexture(1, m_light_mipmap_textures[1].get_id(), 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA16F);
-		m_downsample_compute_shader.use(64, 64);
-		glMemoryBarrier(GL_ALL_BARRIER_BITS);
+		for (size_t i = 0; i < m_light_mipmap_textures.size(); ++i)
+		{
+			blur_texture(m_light_mipmap_textures[i]);
+		}
 
-		glBindImageTexture(0, m_blur_texture.get_id(), 0, GL_FALSE, 0, GL_READ_ONLY, GL_RGBA16F);
-		glBindImageTexture(1, m_light_mipmap_textures[2].get_id(), 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA16F);
-		m_downsample_compute_shader.use(64, 64);
-		glMemoryBarrier(GL_ALL_BARRIER_BITS);
-
-		glBindImageTexture(0, m_blur_texture.get_id(), 0, GL_FALSE, 0, GL_READ_ONLY, GL_RGBA16F);
-		glBindImageTexture(1, m_light_mipmap_textures[3].get_id(), 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA16F);
-		m_downsample_compute_shader.use(64, 64);
-		glMemoryBarrier(GL_ALL_BARRIER_BITS);
-
+		for (size_t i = m_light_mipmap_textures.size() - 1; i > 0; --i)
+		{
+			// blend(i, i - 1);
+		}
 	}
 
 	void Renderer::post_processing()
 	{
-		begin_render_pass(m_intermediate_frame_buffer);
-		m_postprocessing_material.set<int>("u_scene", 0);
+		//volumetric_light();
+		
+		//////////TAA resolve///////////
+	/*	begin_render_pass(m_intermediate_frame_buffer);
+		m_taa_resolve_material.set<int>("u_current_frame", 0);
 		m_final_frame_buffer.bind_texture(0);
-		m_postprocessing_material.set("u_is_bloom_enabled", m_using_bloom);
-		if(m_using_bloom)
-		{
-			m_postprocessing_material.set<int>("u_bloom_blur", 1);
-			m_blur_texture.bind(1);
-		}
+		m_taa_resolve_material.set<int>("u_prev_frame", 1);
+		m_previous_frame_buffer.bind_texture(0);
+		m_taa_resolve_material.set<int>("u_velocity_buffer", 2);
+		m_gbuffer.bind_texture(0, 4);
+		m_taa_resolve_material.use();
+		render_quad();
+		end_render_pass(m_intermediate_frame_buffer);
+		FrameBufferGL::blit_framebuffer(m_viewport.width, m_viewport.height, m_intermediate_frame_buffer.get_id(), m_final_frame_buffer.get_id());*/
+		////////////////////////////////
+
+		begin_render_pass(m_intermediate_frame_buffer);
+		m_postprocessing_material.set<int>("u_scene", 1);
+		m_final_frame_buffer.bind_texture(1);
+		m_postprocessing_material.set<int>("u_bloom_blur", 0);
+		m_light_mipmap_textures[0].bind(0);
 		m_postprocessing_material.use();
 		render_quad();
 		end_render_pass(m_intermediate_frame_buffer);
+
 		FrameBufferGL::blit_framebuffer(m_viewport.width, m_viewport.height, m_intermediate_frame_buffer.get_id(), m_final_frame_buffer.get_id());
+		FrameBufferGL::blit_framebuffer(m_viewport.width, m_viewport.height, m_final_frame_buffer.get_id(), m_previous_frame_buffer.get_id());
+	}
+
+	void Renderer::volumetric_light()
+	{
+		uint32_t texture_slot = 0;
+		begin_render_pass(m_intermediate_frame_buffer);
+		m_volumetric_light_material.set<int>("u_scene", texture_slot);
+		m_final_frame_buffer.bind_texture(texture_slot++);
+		m_volumetric_light_material.set<int>("u_position_map", texture_slot);
+		m_gbuffer.bind_texture(texture_slot++, 0);
+		for (size_t i = 0; i < m_dir_lights.size(); ++i)
+		{
+			m_volumetric_light_material.set<int>("u_dirlights[" + std::to_string(i) + "].shadow_map", texture_slot);
+			m_dir_light_shadow_map_textures[i].bind_texture(texture_slot++);
+		}
+
+		m_volumetric_light_material.use();
+		render_quad();
+		end_render_pass(m_intermediate_frame_buffer);
+
+		FrameBufferGL::blit_framebuffer(m_viewport.width, m_viewport.height, m_intermediate_frame_buffer.get_id(), m_final_frame_buffer.get_id());
+	}
+
+	void Renderer::blur_texture(const TextureGL& texture)
+	{
+		for (size_t i = 0; i < 1; ++i)
+		{
+			glBindImageTexture(0, texture.get_id(), 0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA16F);
+			m_blur_compute_material.set("u_horizontal", false);
+			m_blur_compute_material.use();
+			RendererApiGL::dispatch_compute(64, 64, 1);
+			glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+
+			glBindImageTexture(0, texture.get_id(), 0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA16F);
+			m_blur_compute_material.set("u_horizontal", true);
+			m_blur_compute_material.use();
+			RendererApiGL::dispatch_compute(64, 64, 1);
+			glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+		}
+		
 	}
 
 	void Renderer::render_environment_map() 
@@ -615,7 +652,7 @@ namespace vengine
 			-1, 1, 1
 		};
 
-		unsigned int indices[6 * 6] =
+		uint32_t indices[6 * 6] =
 		{
 			0, 1, 3, 3, 1, 2,
 			1, 5, 2, 2, 5, 6,
@@ -626,7 +663,7 @@ namespace vengine
 		};
 
 		render_command.set_vertex_buffer(vertices, sizeof(vertices));
-		render_command.set_index_buffer(indices, sizeof(indices), sizeof(indices) / sizeof(unsigned int));
+		render_command.set_index_buffer(indices, sizeof(indices), sizeof(indices) / sizeof(uint32_t));
 		render_command.set_buffer_layout(BufferLayout{ ShaderDataType::Float3 });
 
 		RendererApiGL::draw_elements(render_command);
@@ -661,6 +698,7 @@ namespace vengine
 		
 		m_direct_shadow_map_material.set("u_light_space_matrix", light_space_matrix);
 		m_pbr_render_material.set("u_dirlights[" + std::to_string(light_index) + "].light_space_matrix", light_space_matrix);
+		m_volumetric_light_material.set("u_dirlights[" + std::to_string(light_index) + "].light_space_matrix", light_space_matrix);
 	}
 
 	void Renderer::set_point_light_space_matrices(const Light<PointLightComponent>& point_light, int light_index)
@@ -691,6 +729,4 @@ namespace vengine
 		m_pbr_render_material.set<float>("u_far_plane", FAR_PLANE);
 		m_omnidirect_shadow_map_material.set<float>("u_far_plane", FAR_PLANE);
 	}
-
-	
 }

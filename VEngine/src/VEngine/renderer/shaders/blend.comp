@@ -1,0 +1,15 @@
+#version 450 core
+
+layout(local_size_x = 32, local_size_y = 32, local_size_z = 1) in;
+
+layout(rgba16f, binding = 0) uniform readonly image2D u_input;
+layout(rgba16f, binding = 1) uniform image2D u_output;
+
+void main()
+{
+   	ivec2 mipCoords = ivec2(gl_GlobalInvocationID.xy);
+  
+    vec4 val1 = imageLoad(u_input, mipCoords);
+    vec4 val2 = imageLoad(u_output, mipCoords);
+    imageStore(u_output, mipCoords, val1 + val2);
+}

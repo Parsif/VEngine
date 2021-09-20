@@ -15,10 +15,12 @@ namespace vengine
 		static void begin_render_pass(const RenderPassDescriptor& descriptor);
 		static void end_render_pass();
 
-		static void set_viewport(int x, int y, unsigned int width, unsigned int height);
+		static void set_viewport(int x, int y, uint32_t width, uint32_t height);
 
 		static void draw_elements(RenderCommand& command);
-		static void draw_arrays(RenderCommand& command, unsigned int first, unsigned int count);
+		static void draw_arrays(RenderCommand& command, uint32_t first, uint32_t count);
+
+		static void dispatch_compute(uint32_t num_group_x, uint32_t num_group_y, uint32_t num_group_z);
 
 	private:
 		void static prepare_drawing(RenderCommand& command);

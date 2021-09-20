@@ -3,7 +3,6 @@
 #include "renderer/Camera.h"
 
 #include "Components.h"
-#include "renderer/Grid.h"
 #include "renderer/Renderer.h"
 
 #include <entt/entt.hpp>
@@ -61,9 +60,9 @@ namespace vengine
 		Camera m_editor_camera{45.0f, 0.1f, 500.f};
 		Camera m_active_camera = m_editor_camera;
 		entt::entity m_game_camera_entity;
+		glm::mat4 m_previous_view_projection;
 
 		entt::registry m_registry;
-		Grid m_grid;
 		Ref<Renderer> m_renderer;
 
 		bool m_is_gamemode_on = false;

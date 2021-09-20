@@ -385,7 +385,6 @@ namespace vengine
 			{
 				// Disabling fullscreen would allow the window to be moved to the front of other windows,
 				// which we can't undo at the moment without finer window depth/z control.
-				ImGui::MenuItem("Grid", nullptr, &Grid::s_enabled);
 				ImGui::MenuItem("Padding", nullptr, &opt_padding);
 				ImGui::Separator();
 				
@@ -446,8 +445,7 @@ namespace vengine
 				glm::vec3 translation, rotation, scale;
 				math::decompose_transform(transform, translation, rotation, scale);
 				transform_component.translation = translation;
-				//TODO: fix rotation
-				//transform_component.rotation += rotation - transform_component.rotation;
+				transform_component.rotation += rotation - transform_component.rotation;
 				transform_component.scale = scale;
 				if(m_scene->m_registry.has<DirLightComponent>(selected_entity))
 				{

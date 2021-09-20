@@ -8,7 +8,6 @@ uniform sampler2D u_bloom_blur;
 uniform float u_exposure;
 uniform bool u_is_bloom_enabled;
 
-
 void main()
 {             
     vec3 hdr_color = texture(u_scene, vs_tex_coords).rgb;      

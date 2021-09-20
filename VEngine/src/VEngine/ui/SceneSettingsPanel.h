@@ -18,7 +18,7 @@ namespace vengine
 
 		float m_exposure = 1.0f;
 		float m_bloom_threshold = 0.5f;
-		float m_bloom_intensity = 0.1f;
+		float m_bloom_intensity = 1.0f;
 	};
 	
 }

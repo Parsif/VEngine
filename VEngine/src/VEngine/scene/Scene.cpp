@@ -13,18 +13,15 @@ namespace vengine
 	void Scene::init(Ref<Renderer> renderer)
 	{
 		m_renderer = renderer;
-		m_grid.init();
 		create_camera();
 	}
 	
 	void Scene::on_update()
 	{
-		if (Grid::s_enabled)
-		{
-			
-		}
 		//Try to move setting params out from loop
-		m_renderer->set_camera_params(m_active_camera);
+		m_renderer->set_camera_params(m_active_camera, m_previous_view_projection);
+		m_previous_view_projection = m_active_camera.get_view_projection();
+
 		for (auto&& [view_entity, dir_light_component, transform_component] : m_registry.view<DirLightComponent, TransformComponent>().each())
 		{
 			m_renderer->add_dir_light(dir_light_component, transform_component.translation);
@@ -54,6 +51,7 @@ namespace vengine
 			mesh.transform = transform_component.get_transform();
 			mesh.materials = materials_component;
 			m_renderer->add_drawable(mesh);
+			mesh.prev_frame_transform = mesh.transform;
 		}
 	}
 

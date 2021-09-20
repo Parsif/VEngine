@@ -12,6 +12,7 @@ namespace vengine
 		std::vector<RenderCommand> commands;
 		bool is_casting_shadow;
 		glm::mat4 transform;
+		glm::mat4 prev_frame_transform;
 		bool has_albedo_texture;
 		bool has_roughness_texture;
 		bool has_metallic_texture;

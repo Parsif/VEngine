@@ -41,7 +41,7 @@ namespace vengine
 		void add_sphere_area_light(const SphereAreaLightComponent& sphere_area_light_component, const glm::vec3& position);
 		void add_tube_area_light(const TubeAreaLightComponent& sphere_area_light_component, const glm::vec3& position);
 		
-		void set_camera_params(const Camera& camera);
+		void set_camera_params(const Camera& camera, glm::mat4 prev_frame_view_projection);
 		void set_bloom(bool is_bloom_enabled);
 		void set_bloom_threshold(float threshold);
 		void set_bloom_intensity(float intensity);
@@ -66,6 +66,9 @@ namespace vengine
 		void render_shadow(Mesh& mesh) const;
 		void render_bloom();
 		void post_processing();
+		void volumetric_light();
+
+		void blur_texture(const TextureGL& texture);
 
 		void render_environment_map();
 		void render_cube() const;
@@ -83,6 +86,7 @@ namespace vengine
 
 		FrameBufferGL m_intermediate_frame_buffer;
 		FrameBufferGL m_final_frame_buffer;
+		FrameBufferGL m_previous_frame_buffer;
 		FrameBufferGL m_environment_map_frame_buffer;
 		FrameBufferGL m_irradiance_map_frame_buffer;
 		FrameBufferGL m_prefilter_map_frame_buffer;
@@ -90,10 +94,7 @@ namespace vengine
 
 		FrameBufferGL m_gbuffer;
 
-		FrameBufferGL m_blur_frame_buffer;
-		TextureGL m_blur_texture;
-		std::array<TextureGL, 5> m_light_mipmap_textures; 
-		std::array<FrameBufferGL, 5> m_light_mipmap_fbos;
+		std::array<TextureGL, 6> m_light_mipmap_textures; 
 
 		const static unsigned int MAX_LIGHTS = 4;
 		std::array<FrameBufferGL, MAX_LIGHTS> m_dir_light_shadow_map_textures{};
@@ -114,13 +115,15 @@ namespace vengine
 		Material m_irradiance_material;
 		Material m_prefilter_material;
 		Material m_convolute_brdf_material;
-		Material m_blur_material;
 		Material m_postprocessing_material;
-		Material m_simple_material;
 		Material m_geometry_pass_material;
-
-		ComputeShader m_downsample_compute_shader;
-		ComputeShader m_lightmap_compute_shader;
+		Material m_downsample_material;
+		Material m_lightmap_material;
+		Material m_blur_compute_material;
+		Material m_blend_compute_material;
+		Material m_upsample_compute_material;
+		Material m_volumetric_light_material;
+		Material m_taa_resolve_material;
 
 		Camera m_camera;
 

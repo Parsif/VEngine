@@ -54,6 +54,7 @@ namespace vengine
 	{
 	public:
 		ShaderProgram() = default;
+		ShaderProgram(const std::string& compute_shader_path);
 		ShaderProgram(const std::string& vertex_shader_path, const std::string& fragment_shader_path);
 		ShaderProgram(const std::string& vertex_shader_path, const std::string& fragment_shader_path, const std::string& geometry_shader_path);
 
@@ -113,21 +114,6 @@ namespace vengine
 
 		friend Material;
 	};
-
-
-	class ComputeShader
-	{
-	public:
-		ComputeShader() = default;
-		ComputeShader(const std::string& shader_path);
-		void use(uint32_t num_group_x, uint32_t num_group_y) const;
-		void set_image(const std::string& uniform_name, int image_id) const;
-		
-	private:
-		unsigned int m_render_id;
-		unsigned int m_shader_id;
-	};
-
 }
 
 

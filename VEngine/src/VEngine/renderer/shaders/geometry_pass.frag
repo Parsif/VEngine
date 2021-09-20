@@ -4,6 +4,7 @@ layout(location = 0) out vec3 fr_position;
 layout(location = 1) out vec3 fr_albedo;
 layout(location = 2) out vec3 fr_normal;
 layout(location = 3) out vec3 fr_metallic_roughness_ao;
+layout(location = 4) out vec2 fr_velocity;
 
 in VertexOutput
 {
@@ -11,6 +12,8 @@ in VertexOutput
 	vec3 normal;
 	vec3 frag_pos;
 	mat3 TBN;
+    vec4 current_pos;
+	vec4 previous_pos;
 } vs_output;
 
 struct Material
@@ -47,4 +50,8 @@ void main()
 
     fr_normal = normal;
     fr_position = vs_output.frag_pos;
+
+    vec3 current_pos_ndc = vs_output.current_pos.xyz / vs_output.current_pos.w;
+    vec3 previous_pos_ndc = vs_output.previous_pos.xyz / vs_output.previous_pos.w;
+    fr_velocity = current_pos_ndc.xy - previous_pos_ndc.xy;
 }

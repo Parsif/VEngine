@@ -64,6 +64,27 @@ namespace vengine
 	//ShaderProgram///////////////////////////////////
 	//////////////////////////////////////////////////
 	
+	ShaderProgram::ShaderProgram(const std::string& compute_shader_path)
+	{
+		Shader shader(ShaderType::COMPUTE, compute_shader_path);
+
+		m_render_id = glCreateProgram();
+		glAttachShader(m_render_id, shader.get_render_id());
+		glLinkProgram(m_render_id);
+
+		int success;
+		glGetProgramiv(m_render_id, GL_LINK_STATUS, &success);
+		if (!success)
+		{
+			char info_log[512];
+			glGetProgramInfoLog(m_render_id, sizeof(info_log), nullptr, info_log);
+			LOG_ERROR(info_log);
+		}
+
+		shader.delete_shader();
+		set_all_uniform_locations();
+	}
+
 	ShaderProgram::ShaderProgram(const std::string& vertex_shader_path, const std::string& fragment_shader_path)
 	{
 		Shader vertex_shader(ShaderType::VERTEX, vertex_shader_path);
@@ -177,7 +198,9 @@ namespace vengine
 			m_mat4_uniforms.emplace(uniform_name, UniformInfo<glm::mat4>{location, type });
 			break;
 		}
-			
+		case GL_IMAGE_2D:
+			break;
+
 		default:
 		{
 			LOG_ERROR("Unhandled uniform type");
@@ -225,39 +248,6 @@ namespace vengine
 			glUniformMatrix4fv(uniform_info.location, 1, GL_FALSE, glm::value_ptr(uniform_info.value));
 		}
 		
-	}
-
-	//compute shader
-	ComputeShader::ComputeShader(const std::string& shader_path)
-	{
-		Shader shader(ShaderType::COMPUTE, shader_path);
-
-		m_render_id = glCreateProgram();
-		glAttachShader(m_render_id, shader.get_render_id());
-		glLinkProgram(m_render_id);
-
-		int success;
-		glGetProgramiv(m_render_id, GL_LINK_STATUS, &success);
-		if (!success)
-		{
-			char info_log[512];
-			glGetProgramInfoLog(m_render_id, sizeof(info_log), nullptr, info_log);
-			LOG_ERROR(info_log);
-		}
-
-		shader.delete_shader();
-	}
-
-	void ComputeShader::use(uint32_t num_group_x, uint32_t num_group_y) const
-	{
-		glUseProgram(m_render_id); // Compute shader program.
-		glDispatchCompute(num_group_x, num_group_y, 1);
-	}
-
-	void ComputeShader::set_image(const std::string& uniform_name, int image_id) const
-	{
-		auto location = glGetUniformLocation(m_render_id, uniform_name.c_str());
-		glProgramUniform1i(m_render_id, location, image_id);
 	}
 }
 
