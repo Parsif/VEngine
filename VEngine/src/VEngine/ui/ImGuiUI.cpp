@@ -447,7 +447,7 @@ namespace vengine
 				math::decompose_transform(transform, translation, rotation, scale);
 				transform_component.translation = translation;
 				//TODO: fix rotation
-				//transform_component.rotation += rotation - transform_component.rotation;
+				transform_component.rotation += rotation - transform_component.rotation;
 				transform_component.scale = scale;
 				if(m_scene->m_registry.has<DirLightComponent>(selected_entity))
 				{

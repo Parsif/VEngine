@@ -17,7 +17,7 @@ namespace vengine
 		m_render_pass_descriptor.depth_test_enabled = true;
 		m_render_pass_descriptor.need_clear_color = true;
 		m_render_pass_descriptor.need_clear_depth = true;
-		m_render_pass_descriptor.need_culling = true;
+		m_render_pass_descriptor.need_culling = false;
 
 		m_viewport.x = 0;
 		m_viewport.y = 0;
@@ -74,9 +74,6 @@ namespace vengine
 		m_lightmap_compute_shader = ComputeShader{ "./VEngine/src/VEngine/renderer/shaders/lightmap.comp" };
 		m_downsample_compute_shader = ComputeShader{ "./VEngine/src/VEngine/renderer/shaders/downsample.comp" };
 
-		m_simple_material = MaterialLibrary::load("./VEngine/src/VEngine/renderer/shaders/simple.vert",
-			"./VEngine/src/VEngine/renderer/shaders/simple.frag", "Simple");
-
 		m_geometry_pass_material = MaterialLibrary::load("./VEngine/src/VEngine/renderer/shaders/geometry_pass.vert",
 			"./VEngine/src/VEngine/renderer/shaders/geometry_pass.frag", "Simple");
 	}
@@ -97,11 +94,7 @@ namespace vengine
 
 		render_shadows();
 		render_scene();
-		if (m_using_bloom)
-		{
-			render_bloom();
-		}
-
+		
 		if (m_using_environment_map)
 		{
 			render_environment_map();
@@ -185,22 +178,6 @@ namespace vengine
 
 		m_skybox_material.set("u_view", m_camera.get_view());
 		m_skybox_material.set("u_projection", m_camera.get_projection());
-	}
-		
-	void Renderer::set_bloom(bool is_bloom_enabled)
-	{
-		m_using_bloom = is_bloom_enabled;
-		m_postprocessing_material.set("u_is_bloom_enabled", is_bloom_enabled);
-	}
-
-	void Renderer::set_bloom_threshold(float threshold)
-	{
-		m_pbr_render_material.set("u_bloom_threshold", threshold);
-	}
-
-	void Renderer::set_bloom_intensity(float intensity)
-	{
-		m_pbr_render_material.set("u_bloom_intensity", intensity);
 	}
 
 	void Renderer::set_exposure(float exposure)
@@ -325,20 +302,6 @@ namespace vengine
 
 	void Renderer::create_resources()
 	{
-		unsigned int downsample_factor = 2;
-		for (auto& texture : m_light_mipmap_textures)
-		{
-			texture.create(m_viewport.width / downsample_factor, m_viewport.height / downsample_factor);
-			downsample_factor *= 2;
-		}
-
-		downsample_factor = 2;
-		for (auto& fbo : m_light_mipmap_fbos)
-		{
-			fbo.create(FrameBufferSpecifications{ m_viewport.width / downsample_factor, m_viewport.height / downsample_factor, FrameBufferType::COLOR_ONLY });
-			downsample_factor *= 2;
-		}
-		m_blur_texture.create(m_viewport.width, m_viewport.height);
 		m_gbuffer.create(FrameBufferSpecifications{ m_viewport.width, m_viewport.height, FrameBufferType::G_BUFFER });
 		m_intermediate_frame_buffer.create(FrameBufferSpecifications{ m_viewport.width, m_viewport.height, FrameBufferType::COLOR_DEPTH_STENCIL });
 	}
@@ -523,54 +486,7 @@ namespace vengine
 
 	void Renderer::render_bloom()
 	{
-		glBindImageTexture(0, m_final_frame_buffer.get_color_attachment0(), 0, GL_FALSE, 0, GL_READ_ONLY, GL_RGBA16F);
-		glBindImageTexture(1, m_blur_texture.get_id(), 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA16F);
-		m_lightmap_compute_shader.use(64, 64);
-		glMemoryBarrier(GL_ALL_BARRIER_BITS);
-
-		//begin_render_pass(m_light_mipmap_fbos[0]);
-
-		//m_simple_material.set("u_image", 0);
-		//m_blur_texture.get_id();
-		//m_simple_material.use();
-		//render_quad();
-
-		//end_render_pass(m_light_mipmap_fbos[0]);
-
-		//for (size_t i = 1; i < m_light_mipmap_fbos.size(); ++i)
-		//{
-		//	begin_render_pass(m_light_mipmap_fbos[i]);
-
-		//	m_simple_material.set("u_image", 0);
-		//	m_light_mipmap_fbos[i - 1].bind_texture(0);
-		//	m_simple_material.use();
-		//	render_quad();
-
-		//	end_render_pass(m_light_mipmap_fbos[i]);
-		//}
-
-		//FrameBufferGL::blit_framebuffer(m_viewport.width, m_viewport.height, m_light_mipmap_fbos[0].get_id(), m_blur_frame_buffer.get_id());
-	
-		glBindImageTexture(0, m_blur_texture.get_id(), 0, GL_FALSE, 0, GL_READ_ONLY, GL_RGBA16F);
-		glBindImageTexture(1, m_light_mipmap_textures[0].get_id(), 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA16F);
-		m_downsample_compute_shader.use(64, 64);
-		glMemoryBarrier(GL_ALL_BARRIER_BITS);
-
-		glBindImageTexture(0, m_blur_texture.get_id(), 0, GL_FALSE, 0, GL_READ_ONLY, GL_RGBA16F);
-		glBindImageTexture(1, m_light_mipmap_textures[1].get_id(), 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA16F);
-		m_downsample_compute_shader.use(64, 64);
-		glMemoryBarrier(GL_ALL_BARRIER_BITS);
-
-		glBindImageTexture(0, m_blur_texture.get_id(), 0, GL_FALSE, 0, GL_READ_ONLY, GL_RGBA16F);
-		glBindImageTexture(1, m_light_mipmap_textures[2].get_id(), 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA16F);
-		m_downsample_compute_shader.use(64, 64);
-		glMemoryBarrier(GL_ALL_BARRIER_BITS);
-
-		glBindImageTexture(0, m_blur_texture.get_id(), 0, GL_FALSE, 0, GL_READ_ONLY, GL_RGBA16F);
-		glBindImageTexture(1, m_light_mipmap_textures[3].get_id(), 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA16F);
-		m_downsample_compute_shader.use(64, 64);
-		glMemoryBarrier(GL_ALL_BARRIER_BITS);
-
+		
 	}
 
 	void Renderer::post_processing()
@@ -579,11 +495,6 @@ namespace vengine
 		m_postprocessing_material.set<int>("u_scene", 0);
 		m_final_frame_buffer.bind_texture(0);
 		m_postprocessing_material.set("u_is_bloom_enabled", m_using_bloom);
-		if(m_using_bloom)
-		{
-			m_postprocessing_material.set<int>("u_bloom_blur", 1);
-			m_blur_texture.bind(1);
-		}
 		m_postprocessing_material.use();
 		render_quad();
 		end_render_pass(m_intermediate_frame_buffer);

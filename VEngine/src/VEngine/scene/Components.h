@@ -1,13 +1,15 @@
 #pragma once
 
-#include "renderer/Camera.h"
-
+#define GLM_ENABLE_EXPERIMENTAL
+#include <glm/gtx/quaternion.hpp>
 #include <glm/fwd.hpp>
 #include <glm/vec3.hpp>
 #include <glm/ext/matrix_transform.hpp>
+
 #include <utility>
 
 #include "renderer/opengl/TextureGL.h"
+#include "renderer/Camera.h"
 
 
 namespace vengine
@@ -35,12 +37,8 @@ namespace vengine
         {
             glm::mat4 transform(1.0f);
             transform = glm::translate(transform, translation);
-        	//TODO: FIX gimbal lock
-            transform = glm::rotate(transform, rotation.x, glm::vec3(1.0f, 0.0f, 0.0f));
-            transform = glm::rotate(transform, rotation.y, glm::vec3(0.0f, 1.0f, 0.0f));
-            transform = glm::rotate(transform, rotation.z, glm::vec3(0.0f, 0.0f, 1.0f));
+            transform *= glm::toMat4(glm::quat(rotation));
             transform = glm::scale(transform, scale);
-
             return transform;
         }
     };

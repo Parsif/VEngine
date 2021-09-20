@@ -10,8 +10,6 @@ namespace vengine
         m_window = window;
 		m_scene = scene;
         m_scene->set_exposure(m_exposure);
-        m_scene->set_bloom_threshold(m_bloom_threshold);
-        m_scene->set_bloom_intensity(m_bloom_intensity);
 	}
 
 	void SceneSettingsPanel::draw()
@@ -47,33 +45,6 @@ namespace vengine
         if (ImGui::DragFloat("##Exposure", &m_exposure, DRAG_SPEED, 0.0f, 100.f))
         {
             m_scene->set_exposure(m_exposure);
-        }
-
-        if (ImGui::TreeNodeEx((void*)typeid(SceneSettingsPanel).hash_code(), ImGuiTreeNodeFlags_DefaultOpen, "Bloom"))
-        {
-            static bool is_bloom;
-            ImGui::Text("Enable bloom");
-            ImGui::SameLine();
-            if (ImGui::Checkbox("##Enable bloom", &is_bloom))
-            {
-                m_scene->toggle_bloom(is_bloom);
-            }
-            
-            ImGui::Text("Threshold");
-            ImGui::SameLine();
-            if (ImGui::DragFloat("##Threshold", &m_bloom_threshold, DRAG_SPEED, 0.0f, 100.f))
-            {
-                m_scene->set_bloom_threshold(m_bloom_threshold);
-            }
-            
-            ImGui::Text("Intensity");
-            ImGui::SameLine();
-            if (ImGui::DragFloat("##Intensity", &m_bloom_intensity, DRAG_SPEED, 0.0f, 100.f))
-            {
-                m_scene->set_bloom_intensity(m_bloom_intensity);
-            }
-        	
-            ImGui::TreePop();
         }
 
         ImGui::End();

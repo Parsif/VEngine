@@ -53,30 +53,6 @@ namespace vengine
 
 		stbi_image_free(data);
 		m_is_texture_loaded = true;
-		
-		switch (m_type)
-		{
-		case aiTextureType_DIFFUSE:
-			m_string_type = "albedo_map";
-			break;
-
-		case aiTextureType_METALNESS:
-			m_string_type = "metallic_map";
-			break;
-
-		case aiTextureType_SHININESS:
-			m_string_type = "roughness_map";
-			break;
-
-		case aiTextureType_AMBIENT_OCCLUSION:
-			m_string_type = "ao_map";
-			break;
-
-		case aiTextureType_NORMALS:
-			m_string_type = "normal_map";
-			break;
-		}
-		
 	}
 
 	TextureGL::TextureGL(const unsigned int id) : m_id(id)
@@ -99,5 +75,27 @@ namespace vengine
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 		glBindTexture(GL_TEXTURE_2D, 0);
+	}
+	std::string TextureGL::get_string_type() const
+	{
+		switch (m_type)
+		{
+		case aiTextureType_DIFFUSE:
+			return "albedo_map";
+
+		case aiTextureType_METALNESS:
+			return "metallic_map";
+
+		case aiTextureType_SHININESS:
+			return "roughness_map";
+
+		case aiTextureType_AMBIENT_OCCLUSION:
+			return "ao_map";
+
+		case aiTextureType_NORMALS:
+			return "normal_map";
+
+
+		}
 	}
 }

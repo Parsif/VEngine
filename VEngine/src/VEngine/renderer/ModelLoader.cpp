@@ -138,7 +138,8 @@ namespace vengine
 			aiString texture_path;
 			if (ai_material->GetTexture(ai_texture_type, 0, &texture_path) == AI_SUCCESS)
 			{
-				const auto fullpath = file_dir + '/' + texture_path.data;
+				std::string fullpath = file_dir + '/' + texture_path.data;
+			
 				if (s_loaded_textures.find(fullpath) != s_loaded_textures.end())
 				{
 					textures2d.push_back(s_loaded_textures[fullpath]);
@@ -150,7 +151,6 @@ namespace vengine
 					textures2d.push_back(texture2d);
 					s_loaded_textures[fullpath] = texture2d;
 				}
-			
 			}
 		}
 		return textures2d;

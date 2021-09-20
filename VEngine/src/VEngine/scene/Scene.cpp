@@ -13,16 +13,11 @@ namespace vengine
 	void Scene::init(Ref<Renderer> renderer)
 	{
 		m_renderer = renderer;
-		m_grid.init();
 		create_camera();
 	}
 	
 	void Scene::on_update()
 	{
-		if (Grid::s_enabled)
-		{
-			
-		}
 		//Try to move setting params out from loop
 		m_renderer->set_camera_params(m_active_camera);
 		for (auto&& [view_entity, dir_light_component, transform_component] : m_registry.view<DirLightComponent, TransformComponent>().each())
@@ -168,7 +163,6 @@ namespace vengine
 		{
 			LOG_ERROR("There is no camera in the scene")
 		}
-		
 	}
 
 	void Scene::stop_game()
@@ -180,21 +174,6 @@ namespace vengine
 	void Scene::set_environment_texture(const TextureGL& texture) const
 	{
 		m_renderer->set_scene_environment_map(texture);
-	}
-
-	void Scene::toggle_bloom(bool is_bloom_enabled) const
-	{
-		m_renderer->set_bloom(is_bloom_enabled);
-	}
-
-	void Scene::set_bloom_threshold(float threshold) const
-	{
-		m_renderer->set_bloom_threshold(threshold);
-	}
-
-	void Scene::set_bloom_intensity(float intensity) const
-	{
-		m_renderer->set_bloom_intensity(intensity);
 	}
 
 	void Scene::set_exposure(float exposure) const

@@ -42,9 +42,6 @@ namespace vengine
 		void add_tube_area_light(const TubeAreaLightComponent& sphere_area_light_component, const glm::vec3& position);
 		
 		void set_camera_params(const Camera& camera);
-		void set_bloom(bool is_bloom_enabled);
-		void set_bloom_threshold(float threshold);
-		void set_bloom_intensity(float intensity);
 		void set_exposure(float exposure);
 
 		[[nodiscard]] auto get_color_attachment() const { return m_final_frame_buffer.get_color_attachment0(); }
@@ -90,11 +87,6 @@ namespace vengine
 
 		FrameBufferGL m_gbuffer;
 
-		FrameBufferGL m_blur_frame_buffer;
-		TextureGL m_blur_texture;
-		std::array<TextureGL, 5> m_light_mipmap_textures; 
-		std::array<FrameBufferGL, 5> m_light_mipmap_fbos;
-
 		const static unsigned int MAX_LIGHTS = 4;
 		std::array<FrameBufferGL, MAX_LIGHTS> m_dir_light_shadow_map_textures{};
 		std::array<FrameBufferGL, MAX_LIGHTS> m_point_light_shadow_map_textures{};
@@ -116,7 +108,6 @@ namespace vengine
 		Material m_convolute_brdf_material;
 		Material m_blur_material;
 		Material m_postprocessing_material;
-		Material m_simple_material;
 		Material m_geometry_pass_material;
 
 		ComputeShader m_downsample_compute_shader;

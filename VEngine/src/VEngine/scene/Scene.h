@@ -50,9 +50,6 @@ namespace vengine
 		void stop_game();
 		[[nodiscard]] bool is_gamemode_on() const { return m_is_gamemode_on; }
 		void set_environment_texture(const TextureGL& texture) const;
-		void toggle_bloom(bool is_bloom_enabled) const;
-		void set_bloom_threshold(float threshold) const;
-		void set_bloom_intensity(float intensity) const;
 		void set_exposure(float exposure) const;
 
 
@@ -63,7 +60,6 @@ namespace vengine
 		entt::entity m_game_camera_entity;
 
 		entt::registry m_registry;
-		Grid m_grid;
 		Ref<Renderer> m_renderer;
 
 		bool m_is_gamemode_on = false;
